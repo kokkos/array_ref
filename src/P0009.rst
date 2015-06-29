@@ -188,7 +188,7 @@ The view interface now requires the following.
 
   Discussion: This method could have other intuitive names, for example **size_#()**.
 
-.. code-block:: c++
+::
 
   template< typename t0 , typename t1 , typename t2 >
   reference operator()( const t0 & i0
