@@ -1,0 +1,313 @@
+===================================================================
+P0009r01 ``Polymorphic Multidimensional Array View``
+===================================================================
+
+:Author: H. Carter Edwards
+:Contact: hcedwar@sandia.gov
+:Author: Christian Trott
+:Contact: crtrott@sandia.gov
+:Author: Juan Alday
+:Contact: juanalday@gmail.com
+:Author: Jesse Perla
+:Contact: jesse.perla@ubc.ca
+:Author: Mauro Bianco
+:Contact: mbianco@cscs.ch
+:Author: Agustín K-ballo Bergé 
+:Contact: kaballo86@hotmail.com
+:Author: Maffeo, Robin 
+:Contact: Robin.Maffeo@amd.com
+:Author: Bryce Lelbach 
+:Contact: balelbach@lbl.gov
+:Date: 2015-06-26
+:Version: 01
+:URL: https://github.com/kokkos/papers/blob/master/src/P0009.rst
+
+---------
+Rationale
+---------
+
+Multidimensional arrays are a foundational data structure
+for science and engineering codes, as demonstrated by their
+extensive use in FORTRAN for five decades.
+A multidimensional array is a **view** to a memory extent
+through a **layout** mapping from a multi-index space (domain) to that extent (range).
+A view's layout mapping may be bijective as in the case of a traditional
+multidimensional array, injective as in the case of a subarray, or
+surjective to express symmetry.
+
+Traditional layout mappings have been specfied as part of the language.
+For example, FORTRAN specifies *column major* layout and C specifies *row major* layout.
+Such a language-imposed specification requires signficant code refactoring
+to change an array's layout, and requires significant code complexity to
+implement non-traditional layouts such as tiling in modern linear algebra
+or structured grid application domains.  Such layout changes are required
+to adapt and optimize code for varying computer architectures; for example,
+to change a code from *array of structures* to *structure of arrays*.
+Furthermore, multiple versions of code must be maintained for each required layout.
+
+A multidimensional array view abstraction with polymorphic layout is required
+to enable changing array layout without extensive code refactoring and
+maintenance of functionally redundant code.
+Layout polymorphism is a critical capability; however, it is not the only
+beneficial form of polymorphism.
+
+--------
+The View
+--------
+
+The proposed **view** has template arguments for the data type of the array
+and a parameter pack for polymorphic properties of the view.
+
+
+.. code-block:: c++
+
+  namespace std {
+  namespace experimental {
+    template< class DataType , class ... Properties >
+    struct view ;
+  }
+  }
+
+..
+
+
+The complete proposed specification for **view** is
+included at the end of this paper.
+We present the specification incrementally to
+convey the rational for this specification.
+
+-----------------------------------------------
+(1) View of a One-Dimensional Array
+-----------------------------------------------
+
+A view of a one-dimension array is anticipated to subsume the functionality
+of a pointer to memory extent combined with an array length.
+For example, a one-dimensional array is passed to a function as follows.
+
+.. code-block:: c++
+
+  // Traditional API
+  void foo( int array[] , size_t N );
+  void foo( const int array[] , size_t N );
+
+  // Corresponding view API
+  void foo( view< int[] > array );
+  void foo( view< const int[] > array );
+
+..
+
+For this functionality the simple one-dimensional view interface requires the following.
+
+.. code-block:: c++
+
+  template< class DataType , class ... Properties >
+  struct view {
+    using value_type = // implementation defined
+    using reference  = // implementation defined
+    using pointer    = // implementation defined
+    constexpr size_t size() const ;
+    template< typename t0 >
+    reference operator[]( const t0 & i0 ) const ;
+    constexpr view( pointer , size_t );
+  };
+
+..
+
+The *const-ness* of a view is analogous to the *const-ness* of a pointer.
+A const-view is similar to a const-pointer in that the view may not be
+modifid but the viewed extent of memory may be modified.
+A view-of-const is similar to a pointer-to-const in that the viewed
+extent of memory may not be modified.
+
+**constexpr size() const ;**
+
+Returns the cardinality of the index space.
+
+**template< typename t0 > reference operator[]( const t0 & i0 ) const ;**
+
+Returns a reference to the member identified with the index *i0*.
+
+Requires the **rank** of the array (number of dimension) to be one.
+
+Requires the index *i0* to be within the domain of the index space; i.e., [0..N).
+
+-----------------------------------------------------------------------
+(2) View of Traditional Multidimensional Array with Explicit Dimensions
+-----------------------------------------------------------------------
+
+A traditional multidimensional array with explicit dimensions
+(for example, an array of 3x3 tensors) is passed to a function as follows.
+
+.. code-block:: c++
+
+  // Traditional API
+  void foo( double array[][3][3] , size_t N0 );
+
+  // View API
+  template< typename T >
+  void foo( view< double[][3][3] > array );
+
+..
+
+The view interface now requires the following.
+
+.. code-block:: c++
+
+  template< class DataType , class ... Properties >
+  struct view {
+    using value_type = // implementation defined
+    using reference  = // implementation defined
+    using pointer    = // implementation defined
+    static constexpr unsigned rank = // rank of the array
+    constexpr size_t  size() const ;
+    constexpr size_t  dimension_0() const ;
+    constexpr size_t  dimension_1() const ;
+    constexpr size_t  dimension_2() const ;
+    template< typename t0 , typename t1 , typename t2 >
+    reference operator()( const t0 & i0
+                        , const t1 & i1
+                        , const t2 & i2 ) const ;
+    constexpr view( pointer , size_t );
+  };
+
+..
+
+**static constexpr unsigned  rank**
+
+Is the rank of the multidimensional array.
+In this tensor example the rank is 3.
+
+**constexpr size_t size() const;**
+
+Returns the cardinality of the multidimensional array index space.
+In this tensor example example the cardinality is N0 * 3 * 3.
+
+**constexpr size_t dimension_#() const;**
+
+Returns the count of the #th dimension.
+
+Discussion: This method could have other intuitive names, for example **size_#()**.
+
+.. code-block:: c++
+
+  template< typename t0 , typename t1 , typename t2 >
+  reference operator()( const t0 & i0
+                      , const t1 & i1
+                      , const t2 & i2 ) const ;
+
+..
+
+Returns a *reference* to the array member referenced by the multi-index (i0,i1,i2).
+
+Requires std::is_integral<t#>::value.  Requirement is enforced via static_assert.
+
+Requires 0 <= i# < dimension_1().  Requirement may be enforced if array bounds checking is enabled.
+
+The dereferencing operator is templated on its argument types to defer promotion of the
+integral arguments to the internal implementation of the mapping expression from multi-index to
+a member reference.
+We defer integral type promotion to this implementation to maximize opportunity for
+optimization of this mapping expression.
+
+--------------------------------------------------------------------
+(3) View of Multidimensional Array with Multiple Implicit Dimensions
+--------------------------------------------------------------------
+
+Multidimensional arrays are used with multiple implicit dimensions;
+i.e., more dimensions than the leading dimension are declared at runtime.
+Such arrays are implemented within applications and libraries with
+numerous design idioms.
+
+A minimalist design that preserves the appearance of conventional
+multidimensional array syntax follows an *array of pointers to array of pointers to ...* idiom.
+While dereferencing operations are syntactically compatible with
+an array of explicitly declared dimensions this idiom provides
+no locality guarantees for members of the array,
+consumes significant memory for the arrays of pointers,
+and is problematic when passing such arrays to functions.
+
+.. code-block:: c++
+
+  double *** x ;
+  x = new double **[N0];
+  for ( size_t i0 = 0 ; i0 < N0 ; ++i0 ) {
+    x[i0] = new double *[N1];
+    for ( size_t i1 = 0 ; i1 < N1 ; ++i1 ) {
+      x[i0][i1] = new double[N2] ;
+    }
+  }
+
+  x[i0][i1][i2] // member access
+
+  foo( double *const *const array[] , size_t N0 , size_t N1 , size_t N2 );
+
+..
+
+A major goal of the **view** interface is to preserve
+compatibility between views to arrays
+with explicit and implicitly declared dimensions.
+In the following example foo1 and foo2 accept rank 3 arrays of integers
+with prescribed explicit / implicit dimensions and fooT accepts a rank 3
+array of integers with unprescribed dimensions.
+
+.. code-block:: c++
+
+  void foo1( view< int[ ][3][3] > array ); // Explicit dimensions #1 and #2
+  void foo2( view< int[ ][ ][ ] > array ); // All implicit dimensions
+
+  // Accept a rank three array of value type int
+  template< typename T >
+  typename enable_if<( rank<T>::value == 3 ) &&
+                     ( is_same< typename remove_all_extents<T>::type , int >::value )
+                    >::type
+  fooT( view< T > array );
+
+..
+
+This syntax requires a relaxation of array type declarator constraints defined in **8.3.4 Arrays paragraph 3**.
+Note that this existing specification is in error when array syntax is used in a type definition.
+
+  When several “array of” specifications are adjacent,
+  a multidimensional array is created;
+  only the first of the constant expressions
+  that specify the bounds of the arrays may be omitted.
+
+.. code-block:: c++
+
+  typedef int X[][3][3] ; // does not create a multidimensional array
+  using Y = int[][3][3] ; // does not create a multidimensional array
+
+..
+
+Changing the **8.3.4.p3** constraint as follows would allow the proposed syntax for a view of an array
+with multiple implicit dimensions, and preserve correctness for conventional array declarations.
+
+  When several “array of” specifications are adjacent
+  to form a multidimensional array type specification
+  only the first of the sequence of array bound constant expressions
+  may be omitted for types used in the explicit declaration of a multidimensional array;
+  otherwise any or all of the array bound constant expressions may be omitted.
+
+Support for multiple implicit dimensions the view requires a constructor
+with a value for each implicit dimension.
+
+.. code-block:: c++
+
+  template< class DataType , class ... Properties >
+  struct view {
+    constexpr view( pointer , size_t N0 , size_t N1 , size_t N2 );
+  };
+
+..
+
+
+--------------------------------------------------------------------
+(4) Layout Polymorphism
+--------------------------------------------------------------------
+
+
+
+
+
+
+
