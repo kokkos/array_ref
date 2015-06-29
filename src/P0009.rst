@@ -2,7 +2,7 @@
 P0009r01 ``Polymorphic Multidimensional Array View``
 ===================================================================
 
-:Author: H. Carter Edwards
+:Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
 :Author: Christian Trott
 :Contact: crtrott@sandia.gov
@@ -121,15 +121,15 @@ extent of memory may not be modified.
 
 **constexpr size() const ;**
 
-Returns the cardinality of the index space.
+  Returns the cardinality of the index space.
 
 **template< typename t0 > reference operator[]( const t0 & i0 ) const ;**
 
-Returns a reference to the member identified with the index *i0*.
+  Returns a reference to the member identified with the index **i0**.
 
-Requires the **rank** of the array (number of dimension) to be one.
+  Requires the *rank* of the array (number of dimension) to be one.
 
-Requires the index *i0* to be within the domain of the index space; i.e., [0..N).
+  Requires the index **i0** to be within the domain of the index space; i.e., [0..N).
 
 -----------------------------------------------------------------------
 (2) View of Traditional Multidimensional Array with Explicit Dimensions
@@ -174,19 +174,19 @@ The view interface now requires the following.
 
 **static constexpr unsigned  rank**
 
-Is the rank of the multidimensional array.
-In this tensor example the rank is 3.
+  Is the rank of the multidimensional array.
+  In this tensor example the rank is 3.
 
 **constexpr size_t size() const;**
 
-Returns the cardinality of the multidimensional array index space.
-In this tensor example example the cardinality is N0 * 3 * 3.
+  Returns the cardinality of the multidimensional array index space.
+  In this tensor example example the cardinality is N0 * 3 * 3.
 
 **constexpr size_t dimension_#() const;**
 
-Returns the count of the #th dimension.
+  Returns the count of the #th dimension.
 
-Discussion: This method could have other intuitive names, for example **size_#()**.
+  Discussion: This method could have other intuitive names, for example **size_#()**.
 
 .. code-block:: c++
 
@@ -197,17 +197,17 @@ Discussion: This method could have other intuitive names, for example **size_#()
 
 ..
 
-Returns a *reference* to the array member referenced by the multi-index (i0,i1,i2).
+  Returns a *reference* to the array member referenced by the multi-index (i0,i1,i2).
 
-Requires std::is_integral<t#>::value.  Requirement is enforced via static_assert.
+  Requires std::is_integral<t#>::value.  Requirement is enforced via static_assert.
 
-Requires 0 <= i# < dimension_1().  Requirement may be enforced if array bounds checking is enabled.
+  Requires 0 <= i# < dimension_1().  Requirement may be enforced if array bounds checking is enabled.
 
-The dereferencing operator is templated on its argument types to defer promotion of the
-integral arguments to the internal implementation of the mapping expression from multi-index to
-a member reference.
-We defer integral type promotion to this implementation to maximize opportunity for
-optimization of this mapping expression.
+  The dereferencing operator is templated on its argument types to defer promotion of the
+  integral arguments to the internal implementation of the mapping expression from multi-index to
+  a member reference.
+  We defer integral type promotion to this implementation to maximize opportunity for
+  optimization of this mapping expression.
 
 --------------------------------------------------------------------
 (3) View of Multidimensional Array with Multiple Implicit Dimensions
