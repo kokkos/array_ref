@@ -502,6 +502,24 @@ Specification
     template< class UType , class ... UProperties >
     view & operator = ( const view< UType , UProperties ... > & );
   };
+
+  // Meta function to generate an implicitly dimensioned
+  // array type from a value type and rank.
+  // Example:
+  //   view< implicit_array_t<int,10> >
+
+  template< typename T , unsigned Rank >
+  struct implicit_array_type {
+    using type = typename implict_array_type<T,Rank-1>::type [] ;
+  };
+  template< typename T >
+  struct implicit_array_type<T,0> {
+    using type = T ;
+  };
+
+  template< typename T , unsigned Rank >
+  using implicit_array_t = typename implicit_array_type<T,Rank>::type ;
+
   }
   }
 
