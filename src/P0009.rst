@@ -106,9 +106,11 @@ For this functionality the simple one-dimensional view interface requires the fo
     using reference  = // implementation defined
     using pointer    = // implementation defined
     constexpr size_t size() const ;
+    constexpr size_t extent() const ;
     template< typename t0 >
     reference operator[]( const t0 & i0 ) const ;
     constexpr view( pointer , size_t );
+    constexpr view();
   };
 
 ..
@@ -119,9 +121,21 @@ modifid but the viewed extent of memory may be modified.
 A view-of-const is similar to a pointer-to-const in that the viewed
 extent of memory may not be modified.
 
-**constexpr size() const ;**
+**constexpr extent() const ;**
 
-  Returns the cardinality of the index space.
+  Returns the extent of the index space.
+
+  Discussion: Note the correlation between the extent of the view's data type and the
+  extent of an instance of that view.
+
+.. code-block:: c++
+  using T = int[] ;
+  view<T> x ;
+  view<T> y( ptr , N );
+  assert( 0 == std::extent<T>::value );
+  assert( 0 == x.extent() );
+  assert( N == y.extent() );
+..
 
 **template< typename t0 > reference operator[]( const t0 & i0 ) const ;**
 
@@ -160,14 +174,16 @@ The view interface now requires the following.
     using pointer    = // implementation defined
     static constexpr unsigned rank = // rank of the array
     constexpr size_t  size() const ;
-    constexpr size_t  dimension_0() const ;
-    constexpr size_t  dimension_1() const ;
-    constexpr size_t  dimension_2() const ;
+    constexpr size_t  extent() const ;
+    constexpr size_t  extent_0() const ;
+    constexpr size_t  extent_1() const ;
+    constexpr size_t  extent_2() const ;
     template< typename t0 , typename t1 , typename t2 >
     reference operator()( const t0 & i0
                         , const t1 & i1
                         , const t2 & i2 ) const ;
     constexpr view( pointer , size_t );
+    constexpr view();
   };
 
 ..
@@ -177,16 +193,25 @@ The view interface now requires the following.
   Is the rank of the multidimensional array.
   In this tensor example the rank is 3.
 
-**constexpr size_t size() const;**
+**constexpr size_t extent() const;**
 
   Returns the cardinality of the multidimensional array index space.
   In this tensor example example the cardinality is N0 * 3 * 3.
 
-**constexpr size_t dimension_#() const;**
+**constexpr size_t extent_#() const;**
 
-  Returns the count of the #th dimension.
+  Returns the extent of the #th dimension.
 
-  Discussion: This method could have other intuitive names, for example **size_#()**.
+  Discussion: This method could have other intuitive names, for example **dimension_#()**.
+
+**constexpr size_t size() const;**
+
+  Returns the distance between the first and last member of the multidimensional array.
+
+  Discussion:  When the viewed array members are contigous and the mapping is
+  bijective then **extent()** and **size()** are equal.
+  If the members are non-contigous or the mapping is surjective then
+  **extent()** and **size()** will not be equal.
 
 ::
 
@@ -256,11 +281,20 @@ array of integers with unprescribed dimensions.
   void foo2( view< int[ ][ ][ ] > array ); // All implicit dimensions
 
   // Accept a rank three array of value type int
-  template< typename T >
-  typename enable_if<( rank<T>::value == 3 ) &&
-                     ( is_same< typename remove_all_extents<T>::type , int >::value )
-                    >::type
-  fooT( view< T > array );
+  // where dimensions are explicit or implicit
+  template< size_t N0 , size_t N1 , size_t N2 >
+  void fooT( view< int[N0][N1][N2] > array );
+
+  // template matching requires:
+  // N0 == std::extent< int[][][] , 0 >::value
+  // N1 == std::extent< int[][][] , 1 >::value
+  // N2 == std::extent< int[][][] , 2 >::value
+
+  // If the explicit dimensions are non-zero then the corresponding
+  // extents must be equal to these dimensions.
+  assert( N0 == 0 || N0 == array.extent_0() );
+  assert( N1 == 0 || N1 == array.extent_0() );
+  assert( N2 == 0 || N2 == array.extent_0() );
 
 ..
 
@@ -306,6 +340,172 @@ with a value for each implicit dimension.
 --------------------------------------------------------------------
 
 
+
+
+
+
+--------------------------------------------------------------------
+Specification
+--------------------------------------------------------------------
+
+.. code-block:: c++
+
+  namespace std {
+  namespace experimental {
+  template< class DataType , class ... Properties >
+  struct view {
+    //--------------------
+    // Types:
+
+    // Types are implementation and Properties dependent.
+    // The following types are normative for empty Properties.
+
+    using value_type = typename std::remove_all_extents< DataType >::type ;
+    using reference  = value_type & ;
+    using pointer    = value_type * ;
+
+    //--------------------
+    // Properties:
+
+    static constexpr unsigned rank = std::rank<DataType>::value ;
+
+    constexpr size_t  size() const ;
+
+    // Rank upper bound is at least ten.
+    constexpr size_t  extent() const ;
+    constexpr size_t  extent_0() const ;
+    constexpr size_t  extent_1() const ;
+    constexpr size_t  extent_2() const ;
+    constexpr size_t  extent_3() const ;
+    constexpr size_t  extent_4() const ;
+    constexpr size_t  extent_5() const ;
+    constexpr size_t  extent_6() const ;
+    constexpr size_t  extent_7() const ;
+    constexpr size_t  extent_8() const ;
+    constexpr size_t  extent_9() const ;
+
+    //--------------------
+    // Member access (proper):
+
+    // Requires rank == 1 and std::is_integral<t0>::value
+    template< typename t0 >
+    reference operator[]( const t0 & i0 ) const ;
+
+    // Requires rank == 0
+    reference operator() const ;
+
+    // Requires rank == 1 and std::is_integral<t0>::value
+    template< typename t0 >
+    reference operator()( const t0 & i0 ) const ;
+
+    // Requires rank == 2 and std::is_integral<t#>::value
+    template< typename t0 , typename t1 >
+    reference operator()( const t0 & i0
+                        , const t1 & i1 ) const ;
+
+    // Requires rank == 3 and std::is_integral<t#>::value
+    template< typename t0 , typename t1 , typename t2 >
+    reference operator()( const t0 & i0
+                        , const t1 & i1
+                        , const t2 & i2 ) const ;
+
+    // member access operator follows pattern through at least rank ten.
+
+    // Requires rank == 10 and std::is_integral<t#>::value
+    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4
+            , typename t5 , typename t6 , typename t7 , typename t8 , typename t9 >
+    reference operator()( const t0 & i0
+                        , const t1 & i1
+                        , const t2 & i2
+                        , const t3 & i3
+                        , const t4 & i4
+                        , const t5 & i5
+                        , const t6 & i6
+                        , const t7 & i7
+                        , const t8 & i8
+                        , const t9 & i9
+                        ) const ;
+
+    //--------------------
+    // Member access (improper):
+
+    // Requires rank == 0 and i# == 0
+    reference operator()( const int i0 = 0
+                        , const int i1 = 0
+                        , const int i2 = 0
+                        , const int i3 = 0
+                        , const int i4 = 0
+                        , const int i5 = 0
+                        , const int i6 = 0
+                        , const int i7 = 0
+                        , const int i8 = 0
+                        , const int i9 = 0
+                        ) const ;
+
+    // Requires rank == 1 and std::is_integral<t0>::value and i{1-9} == 0
+    template< typename t0 >
+    reference operator()( const t0 & i0
+                        , const int i1 = 0
+                        , const int i2 = 0
+                        , const int i3 = 0
+                        , const int i4 = 0
+                        , const int i5 = 0
+                        , const int i6 = 0
+                        , const int i7 = 0
+                        , const int i8 = 0
+                        , const int i9 = 0
+                        ) const ;
+
+    // improper member access operator follows pattern through at least rank nine.
+
+    // Requires rank == 10 and std::is_integral<t{0-8}>::value and i9 == 0
+    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4
+            , typename t5 , typename t6 , typename t7 , typename t8 >
+    reference operator()( const t0 & i0
+                        , const t1 & i1
+                        , const t2 & i2
+                        , const t3 & i3
+                        , const t4 & i4
+                        , const t5 & i5
+                        , const t6 & i6
+                        , const t7 & i7
+                        , const t8 & i8
+                        , const int i9 = 0
+                        ) const ;
+
+    //--------------------
+    // Construct/copy/destroy:
+
+    ~view();
+    constexpr view();
+    constexpr view( const view & );
+    constexpr view( view && );
+    view & operator = ( const view & );
+    view & operator = ( view && );
+
+    constexpr view( pointer
+                  , size_t implicit_N0 = 0
+                  , size_t implicit_N1 = 0
+                  , size_t implicit_N2 = 0
+                  , size_t implicit_N3 = 0
+                  , size_t implicit_N4 = 0
+                  , size_t implicit_N5 = 0
+                  , size_t implicit_N6 = 0
+                  , size_t implicit_N7 = 0
+                  , size_t implicit_N8 = 0
+                  , size_t implicit_N9 = 0
+                  );
+
+    template< class UType , class ... UProperties >
+    constexpr view( const view< UType , UProperties ... > & );
+
+    template< class UType , class ... UProperties >
+    view & operator = ( const view< UType , UProperties ... > & );
+  };
+  }
+  }
+
+..
 
 
 
