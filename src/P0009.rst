@@ -106,7 +106,7 @@ For this functionality the simple one-dimensional view interface requires the fo
     using reference  = // implementation defined
     using pointer    = // implementation defined
     constexpr size_t size() const ;
-    constexpr size_t extent() const ;
+    constexpr size_t extent_0() const ;
     template< typename t0 >
     reference operator[]( const t0 & i0 ) const ;
     constexpr view( pointer , size_t );
@@ -121,20 +121,27 @@ modifid but the viewed extent of memory may be modified.
 A view-of-const is similar to a pointer-to-const in that the viewed
 extent of memory may not be modified.
 
-**constexpr extent() const ;**
+**constexpr size() const ;**
 
-  Returns the extent of the index space.
+  Returns the cardinality of the index space.
+
+**constexpr extent_0() const ;**
+
+  Returns the extent of the 0th dimension of the index space.
 
   Discussion: Note the correlation between the extent of the view's data type and the
   extent of an instance of that view.
+  The non-template member function **x.extent_0()** is prefered over an
+  functionality equivalent template member function **x.template extent<0>()**
+  for syntactic conciseness.
 
 .. code-block:: c++
   using T = int[] ;
   view<T> x ;
   view<T> y( ptr , N );
-  assert( 0 == std::extent<T>::value );
-  assert( 0 == x.extent() );
-  assert( N == y.extent() );
+  assert( 0 == std::extent<T,0>::value );
+  assert( 0 == x.extent_0() );
+  assert( N == y.extent_0() );
 ..
 
 **template< typename t0 > reference operator[]( const t0 & i0 ) const ;**
@@ -174,10 +181,10 @@ The view interface now requires the following.
     using pointer    = // implementation defined
     static constexpr unsigned rank = // rank of the array
     constexpr size_t  size() const ;
-    constexpr size_t  extent() const ;
     constexpr size_t  extent_0() const ;
     constexpr size_t  extent_1() const ;
     constexpr size_t  extent_2() const ;
+    constexpr size_t  span() const ;
     template< typename t0 , typename t1 , typename t2 >
     reference operator()( const t0 & i0
                         , const t1 & i1
@@ -193,7 +200,7 @@ The view interface now requires the following.
   Is the rank of the multidimensional array.
   In this tensor example the rank is 3.
 
-**constexpr size_t extent() const;**
+**constexpr size_t size() const;**
 
   Returns the cardinality of the multidimensional array index space.
   In this tensor example example the cardinality is N0 * 3 * 3.
@@ -202,16 +209,14 @@ The view interface now requires the following.
 
   Returns the extent of the #th dimension.
 
-  Discussion: This method could have other intuitive names, for example **dimension_#()**.
+**constexpr size_t span() const;**
 
-**constexpr size_t size() const;**
-
-  Returns the distance between the first and last member of the multidimensional array.
+  Returns one plus the distance from the first to the last member of the multidimensional array.
 
   Discussion:  When the viewed array members are contigous and the mapping is
-  bijective then **extent()** and **size()** are equal.
+  bijective then **size()** and **span()** are equal.
   If the members are non-contigous or the mapping is surjective then
-  **extent()** and **size()** will not be equal.
+  **size()** and **span()** will not be equal.
 
 ::
 
@@ -226,7 +231,7 @@ The view interface now requires the following.
 
   Requires std::is_integral<t#>::value.  Requirement is enforced via static_assert.
 
-  Requires 0 <= i# < dimension_1().  Requirement may be enforced if array bounds checking is enabled.
+  Requires 0 <= i# < extent_#().  Requirement may be enforced if array bounds checking is enabled.
 
   The dereferencing operator is templated on its argument types to defer promotion of the
   integral arguments to the internal implementation of the mapping expression from multi-index to
@@ -369,10 +374,7 @@ Specification
 
     static constexpr unsigned rank = std::rank<DataType>::value ;
 
-    constexpr size_t  size() const ;
-
     // Rank upper bound is at least ten.
-    constexpr size_t  extent() const ;
     constexpr size_t  extent_0() const ;
     constexpr size_t  extent_1() const ;
     constexpr size_t  extent_2() const ;
@@ -383,6 +385,24 @@ Specification
     constexpr size_t  extent_7() const ;
     constexpr size_t  extent_8() const ;
     constexpr size_t  extent_9() const ;
+
+    // Cardinality of index space; i.e., product of extents
+    constexpr size_t  size() const ;
+
+    // Distance between members when index # is increased by one.
+    constexpr size_t  stride_0() const ;
+    constexpr size_t  stride_1() const ;
+    constexpr size_t  stride_2() const ;
+    constexpr size_t  stride_3() const ;
+    constexpr size_t  stride_4() const ;
+    constexpr size_t  stride_5() const ;
+    constexpr size_t  stride_6() const ;
+    constexpr size_t  stride_7() const ;
+    constexpr size_t  stride_8() const ;
+    constexpr size_t  stride_9() const ;
+
+    // One plus distance from first member to last member
+    constexpr size_t span() const ;
 
     //--------------------
     // Member access (proper):
@@ -503,10 +523,8 @@ Specification
     view & operator = ( const view< UType , UProperties ... > & );
   };
 
-  // Meta function to generate an implicitly dimensioned
-  // array type from a value type and rank.
-  // Example:
-  //   view< implicit_array_t<int,10> >
+  // Meta function to generate an array type with Rank implicit dimensions.
+  // Example:  view< implicit_array_t<int,10> >
 
   template< typename T , unsigned Rank >
   struct implicit_array_type {
