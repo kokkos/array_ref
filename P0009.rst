@@ -181,11 +181,11 @@ The view interface now requires the following.
     using value_type = // implementation defined
     using reference  = // implementation defined
     using pointer    = // implementation defined
-    static constexpr unsigned rank = // rank of the array
-    constexpr size_t  size() const ;
+    static constexpr unsigned rank = std::rank<DataType>::value ;
     constexpr size_t  extent_0() const ;
     constexpr size_t  extent_1() const ;
     constexpr size_t  extent_2() const ;
+    constexpr size_t  size() const ;
     constexpr size_t  span() const ;
     template< typename t0 , typename t1 , typename t2 >
     reference operator()( const t0 & i0
@@ -199,17 +199,21 @@ The view interface now requires the following.
 
 **static constexpr unsigned  rank**
 
-  Is the rank of the multidimensional array.
-  In this tensor example the rank is 3.
-
-**constexpr size_t size() const;**
-
-  Returns the cardinality of the multidimensional array index space.
-  In this tensor example example the cardinality is N0 * 3 * 3.
+  Declares the rank of the multidimensional array.  Conformal to std::rank< DataType >::value.
 
 **constexpr size_t extent_#() const;**
 
   Returns the extent of the #th dimension.
+
+  Discussion:
+  For an explicit dimension extent_#() is simply std::extent<DataType,#>::value.
+  For an implicit dimension extent_#() returns the runtime declared value for dimension #.
+
+**constexpr size_t size() const;**
+
+  Returns the cardinality of the multidimensional array index space.
+  
+  Discussion: Equal to the product of the extents.
 
 **constexpr size_t span() const;**
 
@@ -235,6 +239,7 @@ The view interface now requires the following.
 
   Requires 0 <= i# < extent_#().  Requirement may be enforced if array bounds checking is enabled.
 
+  Discussion:
   The dereferencing operator is templated on its argument types to defer promotion of the
   integral arguments to the internal implementation of the mapping expression from multi-index to
   a member reference.
@@ -275,9 +280,8 @@ and is problematic when passing such arrays to functions.
 
 ..
 
-A major goal of the **view** interface is to preserve
-compatibility between views to arrays
-with explicit and implicitly declared dimensions.
+A major goal of the **view** interface is to preserve compatibility
+between views to arrays with explicit and implicitly declared dimensions.
 In the following example foo1 and foo2 accept rank 3 arrays of integers
 with prescribed explicit / implicit dimensions and fooT accepts a rank 3
 array of integers with unprescribed dimensions.
@@ -291,18 +295,6 @@ array of integers with unprescribed dimensions.
   // and dimensions are explicit or implicit.
   template< size_t N0 , size_t N1 , size_t N2 >
   void fooT( view< int[N0][N1][N2] > array );
-
-  // template matching requires std::extent to declare
-  // zero for all implicit dimensions.
-  // N0 == std::extent< int[][][] , 0 >::value
-  // N1 == std::extent< int[][][] , 1 >::value
-  // N2 == std::extent< int[][][] , 2 >::value
-
-  // If the explicit dimensions are non-zero then the corresponding
-  // extents must be equal to these dimensions.
-  assert( N0 == 0 || N0 == array.extent_0() );
-  assert( N1 == 0 || N1 == array.extent_1() );
-  assert( N2 == 0 || N2 == array.extent_2() );
 
 ..
 
@@ -330,6 +322,34 @@ with multiple implicit dimensions, and preserve correctness for conventional arr
   may be omitted for types used in the explicit declaration of a multidimensional array;
   otherwise any or all of the array bound constant expressions may be omitted.
 
+For consistent template specialization resolution of explicit and implicit dimensions
+the std::extent of an array type declaration must match a template specialization
+with extent parameters.
+
+.. code-block:: c++
+
+  template < typename A >
+  struct array_traits {
+    static constexpr size_t rank = std::rank<A>::value ;
+    static constexpr size_t extent_0 = std::extent<A,0>::value ;
+    static constexpr size_t extent_1 = std::extent<A,1>::value ;
+    static constexpr size_t extent_2 = std::extent<A,2>::value ;
+    // etc.
+  };
+
+  template< size_t N0 , size_t N1 , size_t N2 >
+  struct array_traits< int[N0][N1][N2] > {
+    static constexpr size_t rank = 3 ;
+    static constexpr size_t extent_0 = N0 ;
+    static constexpr size_t extent_1 = N1 ;
+    static constexpr size_t extent_2 = N2 ;
+  };
+
+  array_traits< int[1][2][3] > // matches the partial specialization
+  array_traits< int[ ][ ][ ] > // matches the partial specialization
+
+..
+
 Support for multiple implicit dimensions the view requires a constructor
 with a value for each implicit dimension.
 
@@ -347,7 +367,70 @@ with a value for each implicit dimension.
 Layout Polymorphism
 --------------------------------------------------------------------
 
+The **view::operator()** maps the input multi-index from the array's
+cartesian product multi-index *domain* space to a member in the array's *range* space.
+This is the **layout** mapping for the viewed array.
+For natively declared multidimensional arrays the layout mapping
+is defined to conform to treating the multidimensional array as
+an *array of arrays of arrays ...*; i.e., the size and span are
+equal and the strides increase from right-to-left.
+In the FORTRAN language defines layout mapping with strides
+increasing from left-to-right.
+The *native* layout mappings are only two of many possible layouts.
+For example, the *basic linear algebra subprograms (BLAS)* standard
+defines dense matrix layout mapping with padding of the leading dimension,
+requiring both dimensions and **LDA** parameters to fully declare a matrix layout.
 
+
+A view property template parameter specifies a layout mapping.
+If this property is ommitted the layout mapping of the view 
+conforms to the corresponding natively declared multidimensional array.
+An initial set of layout specifications are
+**layout_right**, **layout_left**, and **layout_stride**.
+
+.. code-block:: c++
+
+  namespace std {
+  namespace experimental {
+    struct layout_right ;
+    struct layout_left ;
+    struct layout_stride ;
+  }
+  }
+
+..
+
+The view interface has the following additions to layout polymorphism.
+
+.. code-block:: c++
+
+  template< typename DataType , class ... Properties >
+  struct view {
+    using layout     = ... ;
+    using is_regular = std::integral_constant<bool, ... > ;
+    constexpr size_t stride_0() const ;
+    constexpr size_t stride_1() const ;
+    constexpr size_t stride_2() const ;
+    constexpr size_t stride_3() const ;
+    // etc.
+  };
+
+..
+
+**using layout = ... ;**
+
+  Declares the layout property.
+  If the Properties pack does not include a layout property the type is **void**.
+
+**using is_regular = ... ;**
+
+  Declares whether the layout mapping is regular.
+  A regular layout mapping has uniform striding for each dimension.
+
+**constexpr size_t stride_#() const ;**
+
+  Returns the stride of the # dimension of a view with regular layout mapping.
+  If the layout mapping is not regular returns zero.
 
 
 
