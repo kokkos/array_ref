@@ -22,6 +22,8 @@ P0009r01 ``Polymorphic Multidimensional Array View``
 :Version: 01
 :URL: https://github.com/kokkos/PolyView/blob/master/src/P0009.rst
 
+.. sectnum::
+
 ---------
 Rationale
 ---------
@@ -77,7 +79,7 @@ We present the specification incrementally to
 convey the rational for this specification.
 
 -----------------------------------------------
-(1) View of a One-Dimensional Array
+View of a One-Dimensional Array
 -----------------------------------------------
 
 A view of a one-dimension array is anticipated to subsume the functionality
@@ -152,9 +154,9 @@ extent of memory may not be modified.
 
   Requires the index **i0** to be within the domain of the index space; i.e., [0..N).
 
------------------------------------------------------------------------
-(2) View of Traditional Multidimensional Array with Explicit Dimensions
------------------------------------------------------------------------
+----------------------------------------------------------------------------
+View of Traditional Multidimensional Array with Explicit Dimensions
+----------------------------------------------------------------------------
 
 A traditional multidimensional array with explicit dimensions
 (for example, an array of 3x3 tensors) is passed to a function as follows.
@@ -240,7 +242,7 @@ The view interface now requires the following.
   optimization of this mapping expression.
 
 --------------------------------------------------------------------
-(3) View of Multidimensional Array with Multiple Implicit Dimensions
+View of Multidimensional Array with Multiple Implicit Dimensions
 --------------------------------------------------------------------
 
 Multidimensional arrays are used with multiple implicit dimensions;
@@ -285,12 +287,13 @@ array of integers with unprescribed dimensions.
   void foo1( view< int[ ][3][3] > array ); // Explicit dimensions #1 and #2
   void foo2( view< int[ ][ ][ ] > array ); // All implicit dimensions
 
-  // Accept a rank three array of value type int
-  // where dimensions are explicit or implicit
+  // Accept a view of a rank three array with value type int
+  // and dimensions are explicit or implicit.
   template< size_t N0 , size_t N1 , size_t N2 >
   void fooT( view< int[N0][N1][N2] > array );
 
-  // template matching requires:
+  // template matching requires std::extent to declare
+  // zero for all implicit dimensions.
   // N0 == std::extent< int[][][] , 0 >::value
   // N1 == std::extent< int[][][] , 1 >::value
   // N2 == std::extent< int[][][] , 2 >::value
@@ -298,8 +301,8 @@ array of integers with unprescribed dimensions.
   // If the explicit dimensions are non-zero then the corresponding
   // extents must be equal to these dimensions.
   assert( N0 == 0 || N0 == array.extent_0() );
-  assert( N1 == 0 || N1 == array.extent_0() );
-  assert( N2 == 0 || N2 == array.extent_0() );
+  assert( N1 == 0 || N1 == array.extent_1() );
+  assert( N2 == 0 || N2 == array.extent_2() );
 
 ..
 
@@ -341,7 +344,7 @@ with a value for each implicit dimension.
 
 
 --------------------------------------------------------------------
-(4) Layout Polymorphism
+Layout Polymorphism
 --------------------------------------------------------------------
 
 
