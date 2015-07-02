@@ -420,12 +420,12 @@ The view interface has the following additions to layout polymorphism.
 **using layout = ... ;**
 
   Declares the layout property.
-  If the Properties pack does not include a layout property the type is **void**.
+  If the Properties pack does not include a layout property the type alias is **void**.
 
-**using is_regular = ... ;**
+**using is_regular = std::integral_constant<bool, ... > ;**
 
   Declares whether the layout mapping is regular.
-  A regular layout mapping has uniform striding for each dimension.
+  A regular layout mapping is injective and has uniform striding for each dimension.
 
 **constexpr size_t stride_#() const ;**
 
@@ -433,6 +433,130 @@ The view interface has the following additions to layout polymorphism.
   If the layout mapping is not regular returns zero.
 
 
+
+**View with layout == void (default)**
+
+The layout mapping with a default layout conforms to the *native* layout mapping
+as if all of the implicit dimensions had been explicit.
+The default layout mapping is regular and bijective; i.e., has size() == span().
+
+.. code-block:: c++
+
+  view< int[][][] > x( x_ptr , N0 , N1 , N2 )
+
+  assert( x.span() == x.size() );
+
+  assert( std::distance( & x(i0,i1,i2) , & x(0,0,0) ) ==
+          ( i0 * x.extent_1() + i1 ) * x.extent_2() + i2 );
+
+  assert( x.stride_2() == 1 );
+  assert( x.stride_1() == x.extent_2() * x.stride_2() );
+  assert( x.stride_0() == x.extent_1() * x.stride_1() );
+
+..
+
+
+**View with layout == layout_right**
+
+A layout_right mapping is regular and is similar to the default mapping
+in that the strides increase from right-to-left dimensions.
+The layout_right mapping deviates from the default mapping
+in that an implementation is allowed to pad dimensions.
+
+.. code-block:: c++
+
+  view< int[][][] , layout_right > y( y_ptr , N0 , N1 , N2 );
+
+  assert( y.span() <= y.size() );
+  assert( y.span() == y.extent_0() * y.stride_0() );
+
+  // 'padded_extent_#' private member for illustration only
+
+  assert( std::distance( & y(i0,i1,i2) , & y(0,0,0) ) ==
+          ( ( i0 * y.padded_extent_1 + i1 ) * y.padded_extent_2 + i2 ) * y.padded_extent_3 );
+
+  assert( 1 <= y.padded_extent_3 );
+  assert( y.padded_extent_2 <= y.extent_2() );
+  assert( y.padded_extent_1 <= y.extent_1() );
+
+  assert( y.stride_2() == y.padded_extent_3 );
+  assert( y.stride_1() == y.padded_extent_2 * y.stride_2() );
+  assert( y.stride_0() == y.padded_extent_1 * y.stride_1() );
+
+..
+
+
+
+**View with layout == layout_left**
+
+A layout_left mapping is regular and its strides
+increase from left-to-right dimensions.
+An implementation is allowed to pad dimensions.
+
+.. code-block:: c++
+
+  view< int[][][] , layout_left > y( y_ptr , N0 , N1 , N2 );
+
+  assert( y.span() <= y.size() );
+  assert( y.span() == y.extent_2() * y.stride_2() );
+
+  // 'padded_extent_#' private member for illustration only
+
+  assert( std::distance( & y(i0,i1,i2) , & y(0,0,0) ) ==
+          y.padded_extent * ( i0 + y.padded_extent_0 * ( i1 + y.padded_extent_1 * i2 ) ) );
+
+  assert( 1 <= y.padded_extent );
+  assert( y.padded_extent_0 <= y.extent_0() );
+  assert( y.padded_extent_1 <= y.extent_1() );
+
+  assert( y.stride_0() == y.padded_extent_0 * y.padded_extent );
+  assert( y.stride_1() == y.padded_extent_1 * y.stride_0() );
+  assert( y.stride_2() == y.padded_extent_2 * y.stride_1() );
+
+..
+
+
+**View with layout == layout_stride**
+
+A layout_stride mapping is regular; however, the ordering of its strides is arbitrary.
+
+.. code-block:: c++
+
+  view< int[][][] , layout_stride > y( y_ptr , N0 , N1 , N2 );
+
+  assert( y.span() <= y.size() );
+  assert( y.span() == max( y.extent_0() * y.stride_0() ,
+                      max( y.extent_1() * y.stride_1() ,
+                           y.extent_2() * y.stride_2() );
+
+  // 'padded_extent_#' private member for illustration only
+
+  assert( std::distance( & y(i0,i1,i2) , & y(0,0,0) ) ==
+          y.stride_0() * i0 + y.stride_1() * i1 + y.stride_2() * i2 );
+
+..
+
+
+--------------------------------------------------------------------
+Subview of View
+--------------------------------------------------------------------
+
+.. code-block:: c++
+
+  template< typename ViewType , class ... Indices_And_Ranges >
+  struct subview_type ;
+
+  template< typename ViewType , class ... Indices_And_Ranges >
+  using subview_t = typenaem subview_type< ViewType , Indices_And_Ranges >::type ;
+
+  template< typename DataType , class ... Parameters , class ... Indices_And_Ranges >
+  subview_t< view< DataType, Parameters ... > , Indices_And_Ranges ... >
+  subview( const viewDataType, Parameters ... > & , Indices_And_Ranges ... );
+
+  template< typename T >
+  struct is_integral_range ;
+
+..
 
 
 --------------------------------------------------------------------
