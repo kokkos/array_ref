@@ -20,7 +20,7 @@ P0009r01 ``Polymorphic Multidimensional Array View``
 :Contact: balelbach@lbl.gov
 :Date: 2015-06-26
 :Version: 01
-:URL: https://github.com/kokkos/PolyView/blob/master/src/P0009.rst
+:URL: https://github.com/kokkos/PolyView/blob/master/P0009.rst
 
 .. sectnum::
 
@@ -208,6 +208,21 @@ The view interface now requires the following.
   Discussion:
   For an explicit dimension extent_#() is simply std::extent<DataType,#>::value.
   For an implicit dimension extent_#() returns the runtime declared value for dimension #.
+  This member function is not templated due to persistent feedback on the usability of **view**
+  within functions that are templated on the **view** type.
+  Given a reasonable upper bound on the rank this usability preference has not been an issue.
+
+.. code-block:: c++
+
+  template< class T , class ... P >
+  void foo( const view<T,P...> x )
+    {
+      size_t const n0 = x.extent_0();           // preferred for usability
+      size_t const n0 = x.template extent<0>(); // disliked by users
+    }
+
+..
+
 
 **constexpr size_t size() const;**
 
@@ -246,9 +261,9 @@ The view interface now requires the following.
   We defer integral type promotion to this implementation to maximize opportunity for
   optimization of this mapping expression.
 
---------------------------------------------------------------------
-View of Multidimensional Array with Multiple Implicit Dimensions
---------------------------------------------------------------------
+----------------------------------------------------------------------------
+View of Multidimensional Array with Multiple Implicit Dimensions (Preferred)
+----------------------------------------------------------------------------
 
 Multidimensional arrays are used with multiple implicit dimensions;
 i.e., more dimensions than the leading dimension are declared at runtime.
@@ -362,6 +377,49 @@ with a value for each implicit dimension.
 
 ..
 
+----------------------------------------------------------------------------
+View of Multidimensional Array with Multiple Implicit Dimensions (Backup)
+----------------------------------------------------------------------------
+
+If the array declaration constraint in **8.3.4.p3** cannot be relaxed then
+the backup syntax is to define mixed explicit and implicit dimensions through
+a view **dimension** property.
+A **dimension** property is syntactically more verbose and requires the
+"magic value" zero to denote an implicit dimension.
+The "magic value" of zero is chosen for consistency with **std::extent**.
+
+.. code-block:: c++
+
+  view< int[][][3] > x(ptr,N0,N1);             // preferred compact notation
+  view< int , dimension<0,0,3> > y(ptr,N0,N1); // verbose "magic value" notation
+
+  assert( extent< int[][][3] , 0 >::value == 0 );
+  assert( extent< int[][][3] , 1 >::value == 0 );
+  assert( extent< int[][][3] , 2 >::value == 3 );
+
+  assert( dimension<0,0,3>::extent_0 == 0 );
+  assert( dimension<0,0,3>::extent_1 == 0 );
+  assert( dimension<0,0,3>::extent_2 == 3 );
+
+  assert( x.extent_0() == N0 );
+  assert( x.extent_1() == N0 );
+  assert( x.extent_2() == 3 );
+
+  assert( y.extent_0() == N0 );
+  assert( y.extent_1() == N0 );
+  assert( y.extent_2() == 3 );
+
+..
+
+If this backup mechanism is required the array declaration syntax
+will still available when only the leading dimension is implicit.
+
+.. code-block:: c++
+
+  view< int[] > x ;              // concise syntax
+  view< int , dimension<0> > y ; // property syntax
+
+..
 
 --------------------------------------------------------------------
 Layout Polymorphism
@@ -573,14 +631,15 @@ Specification
     // Types:
 
     // Types are implementation and Properties dependent.
-    // The following types are normative for empty Properties.
+    // The following type implementation are normative 
+    // with respect to empty Properties.
 
     using value_type = typename std::remove_all_extents< DataType >::type ;
     using reference  = value_type & ;
     using pointer    = value_type * ;
 
     //--------------------
-    // Properties:
+    // Domain index space properties:
 
     static constexpr unsigned rank = std::rank<DataType>::value ;
 
@@ -598,6 +657,12 @@ Specification
 
     // Cardinality of index space; i.e., product of extents
     constexpr size_t  size() const ;
+
+    //--------------------
+    // Layout mapping properties:
+
+    using layout     = ... ;
+    using is_regular = std::integral_constant<bool, ... > ;
 
     // Distance between members when index # is increased by one.
     constexpr size_t  stride_0() const ;
@@ -753,7 +818,41 @@ Specification
 
 ..
 
+**using reference_type =**
 
+  The type returned by the dereferencing operator is dependent upon
+  the *DataType* and the *Properties*.
+  For example, a potential property of *atomic* would cause the
+  **reference_type** to be a proxy overloading operators for
+  atomic access.
 
+**using pointer_type =**
+
+  The type input to a wrapping constructor.
+
+**static constexpr unsigned rank =**
+
+  The rank of the viewed array.
+
+**constexpr size_t extent_#() const**
+  
+  Returns the exent of dimension # when # < **rank**
+  and 1 when ( **rank** <= # < *rank upper bound* ).
+  
+**constexpr size_t size() const**
+
+  Returns the product of the extents.
+
+**using layout =**
+
+  Is the layout type property that defaults to **void**.
+
+**using is_regular = std::integral_constant<bool, ... >**
+
+  Denoting by **is_regular::value** if the layout mapping is regular.
+
+**constexpr size_t stride_#() const**
+
+**constexpr size_t span() const**
 
 
