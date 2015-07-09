@@ -234,7 +234,7 @@ The view interface now requires the following.
 
 **constexpr size_t span() const;**
 
-  Returns one plus the distance from the first to the last member of the multidimensional array.
+  Returns one plus the maximum distance between any two members of the view.
 
   Discussion:  When the viewed array members are contigous and the mapping is
   bijective then **size()** and **span()** are equal.
@@ -318,12 +318,11 @@ array of integers with unprescribed dimensions.
 ..
 
 This syntax requires a relaxation of array type declarator constraints defined in **8.3.4 Arrays paragraph 3**.
+*When several “array of” specifications are adjacent,
+a multidimensional array is created;
+only the first of the constant expressions
+that specify the bounds of the arrays may be omitted.*
 Note that this existing specification is in error when array syntax is used in a type definition.
-
-  When several “array of” specifications are adjacent,
-  a multidimensional array is created;
-  only the first of the constant expressions
-  that specify the bounds of the arrays may be omitted.
 
 .. code-block:: c++
 
@@ -332,14 +331,29 @@ Note that this existing specification is in error when array syntax is used in a
 
 ..
 
+Note that gcc 4.7, 4.8, and 4.9 implicitly support such types as
+demonstrated by the following error-free and warning-free meta function.
+
+.. code-block:: c++
+
+  template< typename T , unsigned R >
+  struct implicit_array_type { using type = typename implicit_array_type<T,R-1>::type[] ; };
+
+  template< typename T >
+  struct implicit_array_type<T,0> { using type = T ; };
+
+  using array_rank_3 = typename implicit_array_type<int,3>::type ;
+
+..
+
+
 Changing the **8.3.4.p3** constraint as follows would allow the proposed syntax for a view of an array
 with multiple implicit dimensions, and preserve correctness for conventional array declarations.
-
-  When several “array of” specifications are adjacent
-  to form a multidimensional array type specification
-  only the first of the sequence of array bound constant expressions
-  may be omitted for types used in the explicit declaration of a multidimensional array;
-  otherwise any or all of the array bound constant expressions may be omitted.
+*When several “array of” specifications are adjacent
+to form a multidimensional array type specification
+only the first of the sequence of array bound constant expressions
+may be omitted for types used in the explicit declaration of a multidimensional array;
+otherwise any or all of the array bound constant expressions may be omitted.*
 
 For consistent template specialization resolution of explicit and implicit dimensions
 the std::extent of an array type declaration must match a template specialization
@@ -387,23 +401,23 @@ View of Multidimensional Array with Multiple Implicit Dimensions (Backup)
 
 If the array declaration constraint in **8.3.4.p3** cannot be relaxed then
 the backup syntax is to define mixed explicit and implicit dimensions through
-a view **dimension** property.
-A **dimension** property is syntactically more verbose and requires the
+a view dimension property.
+A dimension property is syntactically more verbose and requires the
 "magic value" zero to denote an implicit dimension.
 The "magic value" of zero is chosen for consistency with **std::extent**.
 
 .. code-block:: c++
 
-  std::view< int[][][3] > x(ptr,N0,N1);                  // preferred concise syntax
-  std::view< int , std::dimension<0,0,3> > y(ptr,N0,N1); // verbose syntax
+  std::view< int[][][3] > x(ptr,N0,N1);                       // preferred concise syntax
+  std::view< int , std::view_dimension<0,0,3> > y(ptr,N0,N1); // verbose syntax
 
   assert( extent< int[][][3] , 0 >::value == 0 );
   assert( extent< int[][][3] , 1 >::value == 0 );
   assert( extent< int[][][3] , 2 >::value == 3 );
 
-  assert( dimension<0,0,3>::extent_0 == 0 );
-  assert( dimension<0,0,3>::extent_1 == 0 );
-  assert( dimension<0,0,3>::extent_2 == 3 );
+  assert( view_dimension<0,0,3>::extent_0 == 0 );
+  assert( view_dimension<0,0,3>::extent_1 == 0 );
+  assert( view_dimension<0,0,3>::extent_2 == 3 );
 
   assert( x.extent_0() == N0 );
   assert( x.extent_1() == N1 );
@@ -416,12 +430,12 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
 ..
 
 If this backup mechanism is required the array declaration syntax
-will still available when only the leading dimension is implicit.
+will still be available when only the leading dimension is implicit.
 
 .. code-block:: c++
 
-  std::view< int[] > x ;                   // concise syntax
-  std::view< int , std::dimension<0> > y ; // property syntax
+  std::view< int[] > x ;                        // concise syntax
+  std::view< int , std::view_dimension<0> > y ; // property syntax
 
 ..
 
@@ -448,15 +462,15 @@ A view property template parameter specifies a layout mapping.
 If this property is ommitted the layout mapping of the view 
 conforms to the corresponding natively declared multidimensional array.
 An initial set of layout specifications are
-**layout_right**, **layout_left**, and **layout_stride**.
+**view_layout_right**, **view_layout_left**, and **view_layout_stride**.
 
 .. code-block:: c++
 
   namespace std {
   namespace experimental {
-    struct layout_right ;
-    struct layout_left ;
-    struct layout_stride ;
+    struct view_layout_right ;
+    struct view_layout_left ;
+    struct view_layout_stride ;
   }
   }
 
@@ -518,16 +532,16 @@ The default layout mapping is regular and bijective; i.e., has size() == span().
 ..
 
 
-**View with layout == layout_right**
+**View with layout == view_layout_right**
 
-A layout_right mapping is regular and is similar to the default mapping
+A view_layout_right mapping is regular and is similar to the default mapping
 in that the strides increase from right-to-left dimensions.
-The layout_right mapping deviates from the default mapping
+The view_layout_right mapping deviates from the default mapping
 in that an implementation is allowed to pad dimensions.
 
 .. code-block:: c++
 
-  view< int[][][] , layout_right > y( y_ptr , N0 , N1 , N2 );
+  view< int[][][] , view_layout_right > y( y_ptr , N0 , N1 , N2 );
 
   assert( y.span() <= y.size() );
   assert( y.span() == y.extent_0() * y.stride_0() );
@@ -549,15 +563,15 @@ in that an implementation is allowed to pad dimensions.
 
 
 
-**View with layout == layout_left**
+**View with layout == view_layout_left**
 
-A layout_left mapping is regular and its strides
+A view_layout_left mapping is regular and its strides
 increase from left-to-right dimensions.
 An implementation is allowed to pad dimensions.
 
 .. code-block:: c++
 
-  view< int[][][] , layout_left > y( y_ptr , N0 , N1 , N2 );
+  view< int[][][] , view_layout_left > y( y_ptr , N0 , N1 , N2 );
 
   assert( y.span() <= y.size() );
   assert( y.span() == y.extent_2() * y.stride_2() );
@@ -578,13 +592,13 @@ An implementation is allowed to pad dimensions.
 ..
 
 
-**View with layout == layout_stride**
+**View with layout == view_layout_stride**
 
-A layout_stride mapping is regular; however, the ordering of its strides is arbitrary.
+A view_layout_stride mapping is regular; however, the ordering of its strides is arbitrary.
 
 .. code-block:: c++
 
-  view< int[][][] , layout_stride > y( y_ptr , N0 , N1 , N2 );
+  view< int[][][] , view_layout_stride > y( y_ptr , N0 , N1 , N2 );
 
   assert( y.span() <= y.size() );
   assert( y.span() == max( y.extent_0() * y.stride_0() ,
@@ -605,20 +619,59 @@ Subview of View
 
 .. code-block:: c++
 
+namespace std {
+namespace experimental {
+
   template< typename ViewType , class ... Indices_And_Ranges >
   struct subview_type ;
 
   template< typename ViewType , class ... Indices_And_Ranges >
-  using subview_t = typenaem subview_type< ViewType , Indices_And_Ranges >::type ;
+  using subview_t = typename subview_type< ViewType , Indices_And_Ranges >::type ;
 
   template< typename DataType , class ... Parameters , class ... Indices_And_Ranges >
   subview_t< view< DataType, Parameters ... > , Indices_And_Ranges ... >
-  subview( const viewDataType, Parameters ... > & , Indices_And_Ranges ... );
+  subview( const view< DataType, Parameters ... > & , Indices_And_Ranges ... );
 
   template< typename T >
   struct is_integral_range ;
 
+}}
+
 ..
+
+The **subview_t** meta function and **subview** function requires
+``sizeof...(Indices_And_Ranges) == view< DataType , Parameters... >::rank()``
+and each member of **Indices_And_Ranges** to be either an integral type
+or an integral range.
+The rank of the resulting subview is the rank of the input view minus
+the number of integral type arguments in **Indices_And_Ranges**.
+
+.. code-block:: c++
+
+  using U = view< int[][][] > ;
+
+  U x(N0,N1,N2);
+
+  // Using std::pair<int,int> for an integral range
+
+  using V = subview_t< U , std::pair<int,int> , std::pair<int,int> , int > ;
+
+  V y = subview( x , std::pair<int,int>(1,N0-1) , std::pair<int,int>(1,N1-1) , 1 );
+
+  assert( y.rank() == 2 );
+  assert( y.extent_0() == N0-2 );
+  assert( y.extent_1() == N1-2 );
+  assert( & y(0,0) == & x(1,1,1) );
+
+  // Using initializer_list with size() == 2 as an integral range
+
+  auto z = subview( x , 1 , {1,N1-1} , 1 );
+
+  assert( z.rank() == 1 );
+  assert( & z(0) == & x(1,1,1) );
+
+..
+
 
 
 --------------------------------------------------------------------
@@ -626,7 +679,7 @@ Specification with Simple View Properties
 --------------------------------------------------------------------
 
 Simple view properties include the array layout and if necessary 
-a **dimension** type for arrays with multiple implicit dimensions.
+a **view_dimension** type for arrays with multiple implicit dimensions.
 View properties are provided through a variadic template to 
 support extensibility of the view.
 Possible additional properties include array bounds checking,
@@ -853,7 +906,7 @@ setting it to **void**.
   // If necessary
   template< size_t , size_t , size_t , size_t , size_t
           , size_t , size_t , size_t , size_t , size_t >
-  struct dimension ;
+  struct view_dimension ;
 
   }
   }
@@ -1113,7 +1166,7 @@ View Property : Member Access Array Bounds Checking
 
 namespace std {
 namespace experimental {
-struct view_array_bounds_checking ;
+struct view_bounds_checking ;
 }}
 
 ..
@@ -1131,13 +1184,13 @@ the need for special compiler support.
 
   // User enables array bounds checking for selected views.
 
-  using x_property = typename std::conditional< ENABLE_ARRAY_BOUNDS_CHECKING , view_array_bounds_checking , void >::type ;
+  using x_property = typename std::conditional< ENABLE_ARRAY_BOUNDS_CHECKING , view_bounds_checking , void >::type ;
 
   view< int[][][3] , x_property > x(ptr,N0,N1);
 
 ..
 
-Adding **view_array_bounds_checking** to the properties of a view has the
+Adding **view_bounds_checking** to the properties of a view has the
 effect of introducing an array bounds check to each member access operation.
 If the requirement ``0 <= i# < extent_#()`` fails **std::out_of_range** is thrown.
 

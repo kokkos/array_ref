@@ -2,6 +2,7 @@
 #include <view.hpp>
 
 #include <iostream>
+#include <typeinfo>
 
 int main()
 {
@@ -23,6 +24,16 @@ int main()
   std::cout << dimension<1,2,3,4,0,6,7,8,9,10>(15) << std::endl ;
   std::cout << dimension<0,2,3,4,0,6,7,8,9,10>(11,15) << std::endl ;
   std::cout << dimension<0,2,3,4,0>(11,15) << std::endl ;
+
+  typedef implicit_array_type<int,0>::type t0 ;
+  typedef implicit_array_type<int,1>::type t1 ;
+  typedef implicit_array_type<int,2>::type t2 ;
+
+  std::cout << typeid(t0).name() << std::endl ;
+  std::cout << typeid(t1).name() << std::endl ;
+  std::cout << typeid(t2).name() << std::endl ;
+
+  view< int[] > x ;
 
   return 0 ;
 }
