@@ -1,0 +1,13 @@
+Index: lib/Sema/SemaType.cpp
+===================================================================
+--- lib/Sema/SemaType.cpp   (revision 237946)
++++ lib/Sema/SemaType.cpp   (working copy)
+@@ -1558,7 +1558,7 @@
+       return QualType();
+     }
+ 
+-    if (T->isVoidType() || T->isIncompleteArrayType()) {
++    if (T->isVoidType() /*|| T->isIncompleteArrayType()*/) {
+       Diag(Loc, diag::err_illegal_decl_array_incomplete_type) << T;
+       return QualType();
+     }
