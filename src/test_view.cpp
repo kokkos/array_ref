@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <typeinfo>
+#include <cassert>
 
 int main()
 {
@@ -33,7 +34,15 @@ int main()
   std::cout << typeid(t1).name() << std::endl ;
   std::cout << typeid(t2).name() << std::endl ;
 
-  view< int[] > x ;
+  {
+    int x_data[100];
+    view< int[][10] > x(x_data,9);
+    assert( x.rank() == 2 );
+    assert( x.extent_0() == 9 );
+    assert( x.extent_1() == 10 );
+    x(5,5) = 42 ;
+    // x(5,5,0) = 42 ; // no match due to rank 2 array.
+  }
 
   return 0 ;
 }

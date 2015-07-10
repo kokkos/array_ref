@@ -358,14 +358,51 @@ struct view
 
   constexpr size_t span() const { return size(); }
 
+  //----------------------------------------
+
+  struct error_tag_invalid_access_to_non_rank_zero_view
+    {
+      error_tag_invalid_access_to_non_rank_zero_view( reference ) {}
+    };
+
+  typename std::conditional< properties::dimension::rank == 0
+                           , reference
+                           , error_tag_invalid_access_to_non_rank_zero_view
+                           >::type
+  operator()() const
+    {
+      typename std::conditional< properties::dimension::rank == 0
+                               , reference
+                               , error_tag_invalid_access_to_non_rank_zero_view
+                               >::type return_type ;
+      return return_type( *m_ptr );
+    }
+
+  template< typename t0 >
+  typename std::enable_if<( properties::dimension::rank == 1 &&
+                            std::is_integral<t0>::value
+                         ), reference >::type
+  operator()( const t0 & i0 ) const
+    { return m_ptr[ m_offset(i0) ]; }
+
+  template< typename t0 , typename t1 >
+  typename std::enable_if<( properties::dimension::rank == 2 &&
+                            std::is_integral<t0>::value &&
+                            std::is_integral<t1>::value
+                         ), reference >::type
+  operator()( const t0 & i0 , const t1 & i1 ) const
+    { return m_ptr[ m_offset(i0,i1) ]; }
+
   template< typename t0 , typename t1 , typename t2 >
   typename std::enable_if<( properties::dimension::rank == 3 &&
                             std::is_integral<t0>::value &&
                             std::is_integral<t1>::value &&
                             std::is_integral<t2>::value
                          ), reference >::type
-  operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 )
+  operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
     { return m_ptr[ m_offset(i0,i1,i2) ]; }
+
+  //----------------------------------------
 
   constexpr view() : m_ptr(0), m_offset() {}
 
