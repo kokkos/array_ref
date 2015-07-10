@@ -114,7 +114,15 @@ For this functionality the simple one-dimensional view interface requires the fo
     template< typename t0 >
     reference operator[]( const t0 & i0 ) const ;
     constexpr view( pointer , size_t );
+
     constexpr view();
+    constexpr view( const view & );
+    constexpr view( view && );
+    view & operator =( const view & );
+    view & operator =( view && );
+
+    template< class T , class ... P >
+    constexpr view( const view< T , P ... > & );
   };
 
 ..
@@ -155,6 +163,19 @@ extent of memory may not be modified.
   Requires the *rank* of the array (number of dimension) to be one.
 
   Requires the index **i0** to be within the domain of the index space; i.e., [0..N).
+
+**constexpr view( pointer p , size_t n )**
+
+  Effects: Construct view object for the memory span [ p .. p + n )
+
+  Requires: The memory span [ p .. p + n ) is valid to view as an array.
+
+**template< class T , class ... P > constexpr view( const view< T , P ... > & )**
+
+  Effects: Construct view object from an assignable view.
+
+  This view and the input view must be assignable with respect to their data type
+  (e.g., const assigned from non-const) and array properties (e.g., same rank).
 
 ----------------------------------------------------------------------------
 View of Traditional Multidimensional Array with Explicit Dimensions
@@ -1148,6 +1169,39 @@ setting it to **void**.
   Effect: Assigns **this** to view the array viewed by **rhs**.
 
   Requires: This view type is assignable to the **rhs** view type.
+
+--------------------------------------------------------------------
+Assignable View
+--------------------------------------------------------------------
+
+It is essential that view of non-identical types be assignable.
+For example:
+
+.. code-block:: c++
+
+  view< int[][3] > x( ptr , N0 );
+  view< const int[][] > y( x ); // valid assignment
+
+..
+
+The 'std::is_assignable' meta-function will be partial specialized to
+implement the view assignability rules regarding value type, dimensions, and properties.
+
+.. code-block:: c++
+
+template< class Utype , class ... Uprop , class Vtype , class ... Vprop >
+struct is_assignable< view< Utype , Uprop ... > , view< Vtype , Vprop ... > >
+  : public integral_const< bool ,
+      is_assignable< typename view< Utype , Uprop ... >::pointer
+                   , typename view< Vtype , Vprop ... >::pointer >::value
+      &&
+      ( view< Utype , Uprop ... >::rank() == view< Vtype , Vprop ... >::rank() )
+      &&
+      /* other conditions */
+      > {}
+    
+.. /*
+
 
 --------------------------------------------------------------------
 View Property : Member Access Array Bounds Checking
