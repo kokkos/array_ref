@@ -8,6 +8,10 @@
 namespace std {
 namespace experimental {
 
+// For explicit dimensions either
+// static constexpr size_t
+// enum : size_t 
+
 #define VIEW_DIMENSION_DECLARATION_MACRO( R ) \
 template< size_t ExN > struct dimension_ ## R \
 { \
@@ -161,6 +165,8 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
 {
   dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
 
+  using is_regular = std::true_type ;
+
   template< typename t0 >
   constexpr size_t operator()( const t0 & i0 ) const
     { return i0 ; }
@@ -172,6 +178,13 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
   template< typename t0 , typename t1 , typename t2 >
   constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
     { return i0 + dim.n0 * ( i1 + dim.n1 * i2 ); }
+
+  constexpr size_t stride_0() const { return 1 ; }
+  constexpr size_t stride_1() const { return dim.n0 ; }
+  constexpr size_t stride_2() const { return dim.n0 * dim.n1 ; }
+
+  constexpr size_t span() const
+    { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
 
   view_offset() = default ;
   view_offset( const view_offset & ) = default ;
@@ -190,6 +203,8 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
 {
   dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
 
+  using is_regular = std::true_type ;
+
   template< typename t0 >
   constexpr size_t operator()( const t0 & i0 ) const
     { return i0 ; }
@@ -201,6 +216,14 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
   template< typename t0 , typename t1 , typename t2 >
   constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
     { return ( i0 * dim.n1 + i1 ) * dim.n2 + i2 ; }
+
+  constexpr size_t stride_0() const { return dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+  constexpr size_t stride_1() const { return dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+  constexpr size_t stride_2() const { return dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+  constexpr size_t stride_3() const { return dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+
+  constexpr size_t span() const
+    { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
 
   view_offset() = default ;
   view_offset( const view_offset & ) = default ;
@@ -219,6 +242,8 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
 {
   dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
 
+  using is_regular = std::true_type ;
+
   template< typename t0 >
   constexpr size_t operator()( const t0 & i0 ) const
     { return i0 ; }
@@ -230,6 +255,14 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
   template< typename t0 , typename t1 , typename t2 >
   constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
     { return ( i0 * dim.n1 + i1 ) * dim.n2 + i2 ; }
+
+  constexpr size_t stride_0() const { return dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+  constexpr size_t stride_1() const { return dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+  constexpr size_t stride_2() const { return dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+  constexpr size_t stride_3() const { return dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+
+  constexpr size_t span() const
+    { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
 
   view_offset() = default ;
   view_offset( const view_offset & ) = default ;
@@ -324,12 +357,16 @@ struct view
   using pointer    = value_type * ;
   using reference  = value_type & ;
   
+private:
+
+  typedef view_offset< typename properties::dimension
+                     , typename properties::layout
+                     > offset ;
 
   pointer m_ptr ;
+  offset  m_offset ;
 
-  view_offset< typename properties::dimension
-             , typename properties::layout
-             > m_offset ;
+public:
 
   static constexpr unsigned rank() { return properties::dimension::rank ; }
 
@@ -356,9 +393,23 @@ struct view
              m_offset.m_dim.n8 *
              m_offset.m_dim.n9 ; }
 
-  constexpr size_t span() const { return size(); }
+  using is_regular = typename offset::is_regular ;
+
+  constexpr size_t stride_0() const { return m_offset.stride_0(); }
+  constexpr size_t stride_1() const { return m_offset.stride_1(); }
+  constexpr size_t stride_2() const { return m_offset.stride_2(); }
+  constexpr size_t stride_3() const { return m_offset.stride_3(); }
+  constexpr size_t stride_4() const { return m_offset.stride_4(); }
+  constexpr size_t stride_5() const { return m_offset.stride_5(); }
+  constexpr size_t stride_6() const { return m_offset.stride_6(); }
+  constexpr size_t stride_7() const { return m_offset.stride_7(); }
+  constexpr size_t stride_8() const { return m_offset.stride_8(); }
+  constexpr size_t stride_9() const { return m_offset.stride_9(); }
+
+  constexpr size_t span() const { return m_offset.span(); }
 
   //----------------------------------------
+  // Proper dereference operators
 
   struct error_tag_invalid_access_to_non_rank_zero_view
     {
@@ -382,6 +433,13 @@ struct view
   typename std::enable_if<( properties::dimension::rank == 1 &&
                             std::is_integral<t0>::value
                          ), reference >::type
+  operator[]( const t0 & i0 ) const
+    { return m_ptr[ m_offset(i0) ]; }
+
+  template< typename t0 >
+  typename std::enable_if<( properties::dimension::rank == 1 &&
+                            std::is_integral<t0>::value
+                         ), reference >::type
   operator()( const t0 & i0 ) const
     { return m_ptr[ m_offset(i0) ]; }
 
@@ -400,6 +458,60 @@ struct view
                             std::is_integral<t2>::value
                          ), reference >::type
   operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
+    { return m_ptr[ m_offset(i0,i1,i2) ]; }
+
+  //----------------------------------------
+  // Improper deference operators
+
+  template< typename t0 >
+  typename std::enable_if<( properties::dimension::rank == 1 &&
+                            std::is_integral<t0>::value
+                         ), reference >::type
+  operator()( const t0 & i0 
+            , const int
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            ) const
+    { return m_ptr[ m_offset(i0) ]; }
+
+  template< typename t0 , typename t1 >
+  typename std::enable_if<( properties::dimension::rank == 2 &&
+                            std::is_integral<t0>::value &&
+                            std::is_integral<t1>::value
+                         ), reference >::type
+  operator()( const t0 & i0 , const t1 & i1
+            , const int
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            ) const
+    { return m_ptr[ m_offset(i0,i1) ]; }
+
+  template< typename t0 , typename t1 , typename t2 >
+  typename std::enable_if<( properties::dimension::rank == 3 &&
+                            std::is_integral<t0>::value &&
+                            std::is_integral<t1>::value &&
+                            std::is_integral<t2>::value
+                         ), reference >::type
+  operator()( const t0 & i0 , const t1 & i1 , const t2 & i2
+            , const int
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            , const int = 0
+            ) const
     { return m_ptr[ m_offset(i0,i1,i2) ]; }
 
   //----------------------------------------

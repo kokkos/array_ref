@@ -40,8 +40,9 @@ int main()
     assert( x.rank() == 2 );
     assert( x.extent_0() == 9 );
     assert( x.extent_1() == 10 );
-    x(5,5) = 42 ;
-    // x(5,5,0) = 42 ; // no match due to rank 2 array.
+    // x(5) = 41 ; // no match due to insufficient rank
+    x(5,5) = 42 ;   // matches proper rank
+    x(5,5,0) = 43 ; // matches improper rank
   }
 
   return 0 ;
