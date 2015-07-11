@@ -186,12 +186,9 @@ A traditional multidimensional array with explicit dimensions
 
 .. code-block:: c++
 
-  // Traditional API
-  void foo( double array[][3][3] , size_t N0 );
+  void foo( double array[][3][3] , size_t N0 ); // Traditional API
 
-  // View API
-  template< typename T >
-  void foo( view< double[][3][3] > array );
+  void foo( view< double[][3][3] > array ); // View API
 
 ..
 
@@ -215,7 +212,6 @@ The view interface now requires the following.
                         , const t1 & i1
                         , const t2 & i2 ) const ;
     constexpr view( pointer , size_t );
-    constexpr view();
   };
 
 ..
@@ -333,8 +329,9 @@ array of integers with unprescribed dimensions.
 
   // Accept a view of a rank three array with value type int
   // and dimensions are explicit or implicit.
-  template< size_t N0 , size_t N1 , size_t N2 >
-  void fooT( view< int[N0][N1][N2] > array );
+  template< class T , class ... P >
+  typename std::enable_if< view<T,P...>::rank() == 3 >::type
+  fooT( view<T,P...> array );
 
 ..
 
@@ -432,7 +429,7 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
 
 ..
 
-If this laternative mechanism is required the array declaration syntax
+If this aternative mechanism is required the array declaration syntax
 will still be available when only the leading dimension is implicit.
 
 .. code-block:: c++
@@ -483,8 +480,7 @@ An initial set of layout specifications are
     struct view_layout_right ;
     struct view_layout_left ;
     struct view_layout_stride ;
-  }
-  }
+  }}
 
 ..
 
@@ -708,6 +704,7 @@ setting it to **void**.
 
   namespace std {
   namespace experimental {
+
   template< class DataType , class ... Properties >
   struct view {
     //--------------------
@@ -827,7 +824,7 @@ setting it to **void**.
     // Member access (improper):
 
     // Requires rank == 0 and i# == 0
-    reference operator()( const int i0 = 0
+    reference operator()( const int i0
                         , const int i1 = 0
                         , const int i2 = 0
                         , const int i3 = 0
@@ -842,7 +839,7 @@ setting it to **void**.
     // Requires rank == 1 and std::is_integral<t0>::value and i{1-9} == 0
     template< typename t0 >
     reference operator()( const t0 & i0
-                        , const int i1 = 0
+                        , const int i1
                         , const int i2 = 0
                         , const int i3 = 0
                         , const int i4 = 0
@@ -867,7 +864,7 @@ setting it to **void**.
                         , const t6 & i6
                         , const t7 & i7
                         , const t8 & i8
-                        , const int i9 = 0
+                        , const int i9
                         ) const ;
 
     //--------------------
