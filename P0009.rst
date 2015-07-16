@@ -259,9 +259,7 @@ The view interface now requires the following.
   If the members are non-contigous or the mapping is surjective then
   **size()** and **span()** will not be equal.
 
-::
-
-**reference operator()**
+**reference operator()(...) const;**
 
   template< typename t0 , typename t1 , typename t2 >
   reference operator()( const t0 & i0
