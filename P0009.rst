@@ -261,7 +261,7 @@ The view interface now requires the following.
 
 ::
 
-** reference operator()
+** reference operator() **
 
   template< typename t0 , typename t1 , typename t2 >
   reference operator()( const t0 & i0
