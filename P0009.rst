@@ -1248,6 +1248,7 @@ setting it to **void**.
   There may be other *property* dependent effects.
 
 .. code-block: c++
+
   constexpr view( pointer ptr
                 , size_t implicit_N0 = 0
                 , size_t implicit_N1 = 0
@@ -1260,6 +1261,7 @@ setting it to **void**.
                 , size_t implicit_N8 = 0
                 , size_t implicit_N9 = 0
                 );
+
 ..
 
   Effects:
