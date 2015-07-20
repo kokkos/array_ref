@@ -1247,7 +1247,7 @@ setting it to **void**.
 
   There may be other *property* dependent effects.
 
-.. code-block: c++
+.. code-block:: c++
 
   constexpr view( pointer ptr
                 , size_t implicit_N0 = 0
