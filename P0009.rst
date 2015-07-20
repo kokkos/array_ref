@@ -1247,7 +1247,8 @@ setting it to **void**.
 
   There may be other *property* dependent effects.
 
-**constexpr view( pointer ptr
+.. code-block: c++
+  constexpr view( pointer ptr
                 , size_t implicit_N0 = 0
                 , size_t implicit_N1 = 0
                 , size_t implicit_N2 = 0
@@ -1258,7 +1259,8 @@ setting it to **void**.
                 , size_t implicit_N7 = 0
                 , size_t implicit_N8 = 0
                 , size_t implicit_N9 = 0
-                );**
+                );
+..
 
   Effects:
   The *wrapping constructor** of a view with regular layout mapping
@@ -1270,8 +1272,7 @@ setting it to **void**.
   Note that the span requirement may be queried without constructing a view
   with the static **span** member function.
 
-**template< class UType , class ... UProperties >
-  constexpr view( const view< UType , UProperties ... > & rhs )**
+**template< class UType , class ... UProperties > constexpr view( const view< UType , UProperties ... > & rhs )**
 
   Effect: Constructs a view of the array viewed by **rhs**.
 
@@ -1288,8 +1289,7 @@ setting it to **void**.
 ..
 
 
-**template< class UType , class ... UProperties >
-  view & operator = ( const view< UType , UProperties ... > & rhs )**
+**template< class UType , class ... UProperties > view & operator = ( const view< UType , UProperties ... > & rhs )**
 
   Effect: Assigns **this** to view the array viewed by **rhs**.
 
@@ -1314,16 +1314,16 @@ implement the view assignability rules regarding value type, dimensions, and pro
 
 .. code-block:: c++
 
-template< class Utype , class ... Uprop , class Vtype , class ... Vprop >
-struct is_assignable< view< Utype , Uprop ... > , view< Vtype , Vprop ... > >
-  : public integral_const< bool ,
-      is_assignable< typename view< Utype , Uprop ... >::pointer
-                   , typename view< Vtype , Vprop ... >::pointer >::value
-      &&
-      ( view< Utype , Uprop ... >::rank() == view< Vtype , Vprop ... >::rank() )
-      &&
-      /* other conditions */
-      > {}
+  template< class Utype , class ... Uprop , class Vtype , class ... Vprop >
+  struct is_assignable< view< Utype , Uprop ... > , view< Vtype , Vprop ... > >
+    : public integral_const< bool ,
+        is_assignable< typename view< Utype , Uprop ... >::pointer
+                     , typename view< Vtype , Vprop ... >::pointer >::value
+        &&
+        ( view< Utype , Uprop ... >::rank() == view< Vtype , Vprop ... >::rank() )
+        &&
+        /* other conditions */
+        > {}
     
 .. /*
 
