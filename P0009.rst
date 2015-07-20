@@ -206,6 +206,7 @@ The view interface now requires the following.
     constexpr size_t  extent_0() const ;
     constexpr size_t  extent_1() const ;
     constexpr size_t  extent_2() const ;
+    template< unsigned > constexpr size_t extent() const ;
     constexpr size_t  size() const ;
     constexpr size_t  span() const ;
     template< typename t0 , typename t1 , typename t2 >
@@ -237,11 +238,21 @@ The view interface now requires the following.
   template< class T , class ... P >
   void foo( const view<T,P...> x )
     {
-      size_t const n0 = x.extent_0();           // preferred for usability
-      size_t const n0 = x.template extent<0>(); // disliked by users
+      size_t const n0 = x.extent_0();           // preferred by common users
+      size_t const n0 = x.template extent<0>(); // disliked by common users
     }
 
 ..
+
+**template< unsigned > constexpr size_t extent() const;**
+
+  Returns the extent of the #th dimension where # is given as a template argument.
+
+  Discussion:
+  For libraries that are parameterized on the rank of multidimensional array views
+  require parameterized access to extents.
+  This serves a distinctly different user community and usage scenarios
+  than the previous **extent_#()** interface.
 
 
 **constexpr size_t size() const;**
@@ -464,7 +475,7 @@ an *array of arrays of arrays ...*; i.e., the size and span are
 equal and the strides increase from right-to-left.
 In the FORTRAN language defines layout mapping with strides
 increasing from left-to-right.
-The *native* layout mappings are only two of many possible layouts.
+These *native* layout mappings are only two of many possible layouts.
 For example, the *basic linear algebra subprograms (BLAS)* standard
 defines dense matrix layout mapping with padding of the leading dimension,
 requiring both dimensions and **LDA** parameters to fully declare a matrix layout.
@@ -472,7 +483,30 @@ requiring both dimensions and **LDA** parameters to fully declare a matrix layou
 
 A view property template parameter specifies a layout mapping.
 If this property is ommitted the layout mapping of the view 
-conforms to the corresponding natively declared multidimensional array.
+conforms to a corresponding natively declared multidimensional array
+as if implicit dimensions were declared explicitly.
+The default layout is *regular* - the distance is constant between
+entries when a single index of the multi-index is incremented.
+This distance is the *stride* of the corresponding dimension.
+In the default layout mapping is bijective and the stride increases
+monotonically from the right most to the left most dimension.
+
+.. code-block:: c++
+
+  // The default layout mapping of a rank-four multidimensional
+  // array is as if implemented as follows.
+
+  template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
+  size_t native_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
+    {
+      return i0 * N3 * N2 * N1 // stride == N3 * N2 * N1
+           + i1 * N3 * N2      // stride == N3 * N2
+           + i2 * N3           // stride == N3
+           + i3 ;              // stride == 1
+    } 
+
+..
+
 An initial set of layout specifications are
 **view_layout_right**, **view_layout_left**, and **view_layout_stride**.
 
@@ -487,7 +521,48 @@ An initial set of layout specifications are
 
 ..
 
-The view interface has the following additions to layout polymorphism.
+A view_layout_right mapping is regular and injective with
+strides increasing from right most to left most dimension.
+A view_layout_left mapping is regular and injective with
+strides increasing from left most to right most dimension.
+A view_layout_stride mapping is regular; however, it may
+not be injective or surjective.
+
+.. code-block:: c++
+
+  // The right and left layout mapping of a rank-four multidimensional
+  // array is as if implemented as follows.
+
+  template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
+  size_t right_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
+    {
+      const size_t S3 = // stride of dimension #3
+      const size_t P3 = // padding of dimension #3
+      const size_t P2 = // padding of dimension #2
+      const size_t P1 = // padding of dimension #1
+      return i0 * S3 * ( P3 + N3 ) * ( P2 + N2 ) * ( P1 + N1 )
+           + i1 * S3 * ( P3 + N3 ) * ( P2 + N2 )
+           + i2 * S3 * ( P3 + N3 )
+           + i3 * S3 ;
+    }
+
+  template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
+  size_t left_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
+    {
+      const size_t S0 = // stride of dimension #0
+      const size_t P0 = // padding of dimension #0
+      const size_t P1 = // padding of dimension #1
+      const size_t P2 = // padding of dimension #2
+      return i0 * S0
+           + i1 * S0 * ( P0 + N0 )
+           + i2 * S0 * ( P0 + N0 ) * ( P1 + N1 )
+           + i3 * S0 * ( P0 + N0 ) * ( P1 + N1 ) * ( P2 + N2 );
+    }
+
+..
+
+
+The view interface has the following additions for layout polymorphism.
 
 .. code-block:: c++
 
@@ -613,7 +688,7 @@ A view_layout_stride mapping is regular; however, the ordering of its strides is
   assert( y.span() <= y.size() );
   assert( y.span() == max( y.extent_0() * y.stride_0() ,
                       max( y.extent_1() * y.stride_1() ,
-                           y.extent_2() * y.stride_2() );
+                           y.extent_2() * y.stride_2() ) );
 
   // 'padded_extent_#' private member for illustration only
 
@@ -622,6 +697,43 @@ A view_layout_stride mapping is regular; however, the ordering of its strides is
 
 ..
 
+
+--------------------------------------------------------------------
+Extensible Layout Polymorphism
+--------------------------------------------------------------------
+
+The **view** is intended to be extensible such that a user may supply
+a customized layout mapping.
+A user supplied customized layout mapping will be required to conform
+to a specified interface; *a.k.a.*, a C++ Concept.
+Details of this extension point will be included in a subsequent
+proposal.
+
+
+An important customized layout mapping is hierarchical tiling.
+This kind of layout mapping is used in dense linear algebra matrices and
+computations on Cartesian grids to improve the spatial locality
+of array entries.
+These mappings are bijective but are not regular.
+Computations on such multidimensional arrays typically iterate
+through tiles as *subviews* of the array.
+
+.. code-block:: c++
+
+  template< size_t N0 , size_t N1 , size_t N2 >
+  size_t tiling_left_mapping( size_t i0 , size_t i1 , size_t i2 )
+  {
+    static constexpr size_t T = // cube tile size
+    constexpr size_t T0 = ( N0 + T - 1 ) / T ; // tiles in dimension 0
+    constexpr size_t T1 = ( N1 + T - 1 ) / T ; // tiles in dimension 1
+    constexpr size_t T2 = ( N2 + T - 1 ) / T ; // tiles in dimension 2
+
+    // offset within tile + offset to tile
+    return ( i0 % T ) + T * ( i1 % T ) + T * T * ( i2 % T )
+         + T * T * T * ( ( i0 / T ) + T0 * ( ( i1 / T ) + T1 * ( i2 / T ) ) );
+  }
+
+..
 
 --------------------------------------------------------------------
 Subview of View
@@ -737,6 +849,8 @@ setting it to **void**.
     constexpr size_t  extent_8() const ;
     constexpr size_t  extent_9() const ;
 
+    template< unsigned > constexpr size_t extent() const ;
+
     // Cardinality of index space; i.e., product of extents
     constexpr size_t  size() const ;
 
@@ -758,6 +872,8 @@ setting it to **void**.
     constexpr size_t  stride_7() const ;
     constexpr size_t  stride_8() const ;
     constexpr size_t  stride_9() const ;
+
+    template< unsigned > constexpr size_t stride() const ;
 
     // One plus maximum distance between any two members.
     constexpr size_t span() const ;
@@ -944,6 +1060,11 @@ setting it to **void**.
   
   Returns the exent of dimension # when ``# < rank()``
   and 1 when ( **rank** <= # < *rank upper bound* ).
+
+**template< unsigned > constexpr size_t extent() const**
+
+  Returns the exent of dimension # when ``# < rank()``
+  and 1 when ( **rank** <= # < *rank upper bound* ).
   
 **constexpr size_t size() const**
 
@@ -958,6 +1079,12 @@ setting it to **void**.
   Denoting by **is_regular::value** if the layout mapping is regular.
 
 **constexpr size_t stride_#() const**
+
+  For regular layout mapping returns the distance between members
+  when index # is incremented by one.
+  For not-regular layout mapping the return value is undefined.
+
+**template< unsigned > constexpr size_t stride() const**
 
   For regular layout mapping returns the distance between members
   when index # is incremented by one.
