@@ -741,8 +741,8 @@ Subview of View
 
 .. code-block:: c++
 
-namespace std {
-namespace experimental {
+  namespace std {
+  namespace experimental {
 
   template< typename ViewType , class ... Indices_And_Ranges >
   struct subview_type ;
@@ -757,7 +757,7 @@ namespace experimental {
   template< typename T >
   struct is_integral_range ;
 
-}}
+  }}
 
 ..
 
@@ -1035,8 +1035,7 @@ setting it to **void**.
           , size_t , size_t , size_t , size_t , size_t >
   struct view_dimension ;
 
-  }
-  }
+  }}
 
 ..
 
@@ -1335,10 +1334,10 @@ View Property : Member Access Array Bounds Checking
 
 .. code-block:: c++
 
-namespace std {
-namespace experimental {
-struct view_bounds_checking ;
-}}
+  namespace std {
+  namespace experimental {
+  struct view_bounds_checking ;
+  }}
 
 ..
 
