@@ -1,5 +1,5 @@
 ===================================================================
-P0009r01 ``Polymorphic Multidimensional Array View``
+P0009r01 : Polymorphic Multidimensional Array View
 ===================================================================
 
 :Author: H\. Carter Edwards
@@ -16,10 +16,11 @@ P0009r01 ``Polymorphic Multidimensional Array View``
 :Contact: kaballo86@hotmail.com
 :Author: Maffeo, Robin 
 :Contact: Robin.Maffeo@amd.com
+:Author: Sander, Ben
+:Contact: ben.sander@amd.com
 :Author: Bryce Lelbach 
 :Contact: balelbach@lbl.gov
-:Date: 2015-06-26
-:Version: 01
+:Date: 2015-08-03
 :URL: https://github.com/kokkos/PolyView/blob/master/P0009.rst
 :WG21: Library Evolution
 :WG21: Evolution (array declaration)
@@ -149,12 +150,14 @@ extent of memory may not be modified.
   for syntactic conciseness.
 
 .. code-block:: c++
+
   using T = int[] ;
   view<T> x ;
   view<T> y( ptr , N );
   assert( 0 == std::extent<T,0>::value );
   assert( 0 == x.extent_0() );
   assert( N == y.extent_0() );
+
 ..
 
 **template< typename t0 > reference operator[]( const t0 & i0 ) const ;**
@@ -363,24 +366,6 @@ Note that this existing specification is in error when array syntax is used in a
 
 ..
 
-Note that this is a simple one-line change in Clang to disable the error message.
-
-Note that gcc 4.7, 4.8, and 4.9 implicitly support such types as
-demonstrated by the following error-free and warning-free meta function.
-
-.. code-block:: c++
-
-  template< typename T , unsigned R >
-  struct implicit_array_type { using type = typename implicit_array_type<T,R-1>::type[] ; };
-
-  template< typename T >
-  struct implicit_array_type<T,0> { using type = T ; };
-
-  using array_rank_3 = typename implicit_array_type<int,3>::type ;
-
-..
-
-
 Changing the **8.3.4.p3** constraint as follows would allow the proposed syntax for a view of an array
 with multiple implicit dimensions, and preserve correctness for conventional array declarations.
 *When several “array of” specifications are adjacent
@@ -389,11 +374,29 @@ only the first of the sequence of array bound constant expressions
 may be omitted for types used in the explicit declaration of a multidimensional array;
 otherwise any or all of the array bound constant expressions may be omitted.*
 
-Note that there exists at least two precedents for types that can be defined but not used to declare objects:
-(1) an array with an ommitted leading bound and (2) **void**.
+  Note that there exists at least two precedents for types that can be defined but not used to declare objects:
+  (1) an array with an ommitted leading bound and (2) **void**.
+
+  Note that it is a simple one-line change in Clang to disable the error message and
+  allow omission of second and subsequent dimensions.
+
+  Note that gcc 4.7, 4.8, and 4.9 implicitly support such type declarations as
+  demonstrated by the following error-free and warning-free meta function.
+
+.. code-block:: c++
+
+    template< typename T , unsigned R >
+    struct implicit_array_type { using type = typename implicit_array_type<T,R-1>::type[] ; };
+
+    template< typename T >
+    struct implicit_array_type<T,0> { using type = T ; };
+
+    using array_rank_3 = typename implicit_array_type<int,3>::type ;
+
+..
 
 
-A view constructor with arguments for each implicit dimension is now required.
+A view constructor with arguments for each implicit dimension is required.
 
 .. code-block:: c++
 
@@ -403,11 +406,11 @@ A view constructor with arguments for each implicit dimension is now required.
                   , size_t implicit_N0
                   , size_t implicit_N1
                   , size_t implicit_N2
-                  /* etc */
+                  // etc.
                   );
   };
 
-.. /*
+..
 
 ------------------------------------------------------------------------------
 View of Multidimensional Array with Multiple Implicit Dimensions (alternative)
@@ -1301,7 +1304,7 @@ setting it to **void**.
 Assignable View
 --------------------------------------------------------------------
 
-It is essential that view of non-identical types be assignable.
+It is essential that view of non-identical, compatible types be assignable.
 For example:
 
 .. code-block:: c++
