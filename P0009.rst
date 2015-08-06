@@ -63,17 +63,11 @@ The View
 The proposed **view** has template arguments for the data type of the array
 and a parameter pack for polymorphic properties of the view.
 
-
-.. code-block:: c++
-
-  namespace std {
-  namespace experimental {
-    template< class DataType , class ... Properties >
-    struct view ;
-  }
-  }
-
-..
+  |  namespace std {
+  |  namespace experimental {
+  |    template< class DataType , class ... Properties >
+  |    struct view ;
+  |  }}
 
 
 The complete proposed specification for **view** is
@@ -99,33 +93,17 @@ For example, a one-dimensional array is passed to a function as follows.
   void foo( view< int[] > array );
   void foo( view< const int[] > array );
 
-..
+  void bar()
+  {
+    enum { L = ... };
+    int buffer[ L ];
+    view<int[]> array( buffer , L );
 
-For this functionality the simple one-dimensional view interface requires the following.
+    assert( L == array.size() );
+    assert( & array[0] == buffer );
 
-.. code-block:: c++
-
-  template< class DataType , class ... Properties >
-  struct view {
-    using value_type = // implementation defined
-    using reference  = // implementation defined
-    using pointer    = // implementation defined
-    constexpr size_t size() const ;
-    constexpr size_t extent_0() const ;
-
-    template< typename t0 >
-    reference operator[]( const t0 & i0 ) const ;
-    constexpr view( pointer , size_t );
-
-    constexpr view();
-    constexpr view( const view & );
-    constexpr view( view && );
-    view & operator =( const view & );
-    view & operator =( view && );
-
-    template< class T , class ... P >
-    constexpr view( const view< T , P ... > & );
-  };
+    foo( array );
+  }
 
 ..
 
@@ -134,52 +112,6 @@ A const-view is similar to a const-pointer in that the view may not be
 modifid but the viewed extent of memory may be modified.
 A view-of-const is similar to a pointer-to-const in that the viewed
 extent of memory may not be modified.
-
-**constexpr size() const ;**
-
-  Returns the cardinality of the index space.
-
-**constexpr extent_0() const ;**
-
-  Returns the extent of the 0th dimension of the index space.
-
-  Discussion: Note the correlation between the extent of the view's data type and the
-  extent of an instance of that view.
-  The non-template member function **x.extent_0()** is prefered over an
-  functionality equivalent template member function **x.template extent<0>()**
-  for syntactic conciseness.
-
-.. code-block:: c++
-
-  using T = int[] ;
-  view<T> x ;
-  view<T> y( ptr , N );
-  assert( 0 == std::extent<T,0>::value );
-  assert( 0 == x.extent_0() );
-  assert( N == y.extent_0() );
-
-..
-
-**template< typename t0 > reference operator[]( const t0 & i0 ) const ;**
-
-  Returns a reference to the member identified with the index **i0**.
-
-  Requires the *rank* of the array (number of dimension) to be one.
-
-  Requires the index **i0** to be within the domain of the index space; i.e., [0..N).
-
-**constexpr view( pointer p , size_t n )**
-
-  Effects: Construct view object for the memory span [ p .. p + n )
-
-  Requires: The memory span [ p .. p + n ) is valid to view as an array.
-
-**template< class T , class ... P > constexpr view( const view< T , P ... > & )**
-
-  Effects: Construct view object from an assignable view.
-
-  This view and the input view must be assignable with respect to their data type
-  (e.g., const assigned from non-const) and array properties (e.g., same rank).
 
 ----------------------------------------------------------------------------
 View of Traditional Multidimensional Array with Explicit Dimensions
@@ -191,115 +123,29 @@ A traditional multidimensional array with explicit dimensions
 .. code-block:: c++
 
   void foo( double array[][3][3] , size_t N0 ); // Traditional API
-
   void foo( view< double[][3][3] > array ); // View API
 
-..
+  void bar()
+  {
+    enum { L = ... };
+    int buffer[ L * 3 * 3 ];
+    view< int[][3][3] > array( buffer , L );
 
-The view interface now requires the following.
+    assert( 3 == array.rank() );
+    assert( L == array.extent(0) );
+    assert( 3 == array.extent(1) );
+    assert( 3 == array.extent(2) );
+    assert( array.size() == array.extent(0) * array.extent(1) * array.extent(2) );
+    assert( & array(0,0,0) == buffer );
 
-.. code-block:: c++
-
-  template< class DataType , class ... Properties >
-  struct view {
-    using value_type = // implementation defined
-    using reference  = // implementation defined
-    using pointer    = // implementation defined
-    static constexpr unsigned rank() { return std::rank<DataType>::value ; }
-    constexpr size_t  extent_0() const ;
-    constexpr size_t  extent_1() const ;
-    constexpr size_t  extent_2() const ;
-    template< unsigned > constexpr size_t extent() const ;
-    constexpr size_t  size() const ;
-    constexpr size_t  span() const ;
-    template< typename t0 , typename t1 , typename t2 >
-    reference operator()( const t0 & i0
-                        , const t1 & i1
-                        , const t2 & i2 ) const ;
-    constexpr view( pointer , size_t );
-  };
+    foo( array );
+  }
 
 ..
 
-**static constexpr unsigned  rank()**
-
-  Returns the rank of the multidimensional array.  Conformal to std::rank< DataType >::value.
-
-**constexpr size_t extent_#() const;**
-
-  Returns the extent of the #th dimension.
-
-  Discussion:
-  For an explicit dimension extent_#() is simply std::extent<DataType,#>::value.
-  For an implicit dimension extent_#() returns the runtime declared value for dimension #.
-  This member function is not templated due to persistent feedback on the usability of **view**
-  within functions that are templated on the **view** type.
-  Given a reasonable upper bound on the rank this usability preference has not been an issue.
-
-.. code-block:: c++
-
-  template< class T , class ... P >
-  void foo( const view<T,P...> x )
-    {
-      size_t const n0 = x.extent_0();           // preferred by common users
-      size_t const n0 = x.template extent<0>(); // disliked by common users
-    }
-
-..
-
-**template< unsigned > constexpr size_t extent() const;**
-
-  Returns the extent of the #th dimension where # is given as a template argument.
-
-  Discussion:
-  For libraries that are parameterized on the rank of multidimensional array views
-  require parameterized access to extents.
-  This serves a distinctly different user community and usage scenarios
-  than the previous **extent_#()** interface.
-
-
-**constexpr size_t size() const;**
-
-  Returns the cardinality of the multidimensional array index space.
-  
-  Discussion: Equal to the product of the extents.
-
-**constexpr size_t span() const;**
-
-  Returns one plus the maximum distance between any two members of the view.
-
-  Discussion:  When the viewed array members are contigous and the mapping is
-  bijective then **size()** and **span()** are equal.
-  If the members are non-contigous or the mapping is surjective then
-  **size()** and **span()** will not be equal.
-
-**reference operator()(...) const;**
-
-.. code-block:: c++
-
-  template< typename t0 , typename t1 , typename t2 >
-  reference operator()( const t0 & i0
-                      , const t1 & i1
-                      , const t2 & i2 ) const ;
-
-..
-
-  Returns a *reference* to the array member referenced by the multi-index (i0,i1,i2).
-
-  Requires std::is_integral<t#>::value.  Requirement is enforced via static_assert.
-
-  Requires 0 <= i# < extent_#().  Requirement may be enforced if array bounds checking is enabled.
-
-  Discussion: 
-  The *operator()* is templated on its argument types to defer promotion of the
-  integral arguments to the internal implementation of the mapping expression from multi-index to
-  a member reference.
-  We defer integral type promotion to this implementation to maximize opportunity for
-  optimization of this mapping expression.
-
-----------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 View of Multidimensional Array with Multiple Implicit Dimensions (Preferred)
-----------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 **Requires language change for slight relaxation of array declaration.**
 
@@ -329,7 +175,7 @@ and is problematic when passing such arrays to functions.
 
   x[i0][i1][i2] // member access
 
-  foo( double *const *const array[] , size_t N0 , size_t N1 , size_t N2 );
+  foo( double *const *const * const array , size_t N0 , size_t N1 , size_t N2 );
 
 ..
 
@@ -341,7 +187,7 @@ array of integers with unprescribed dimensions.
 
 .. code-block:: c++
 
-  void foo1( view< int[ ][3][3] > array ); // Explicit dimensions #1 and #2
+  void foo1( view< int[ ][3][3] > array ); // Two explicit dimensions
   void foo2( view< int[ ][ ][ ] > array ); // All implicit dimensions
 
   // Accept a view of a rank three array with value type int
@@ -350,14 +196,33 @@ array of integers with unprescribed dimensions.
   typename std::enable_if< view<T,P...>::rank() == 3 >::type
   fooT( view<T,P...> array );
 
+  void bar()
+  {
+    enum { L = ... };
+    int buffer[ L * 3 * 3 ];
+    view< int[][][] > array( buffer , L , 3 , 3 );
+
+    assert( 3 == array.rank() );
+    assert( L == array.extent(0) );
+    assert( 3 == array.extent(1) );
+    assert( 3 == array.extent(2) );
+    assert( array.size() == array.extent(0) * array.extent(1) * array.extent(2) );
+    assert( & array(0,0,0) == buffer );
+
+    foo( array );
+  }
+
 ..
 
 This syntax requires a relaxation of array type declarator constraints defined in **8.3.4 Arrays paragraph 3**.
-*When several “array of” specifications are adjacent,
-a multidimensional array is created;
-only the first of the constant expressions
-that specify the bounds of the arrays may be omitted.*
-Note that this existing specification is in error when array syntax is used in a type definition.
+
+  *When several “array of” specifications are adjacent,
+  a multidimensional array is created;
+  only the first of the constant expressions
+  that specify the bounds of the arrays may be omitted.*
+
+Note that this existing specification is in error when array syntax is used in a type definition;
+as a type definition does not create a multidimensional array.
 
 .. code-block:: c++
 
@@ -368,20 +233,21 @@ Note that this existing specification is in error when array syntax is used in a
 
 Changing the **8.3.4.p3** constraint as follows would allow the proposed syntax for a view of an array
 with multiple implicit dimensions, and preserve correctness for conventional array declarations.
-*When several “array of” specifications are adjacent
-to form a multidimensional array type specification
-only the first of the sequence of array bound constant expressions
-may be omitted for types used in the explicit declaration of a multidimensional array;
-otherwise any or all of the array bound constant expressions may be omitted.*
 
-  Note that there exists at least two precedents for types that can be defined but not used to declare objects:
-  (1) an array with an ommitted leading bound and (2) **void**.
+  *When several “array of” specifications are adjacent
+  to form a multidimensional array type specification
+  only the first of the sequence of array bound constant expressions
+  may be omitted for types used in the explicit declaration of a multidimensional array;
+  otherwise any or all of the array bound constant expressions may be omitted.*
 
-  Note that it is a simple one-line change in Clang to disable the error message and
-  allow omission of second and subsequent dimensions.
+There exists at least two precedents for types that can be defined but not used to declare objects:
+(1) an array with an ommitted leading bound and (2) **void**.
 
-  Note that gcc 4.7, 4.8, and 4.9 implicitly support such type declarations as
-  demonstrated by the following error-free and warning-free meta function.
+Relaxing this constraint is a simple one-line change in Clang that merely disables the error message and
+allows omission of second and subsequent dimensions.
+
+In gcc 4.7, 4.8, and 4.9 this relaxation was implicitly supported as
+demonstrated by the following error-free and warning-free meta function.
 
 .. code-block:: c++
 
@@ -396,28 +262,12 @@ otherwise any or all of the array bound constant expressions may be omitted.*
 ..
 
 
-A view constructor with arguments for each implicit dimension is required.
-
-.. code-block:: c++
-
-  template< class DataType , class ... Properties >
-  struct view {
-    constexpr view( pointer
-                  , size_t implicit_N0
-                  , size_t implicit_N1
-                  , size_t implicit_N2
-                  // etc.
-                  );
-  };
-
-..
-
 ------------------------------------------------------------------------------
 View of Multidimensional Array with Multiple Implicit Dimensions (alternative)
 ------------------------------------------------------------------------------
 
-If the array declaration constraint in **8.3.4.p3** cannot be relaxed then
-an alternative mechanism is required to define mixed explicit and implicit
+If the array declaration constraint in **8.3.4.p3** is not relaxed then
+an alternative mechanism will be required to define mixed explicit and implicit
 dimensions through a view dimension property.
 A dimension property is syntactically more verbose and requires the
 "magic value" zero to denote an implicit dimension.
@@ -436,18 +286,18 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
   assert( view_dimension<0,0,3>::extent_1 == 0 );
   assert( view_dimension<0,0,3>::extent_2 == 3 );
 
-  assert( x.extent_0() == N0 );
-  assert( x.extent_1() == N1 );
-  assert( x.extent_2() == 3 );
+  assert( x.extent(0) == N0 );
+  assert( x.extent(1) == N1 );
+  assert( x.extent(2) == 3 );
 
-  assert( y.extent_0() == N0 );
-  assert( y.extent_1() == N1 );
-  assert( y.extent_2() == 3 );
+  assert( y.extent(0) == N0 );
+  assert( y.extent(1) == N1 );
+  assert( y.extent(2) == 3 );
 
 ..
 
-If this aternative mechanism is required the array declaration syntax
-will still be available when only the leading dimension is implicit.
+If this aternative *properties* mechanism is required the array declaration syntax
+is still available when only the leading dimension is implicit.
 
 .. code-block:: c++
 
@@ -456,17 +306,17 @@ will still be available when only the leading dimension is implicit.
 
 ..
 
-A similar mechanism may be defined to declare a view to array
+A similar *properties* mechanism may be defined to declare a view to array
 of rank **R** with all-implicit dimension.
 
 .. code-block:: c++
 
-  std::view< int , std::view_rank<R> > z ;
+  std::view< int , std::view_implicit_rank<R> > z ;
 
 ..
 
 --------------------------------------------------------------------
-Layout Polymorphism
+View Properties: Layout Polymorphism
 --------------------------------------------------------------------
 
 The **view::operator()** maps the input multi-index from the array's
@@ -510,17 +360,30 @@ monotonically from the right most to the left most dimension.
 
 ..
 
-An initial set of layout specifications are
+An initial set of layout properties are
 **view_layout_right**, **view_layout_left**, and **view_layout_stride**.
+
+  |  namespace std {
+  |  namespace experimental {
+  |    struct view_layout_right ;
+  |    struct view_layout_left ;
+  |    struct view_layout_stride ;
+  |  }}
+
 
 .. code-block:: c++
 
-  namespace std {
-  namespace experimental {
-    struct view_layout_right ;
-    struct view_layout_left ;
-    struct view_layout_stride ;
-  }}
+  typedef view< int[][][] > view_native ;
+  typedef view< int[][][] , view_layout_right > view_right ;
+  typedef view< int[][][] , view_layout_left >  view_left ;
+
+  assert( std::is_same< typename view_native::layout , void >::value );
+  assert( std::is_same< typename view_right ::layout , view_layout_right >::value );
+  assert( std::is_same< typename view_left  ::layout , view_layout_left >::value );
+
+  assert( view_native::is_regular::value );
+  assert( view_right ::is_regular::value );
+  assert( view_left  ::is_regular::value );
 
 ..
 
@@ -539,10 +402,10 @@ not be injective or surjective.
   template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
   size_t right_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
     {
-      const size_t S3 = // stride of dimension #3
-      const size_t P3 = // padding of dimension #3
-      const size_t P2 = // padding of dimension #2
-      const size_t P1 = // padding of dimension #1
+      const size_t S3 = // stride of dimension 3
+      const size_t P3 = // padding of dimension 3
+      const size_t P2 = // padding of dimension 2
+      const size_t P1 = // padding of dimension 1
       return i0 * S3 * ( P3 + N3 ) * ( P2 + N2 ) * ( P1 + N1 )
            + i1 * S3 * ( P3 + N3 ) * ( P2 + N2 )
            + i2 * S3 * ( P3 + N3 )
@@ -552,10 +415,10 @@ not be injective or surjective.
   template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
   size_t left_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
     {
-      const size_t S0 = // stride of dimension #0
-      const size_t P0 = // padding of dimension #0
-      const size_t P1 = // padding of dimension #1
-      const size_t P2 = // padding of dimension #2
+      const size_t S0 = // stride of dimension 0
+      const size_t P0 = // padding of dimension 0
+      const size_t P1 = // padding of dimension 1
+      const size_t P2 = // padding of dimension 2
       return i0 * S0
            + i1 * S0 * ( P0 + N0 )
            + i2 * S0 * ( P0 + N0 ) * ( P1 + N1 )
@@ -564,145 +427,8 @@ not be injective or surjective.
 
 ..
 
-
-The view interface has the following additions for layout polymorphism.
-
-.. code-block:: c++
-
-  template< typename DataType , class ... Properties >
-  struct view {
-    using layout     = // implementation defined
-    using is_regular = std::integral_constant<bool, /* implementation defined*/ > ;
-    constexpr size_t stride_0() const ;
-    constexpr size_t stride_1() const ;
-    constexpr size_t stride_2() const ;
-    constexpr size_t stride_3() const ;
-    // etc.
-  };
-
-..
-
-**using layout = ... ;**
-
-  Declares the layout property.
-  If the Properties pack does not include a layout property the type alias is **void**.
-
-**using is_regular = std::integral_constant<bool, ... > ;**
-
-  Declares whether the layout mapping is regular.
-  A regular layout mapping is injective and has uniform striding for each dimension.
-
-**constexpr size_t stride_#() const ;**
-
-  Returns the stride of the # dimension of a view with regular layout mapping.
-  If the layout mapping is not regular returns zero.
-
-
-**View with layout == void (default)**
-
-The layout mapping with a default layout conforms to the *native* layout mapping
-as if all of the implicit dimensions had been explicit.
-The default layout mapping is regular and bijective; i.e., has size() == span().
-
-.. code-block:: c++
-
-  view< int[][][] > x( x_ptr , N0 , N1 , N2 )
-
-  assert( x.span() == x.size() );
-
-  assert( std::distance( & x(i0,i1,i2) , & x(0,0,0) ) ==
-          ( i0 * x.extent_1() + i1 ) * x.extent_2() + i2 );
-
-  assert( x.stride_2() == 1 );
-  assert( x.stride_1() == x.extent_2() * x.stride_2() );
-  assert( x.stride_0() == x.extent_1() * x.stride_1() );
-
-..
-
-
-**View with layout == view_layout_right**
-
-A view_layout_right mapping is regular and is similar to the default mapping
-in that the strides increase from right-to-left dimensions.
-The view_layout_right mapping deviates from the default mapping
-in that an implementation is allowed to pad dimensions.
-
-.. code-block:: c++
-
-  view< int[][][] , view_layout_right > y( y_ptr , N0 , N1 , N2 );
-
-  assert( y.span() <= y.size() );
-  assert( y.span() == y.extent_0() * y.stride_0() );
-
-  // 'padded_extent_#' private member for illustration only
-
-  assert( std::distance( & y(i0,i1,i2) , & y(0,0,0) ) ==
-          ( ( i0 * y.padded_extent_1 + i1 ) * y.padded_extent_2 + i2 ) * y.padded_extent_3 );
-
-  assert( 1 <= y.padded_extent_3 );
-  assert( y.padded_extent_2 <= y.extent_2() );
-  assert( y.padded_extent_1 <= y.extent_1() );
-
-  assert( y.stride_2() == y.padded_extent_3 );
-  assert( y.stride_1() == y.padded_extent_2 * y.stride_2() );
-  assert( y.stride_0() == y.padded_extent_1 * y.stride_1() );
-
-..
-
-
-
-**View with layout == view_layout_left**
-
-A view_layout_left mapping is regular and its strides
-increase from left-to-right dimensions.
-An implementation is allowed to pad dimensions.
-
-.. code-block:: c++
-
-  view< int[][][] , view_layout_left > y( y_ptr , N0 , N1 , N2 );
-
-  assert( y.span() <= y.size() );
-  assert( y.span() == y.extent_2() * y.stride_2() );
-
-  // 'padded_extent_#' private member for illustration only
-
-  assert( std::distance( & y(i0,i1,i2) , & y(0,0,0) ) ==
-          y.padded_extent * ( i0 + y.padded_extent_0 * ( i1 + y.padded_extent_1 * i2 ) ) );
-
-  assert( 1 <= y.padded_extent );
-  assert( y.padded_extent_0 <= y.extent_0() );
-  assert( y.padded_extent_1 <= y.extent_1() );
-
-  assert( y.stride_0() == y.padded_extent_0 * y.padded_extent );
-  assert( y.stride_1() == y.padded_extent_1 * y.stride_0() );
-  assert( y.stride_2() == y.padded_extent_2 * y.stride_1() );
-
-..
-
-
-**View with layout == view_layout_stride**
-
-A view_layout_stride mapping is regular; however, the ordering of its strides is arbitrary.
-
-.. code-block:: c++
-
-  view< int[][][] , view_layout_stride > y( y_ptr , N0 , N1 , N2 );
-
-  assert( y.span() <= y.size() );
-  assert( y.span() == max( y.extent_0() * y.stride_0() ,
-                      max( y.extent_1() * y.stride_1() ,
-                           y.extent_2() * y.stride_2() ) );
-
-  // 'padded_extent_#' private member for illustration only
-
-  assert( std::distance( & y(i0,i1,i2) , & y(0,0,0) ) ==
-          y.stride_0() * i0 + y.stride_1() * i1 + y.stride_2() * i2 );
-
-..
-
-
 --------------------------------------------------------------------
-Extensible Layout Polymorphism
+View Properties: Extensible Layout Polymorphism
 --------------------------------------------------------------------
 
 The **view** is intended to be extensible such that a user may supply
@@ -738,66 +464,8 @@ through tiles as *subviews* of the array.
 
 ..
 
---------------------------------------------------------------------
-Subview of View
---------------------------------------------------------------------
-
-.. code-block:: c++
-
-  namespace std {
-  namespace experimental {
-
-  template< typename ViewType , class ... Indices_And_Ranges >
-  struct subview_type ;
-
-  template< typename ViewType , class ... Indices_And_Ranges >
-  using subview_t = typename subview_type< ViewType , Indices_And_Ranges >::type ;
-
-  template< typename DataType , class ... Parameters , class ... Indices_And_Ranges >
-  subview_t< view< DataType, Parameters ... > , Indices_And_Ranges ... >
-  subview( const view< DataType, Parameters ... > & , Indices_And_Ranges ... );
-
-  template< typename T >
-  struct is_integral_range ;
-
-  }}
-
-..
-
-The **subview_t** meta function and **subview** function requires
-``sizeof...(Indices_And_Ranges) == view< DataType , Parameters... >::rank()``
-and each member of **Indices_And_Ranges** to be either an integral type
-or an integral range.
-The rank of the resulting subview is the rank of the input view minus
-the number of integral type arguments in **Indices_And_Ranges**.
-
-.. code-block:: c++
-
-  using U = view< int[][][] > ;
-
-  U x(N0,N1,N2);
-
-  // Using std::pair<int,int> for an integral range
-
-  using V = subview_t< U , std::pair<int,int> , std::pair<int,int> , int > ;
-
-  V y = subview( x , std::pair<int,int>(1,N0-1) , std::pair<int,int>(1,N1-1) , 1 );
-
-  assert( y.rank() == 2 );
-  assert( y.extent_0() == N0-2 );
-  assert( y.extent_1() == N1-2 );
-  assert( & y(0,0) == & x(1,1,1) );
-
-  // Using initializer_list with size() == 2 as an integral range
-
-  auto z = subview( x , 1 , {1,N1-1} , 1 );
-
-  assert( z.rank() == 1 );
-  assert( & z(0) == & x(1,1,1) );
-
-..
-
-
+Note that a tiled layout mapping is irregular and if padding is 
+required to align with tile boundarries then the span will exceed the size.
 
 --------------------------------------------------------------------
 Specification with Simple View Properties
@@ -817,302 +485,468 @@ view properties and then enabling/disabling a particular property by conditional
 setting it to **void**.
 
 
-.. code-block:: c++
+  |  namespace std {
+  |  namespace experimental {
+  |
+  |  template< class DataType , class ... Properties >
+  |  struct view {
+  |    //--------------------
+  |    // Types:
+  |
+  |    // Types are implementation and Properties dependent.
+  |    // The following type implementation are normative 
+  |    // with respect to empty Properties.
+  |
+  |    using value_type = typename std::remove_all_extents< DataType >::type ;
+  |    using reference  = value_type & ; // Typical type, but implementation defined
+  |    using pointer    = value_type * ; // Typical type, but implementation defined
+  |
+  |    //--------------------
+  |    // Domain index space properties:
+  |
+  |    static constexpr unsigned rank() const ;
+  |
+  |    // Rank upper bound is at least ten.
+  |    constexpr size_t  extent_0() const ;
+  |    constexpr size_t  extent_1() const ;
+  |    constexpr size_t  extent_2() const ;
+  |    constexpr size_t  extent_3() const ;
+  |    constexpr size_t  extent_4() const ;
+  |    constexpr size_t  extent_5() const ;
+  |    constexpr size_t  extent_6() const ;
+  |    constexpr size_t  extent_7() const ;
+  |    constexpr size_t  extent_8() const ;
+  |    constexpr size_t  extent_9() const ;
+  |
+  |    template< typename IntegralType >
+  |    constexpr size_t extent( const IntegralType & ) const ;
+  |
+  |    // Cardinality of index space; i.e., product of extents
+  |    constexpr size_t  size() const ;
+  |
+  |    //--------------------
+  |    // Layout mapping properties:
+  |
+  |    using layout     = *array layout type* ;
+  |    using is_regular = std::integral_constant<bool, *B* > ;
+  |
+  |    // If the layout mapping is regular then return the
+  |    // distance between members when index \# is increased by one.
+  |    constexpr size_t  stride_0() const ;
+  |    constexpr size_t  stride_1() const ;
+  |    constexpr size_t  stride_2() const ;
+  |    constexpr size_t  stride_3() const ;
+  |    constexpr size_t  stride_4() const ;
+  |    constexpr size_t  stride_5() const ;
+  |    constexpr size_t  stride_6() const ;
+  |    constexpr size_t  stride_7() const ;
+  |    constexpr size_t  stride_8() const ;
+  |    constexpr size_t  stride_9() const ;
+  |
+  |    template< typename IntegralType >
+  |    constexpr size_t stride( const IntegralType & ) const ;
+  |
+  |    // Span covering the members
+  |    constexpr size_t span() const ;
+  |
+  |    // Span of an array with regular layout if it
+  |    // is constructed with the given implicit dimensions.
+  |    static constexpr
+  |      size_t span( size_t implicit_N0
+  |                 , size_t implicit_N1 = 0
+  |                 , size_t implicit_N2 = 0
+  |                 , size_t implicit_N3 = 0
+  |                 , size_t implicit_N4 = 0
+  |                 , size_t implicit_N5 = 0
+  |                 , size_t implicit_N6 = 0
+  |                 , size_t implicit_N7 = 0
+  |                 , size_t implicit_N8 = 0
+  |                 , size_t implicit_N9 = 0
+  |                 );
+  |
+  |    // Pointer to member memory
+  |    constexpr pointer data() const ;
+  |
+  |    //--------------------
+  |    // Member access (proper):
+  |
+  |    // EnableIf rank == 0
+  |    reference operator()() const ;
+  |
+  |    // EnableIf rank == 1 and std::is_integral<t0>::value
+  |    template< typename t0 >
+  |    reference operator[]( const t0 & i0 ) const ;
+  |
+  |    // EnableIf rank == 1 and std::is_integral<t0>::value
+  |    template< typename t0 >
+  |    reference operator()( const t0 & i0 ) const ;
+  |
+  |    // EnableIf rank == 2 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1 ) const ;
+  |
+  |    // EnableIf rank == 3 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2 ) const ;
+  |
+  |    // EnableIf rank == 4 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 5 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 6 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 7 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 8 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 , typename t7 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        , const t7 & i7
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 9 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 , typename t7 , typename t8 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        , const t7 & i7
+  |                        , const t8 & i8
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 10 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 , typename t7 , typename t8 , typename t9 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        , const t7 & i7
+  |                        , const t8 & i8
+  |                        , const t9 & i9
+  |                        ) const ;
+  |
+  |    //--------------------
+  |    // Member access (improper):
+  |
+  |    // EnableIf rank == 0 and i# == 0
+  |    reference operator()( const int i0
+  |                        , const int i1 = 0
+  |                        , const int i2 = 0
+  |                        , const int i3 = 0
+  |                        , const int i4 = 0
+  |                        , const int i5 = 0
+  |                        , const int i6 = 0
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 1 and std::is_integral<t0>::value and i{1-9} == 0
+  |    template< typename t0 >
+  |    reference operator()( const t0 & i0
+  |                        , const int i1
+  |                        , const int i2 = 0
+  |                        , const int i3 = 0
+  |                        , const int i4 = 0
+  |                        , const int i5 = 0
+  |                        , const int i6 = 0
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 2 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const int i2
+  |                        , const int i3 = 0
+  |                        , const int i4 = 0
+  |                        , const int i5 = 0
+  |                        , const int i6 = 0
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 3 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const int i3
+  |                        , const int i4 = 0
+  |                        , const int i5 = 0
+  |                        , const int i6 = 0
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 4 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const int i4
+  |                        , const int i5 = 0
+  |                        , const int i6 = 0
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 5 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const int i5
+  |                        , const int i6 = 0
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 6 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const int i6
+  |                        , const int i7 = 0
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 7 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        , const int i7
+  |                        , const int i8 = 0
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 8 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 , typename t7 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        , const t7 & i7
+  |                        , const int i8
+  |                        , const int i9 = 0
+  |                        ) const ;
+  |
+  |    // EnableIf rank == 9 and std::is_integral<t#>::value
+  |    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 , typename t5 , typename t6 , typename t7 , typename t8 >
+  |    reference operator()( const t0 & i0
+  |                        , const t1 & i1
+  |                        , const t2 & i2
+  |                        , const t3 & i3
+  |                        , const t4 & i4
+  |                        , const t5 & i5
+  |                        , const t6 & i6
+  |                        , const t7 & i7
+  |                        , const t8 & i8
+  |                        , const int i9
+  |                        ) const ;
+  |
+  |    //--------------------
+  |    // Construct/copy/destroy:
+  |
+  |    ~view();
+  |    constexpr view();
+  |    constexpr view( const view & );
+  |    constexpr view( view && );
+  |    view & operator = ( const view & );
+  |    view & operator = ( view && );
+  |
+  |    constexpr view( pointer
+  |                  , size_t implicit_N0 = 0
+  |                  , size_t implicit_N1 = 0
+  |                  , size_t implicit_N2 = 0
+  |                  , size_t implicit_N3 = 0
+  |                  , size_t implicit_N4 = 0
+  |                  , size_t implicit_N5 = 0
+  |                  , size_t implicit_N6 = 0
+  |                  , size_t implicit_N7 = 0
+  |                  , size_t implicit_N8 = 0
+  |                  , size_t implicit_N9 = 0
+  |                  );
+  |
+  |    template< class UType , class ... UProperties >
+  |    constexpr view( const view< UType , UProperties ... > & );
+  |
+  |    template< class UType , class ... UProperties >
+  |    view & operator = ( const view< UType , UProperties ... > & );
+  |  };
+  |
+  |  // Meta function to generate an array type with Rank implicit dimensions.
+  |  // Example:  view< implicit_array_t<int,10> >
+  |
+  |  template< typename T , unsigned Rank >
+  |  struct implicit_array_type {
+  |    using type = typename implict_array_type<T,Rank-1>::type [] ;
+  |  };
+  |  template< typename T >
+  |  struct implicit_array_type<T,0> {
+  |    using type = T ;
+  |  };
+  |
+  |  template< typename T , unsigned Rank >
+  |  using implicit_array_t = typename implicit_array_type<T,Rank>::type ;
+  |
+  |  // If necessary
+  |  template< size_t , size_t , size_t , size_t , size_t
+  |          , size_t , size_t , size_t , size_t , size_t >
+  |  struct view_dimension ;
+  |
+  | }}
 
-  namespace std {
-  namespace experimental {
+**uisng value_type = typename std::remove_all_extents< DataType >::type ;**
 
-  template< class DataType , class ... Properties >
-  struct view {
-    //--------------------
-    // Types:
+**using reference =**
 
-    // Types are implementation and Properties dependent.
-    // The following type implementation are normative 
-    // with respect to empty Properties.
+  The type returned by a dereferencing operator.  Typically this will be **value_type &**.
+  [Note: The reference type may be a proxy depending upon the **Properties**.
+  For example, if a property indicates that all member references are to be atomic then
+  the reference type would be a proxy conforming to *atomic-view-concept* 
+  introduced in paper P0019. - end note]
 
-    using value_type = typename std::remove_all_extents< DataType >::type ;
-    using reference  = value_type & ;
-    using pointer    = value_type * ;
+**using pointer =**
 
-    //--------------------
-    // Domain index space properties:
+  The input type to a wrapping constructor.
 
-    static constexpr unsigned rank();
+**static constexpr unsigned rank() const**
 
-    // Rank upper bound is at least ten.
-    constexpr size_t  extent_0() const ;
-    constexpr size_t  extent_1() const ;
-    constexpr size_t  extent_2() const ;
-    constexpr size_t  extent_3() const ;
-    constexpr size_t  extent_4() const ;
-    constexpr size_t  extent_5() const ;
-    constexpr size_t  extent_6() const ;
-    constexpr size_t  extent_7() const ;
-    constexpr size_t  extent_8() const ;
-    constexpr size_t  extent_9() const ;
-
-    template< unsigned > constexpr size_t extent() const ;
-
-    // Cardinality of index space; i.e., product of extents
-    constexpr size_t  size() const ;
-
-    //--------------------
-    // Layout mapping properties:
-
-    using layout     = ... ;
-    using is_regular = std::integral_constant<bool, ... > ;
-
-    // If the layout mapping is regular then return the
-    // distance between members when index # is increased by one.
-    constexpr size_t  stride_0() const ;
-    constexpr size_t  stride_1() const ;
-    constexpr size_t  stride_2() const ;
-    constexpr size_t  stride_3() const ;
-    constexpr size_t  stride_4() const ;
-    constexpr size_t  stride_5() const ;
-    constexpr size_t  stride_6() const ;
-    constexpr size_t  stride_7() const ;
-    constexpr size_t  stride_8() const ;
-    constexpr size_t  stride_9() const ;
-
-    template< unsigned > constexpr size_t stride() const ;
-
-    // One plus maximum distance between any two members.
-    constexpr size_t span() const ;
-
-    // Span of an array with regular layout if it
-    // is constructed with the given implicit dimensions.
-    static constexpr
-      size_t span( size_t implicit_N0
-                 , size_t implicit_N1 = 0
-                 , size_t implicit_N2 = 0
-                 , size_t implicit_N3 = 0
-                 , size_t implicit_N4 = 0
-                 , size_t implicit_N5 = 0
-                 , size_t implicit_N6 = 0
-                 , size_t implicit_N7 = 0
-                 , size_t implicit_N8 = 0
-                 , size_t implicit_N9 = 0
-                 );
-
-    // Pointer to member memory
-    constexpr pointer data() const ;
-
-    //--------------------
-    // Member access (proper):
-
-    // Requires rank == 0
-    reference operator()() const ;
-
-    // Requires rank == 1 and std::is_integral<t0>::value
-    template< typename t0 >
-    reference operator[]( const t0 & i0 ) const ;
-
-    // Requires rank == 1 and std::is_integral<t0>::value
-    template< typename t0 >
-    reference operator()( const t0 & i0 ) const ;
-
-    // Requires rank == 2 and std::is_integral<t#>::value
-    template< typename t0 , typename t1 >
-    reference operator()( const t0 & i0
-                        , const t1 & i1 ) const ;
-
-    // Requires rank == 3 and std::is_integral<t#>::value
-    template< typename t0 , typename t1 , typename t2 >
-    reference operator()( const t0 & i0
-                        , const t1 & i1
-                        , const t2 & i2 ) const ;
-
-    // member access operator follows pattern through at least rank ten.
-
-    // Requires rank == 10 and std::is_integral<t#>::value
-    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4
-            , typename t5 , typename t6 , typename t7 , typename t8 , typename t9 >
-    reference operator()( const t0 & i0
-                        , const t1 & i1
-                        , const t2 & i2
-                        , const t3 & i3
-                        , const t4 & i4
-                        , const t5 & i5
-                        , const t6 & i6
-                        , const t7 & i7
-                        , const t8 & i8
-                        , const t9 & i9
-                        ) const ;
-
-    //--------------------
-    // Member access (improper):
-
-    // Requires rank == 0 and i# == 0
-    reference operator()( const int i0
-                        , const int i1 = 0
-                        , const int i2 = 0
-                        , const int i3 = 0
-                        , const int i4 = 0
-                        , const int i5 = 0
-                        , const int i6 = 0
-                        , const int i7 = 0
-                        , const int i8 = 0
-                        , const int i9 = 0
-                        ) const ;
-
-    // Requires rank == 1 and std::is_integral<t0>::value and i{1-9} == 0
-    template< typename t0 >
-    reference operator()( const t0 & i0
-                        , const int i1
-                        , const int i2 = 0
-                        , const int i3 = 0
-                        , const int i4 = 0
-                        , const int i5 = 0
-                        , const int i6 = 0
-                        , const int i7 = 0
-                        , const int i8 = 0
-                        , const int i9 = 0
-                        ) const ;
-
-    // improper member access operator follows pattern through at least rank nine.
-
-    // Requires rank == 10 and std::is_integral<t{0-8}>::value and i9 == 0
-    template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4
-            , typename t5 , typename t6 , typename t7 , typename t8 >
-    reference operator()( const t0 & i0
-                        , const t1 & i1
-                        , const t2 & i2
-                        , const t3 & i3
-                        , const t4 & i4
-                        , const t5 & i5
-                        , const t6 & i6
-                        , const t7 & i7
-                        , const t8 & i8
-                        , const int i9
-                        ) const ;
-
-    //--------------------
-    // Construct/copy/destroy:
-
-    ~view();
-    constexpr view();
-    constexpr view( const view & );
-    constexpr view( view && );
-    view & operator = ( const view & );
-    view & operator = ( view && );
-
-    constexpr view( pointer
-                  , size_t implicit_N0 = 0
-                  , size_t implicit_N1 = 0
-                  , size_t implicit_N2 = 0
-                  , size_t implicit_N3 = 0
-                  , size_t implicit_N4 = 0
-                  , size_t implicit_N5 = 0
-                  , size_t implicit_N6 = 0
-                  , size_t implicit_N7 = 0
-                  , size_t implicit_N8 = 0
-                  , size_t implicit_N9 = 0
-                  );
-
-    template< class UType , class ... UProperties >
-    constexpr view( const view< UType , UProperties ... > & );
-
-    template< class UType , class ... UProperties >
-    view & operator = ( const view< UType , UProperties ... > & );
-  };
-
-  // Meta function to generate an array type with Rank implicit dimensions.
-  // Example:  view< implicit_array_t<int,10> >
-
-  template< typename T , unsigned Rank >
-  struct implicit_array_type {
-    using type = typename implict_array_type<T,Rank-1>::type [] ;
-  };
-  template< typename T >
-  struct implicit_array_type<T,0> {
-    using type = T ;
-  };
-
-  template< typename T , unsigned Rank >
-  using implicit_array_t = typename implicit_array_type<T,Rank>::type ;
-
-  // If necessary
-  template< size_t , size_t , size_t , size_t , size_t
-          , size_t , size_t , size_t , size_t , size_t >
-  struct view_dimension ;
-
-  }}
-
-..
-
-**using reference_type =**
-
-  The type returned by the dereferencing operator is dependent upon
-  the *DataType* and the *Properties*.
-  For example, a potential property of *atomic* would cause the
-  **reference_type** to be a proxy overloading operators for
-  atomic access.
-
-**using pointer_type =**
-
-  The type input to a wrapping constructor.
-
-**static constexpr unsigned rank =**
-
-  The rank of the viewed array.
+  Returns: The rank of the viewed array.
 
 **constexpr size_t extent_#() const**
   
-  Returns the exent of dimension # when ``# < rank()``
-  and 1 when ( **rank** <= # < *rank upper bound* ).
+  Returns: The exent of dimension \# when ``# < rank()``
+  and 1 when ( **rank** <= \# < *rank upper bound* ).
 
-**template< unsigned > constexpr size_t extent() const**
+**template< typename IntegralType > constexpr size_t extent( const IntegralType & r ) const**
 
-  Returns the exent of dimension # when ``# < rank()``
-  and 1 when ( **rank** <= # < *rank upper bound* ).
+  Returns: The exent of dimension r when ``r < rank()``
+  and 1 when ( **rank** <= r < *rank upper bound* ).
   
 **constexpr size_t size() const**
 
-  Returns the product of the extents.
+  Returns: The product of the extents.
 
 **using layout =**
 
-  Is the layout type property that defaults to **void**.
+  The layout type property that defaults to **void**.
 
-**using is_regular = std::integral_constant<bool, ... >**
+**using is_regular = std::integral_constant<bool,** *B* **>**
 
-  Denoting by **is_regular::value** if the layout mapping is regular.
+  Denoting by **is_regular::value** if the layout mapping is regular;
+  *i.e.*, if there is a uniform stride between members when
+  incrementing a particular dereferencing index and holding all
+  other indices fixed.
 
 **constexpr size_t stride_#() const**
 
   For regular layout mapping returns the distance between members
-  when index # is incremented by one.
+  when index \# is incremented by one.
   For not-regular layout mapping the return value is undefined.
 
-**template< unsigned > constexpr size_t stride() const**
+**template< typename IntegralType > constexpr size_t stride( const IntegralType & r ) const**
 
   For regular layout mapping returns the distance between members
-  when index # is incremented by one.
+  when index **r** is incremented by one.
   For not-regular layout mapping the return value is undefined.
 
 **constexpr size_t span() const**
 
-  For regular layout mapping returns
-  one plus the maximum distance between any two members of the array.
-  For not-regular layout mapping the return value is undefined.
+  Returns:  A distance that is at least one plus the
+  maximum distance between any two members of the array.
+
+  Remark: For a one-to-one layout mapping the span will equal the size.
+
+**static constexpr
+size_t span( size_t implicit_N0 , size_t implicit_N1 = 0 , size_t implicit_N2 = 0 ,
+size_t implicit_N3 = 0 , size_t implicit_N4 = 0 , size_t implicit_N5 = 0 ,
+size_t implicit_N6 = 0 , size_t implicit_N7 = 0 , size_t implicit_N8 = 0 ,
+size_t implicit_N9 = 0 )**
+
+  Returns:  The span of the view if it were constructed with the implicit dimensions.
+
 
 **constexpr pointer data() const**
 
-  For regular layout mapping returns
-  pointer to member with the smallest address.
-  For not-regular layout mapping the return value is undefined.
+  Returns: Pointer to the member with the minimum location.
 
-  Requires for regular layout mapping all members are in the
-  range ``[ data() .. data() + span() )``.
+  Requires: All members are in the range ``[ data() .. data() + span() )``.
 
 **reference operator()() const**
 
-  Returns a reference to the member of a rank zero array.
-
   Requires rank == 0.
-  It is suggested that this requirement be enforced by conditionally
+
+  Returns:  A reference to the member of a rank zero array.
+
+  Remark: It is recommended that the requirement be enforced by conditionally
   defining the return type of the operator.
 
 .. code-block:: c++
@@ -1123,17 +957,59 @@ setting it to **void**.
 
 ..
 
-**reference operator()( /\* multi-index-argument-list \*/ ) const /\* proper \*/**
+**template< typename IntegralType > reference operator[]( const IntegralType & i ) const**
 
-  Returns a reference to member associated with the *multi-index-argument-list*.
+  | Requires: rank() == 1
+  | Requires: is_integral<IntegralType>::value
+  | Requires: 0 <= i < extent_0()
 
-  Requires the rank of the mult-index-argument-list equal to the rank of the array
-  and all multi-indices are an integral type.
-  It is suggested that this requirement be enforced as follows.
+  Returns: Reference to member denoted by index **i**.
+
+  Remark:  A view with a bounds-checking property should throw **std::out_of_range**
+  when the index bounds requirement is violated.
+
+  Remark:  It is recommended that the rank and type requirements be enforced
+  by conditionally enabling the operator.
 
 .. code-block:: c++
 
-  // proper rank 4 member access operator
+  template< typename IntegralType >
+  typename std::enable_if< std::is_integral<IntegralType>::value && rank() == 1 , reference >::type
+  operator[]( const IntegralType & i ) const ;
+
+..
+
+
+| **template< typename t0 , typename t1 , ... , typename tm >**
+| **reference operator()( const t0 & i0 , const t1 & i1 , ... , const tm & im ) const**
+
+  | Requires:  std::is_integral<t#>::value
+  | Requires:  For a *proper* deference operator rank() == m + 1
+  | Requires:  For an *improper** deference operator rank() <= m
+  | Requires:  0 <= i# < extent_#()
+
+  Returns: Reference to member associated with multi-index (i0,i1,...,im).
+
+  Remark: Index arguments are accepted as constant references of a
+  template type to defer type promotion of these arguments until 
+  they appear in the layout mapping computation.
+  This has been demonstrated to better enable conventional compilers to
+  optimize code containting the layout mapping computation without the
+  need for specialized pattern recognition of **view::operator()**.
+
+  Remark:  The *improper* dereference operator is a necessary usability feature
+  to allow functions to accept views of variable rank.
+
+  Remark:  A view with a bounds-checking property should throw **std::out_of_range**
+  when the index bounds requirement is violated.
+  Note that for improper dereference operator extent_#() == 1 when rank() <= \#.
+
+  Remark:  It is recommended that the rank and type requirements be enforced by
+  conditionally enabling the operators.
+
+.. code-block:: c++
+
+  // Proper rank 4 member access operator
   template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 >
   typename std::enable_if< rank() == 4 &&
                            std::is_integral<t0>::value &&
@@ -1147,33 +1023,7 @@ setting it to **void**.
              , const t3 & i3
              ) const ;
 
-..
-
-  Requires each index is within the extent of the corresponding dimension:
-  ``0 <= i# < extent_#()``.
-  It is suggested that this requirement be enforced when the **view** is
-  given an array bounds checking checking property.
-
-  [Discussion:
-  Index arguments are accepted as constant references to
-  templated types to defer type promotion of these arguments until 
-  they appear in the layout mapping computation.
-  This has been demonstrated to better enable conventional compilers to
-  optimize code containting the layout mapping computation without the
-  need for specialized pattern recognition of **view::operator()**.
-  ]
-
-**reference operator()( /\* multi-index-argument-list \*/ ) const /\* improper \*/**
-
-  Returns a reference to the member associated with the *multi-index-argument-list*
-  up to the rank of the array.
-
-  Requires the rank of the multi-index-argument-list is greater than the rank of the array
-  and all multi-indices are an integral type.
-
-.. code-block:: c++
-
-  // improper rank 4 member access operator
+  // Improper rank 4 member access operator
   template< typename t0 , typename t1 , typename t2 , typename t3 , typename t4 >
   typename std::enable_if< rank() == 4 &&
                            std::is_integral<t0>::value &&
@@ -1195,95 +1045,57 @@ setting it to **void**.
 
 ..
 
-  Requires each index is within the extent of the corresponding dimension:
-  ``0 <= i# < extent_#()``.
-  Note that when ``rank() <= i#`` then ``extent_#() == 1`` so if array bounds
-  are enforces then these extraneous indices are required to be zero.
-  It is suggested that this requirement be enforced when the **view** is
-  given an array bounds checking checking property.
 
-  [Discussion:
-  In practice user codes often have conditional blocks depending upon
-  the rank of the array.  If only the *proper* member access operators are defined
-  then that operator will only exist for one of the conditional blocks.
-  This is a significant usability deficiency.
-  The *improper** member access operators support such user code by allowing the
-  code to use a multi-index-argument-list with the maximal rank that the user code
-  supports.
-  ]
-  
 **constexpr view()**
 
-  Effect: Construct a *null* view.
-
-  Requires all implicit dimensions have an extent of zero.
-
-  Requires ``data() == 0``.
+  Effect: Construct a *null* view with extent_#() == 0 for all implicit dimensions
+  and data() == nullptr.
 
 **constexpr view( const view & rhs )**
 
   Effect: Construct a view of the array viewed by **rhs**.
 
-  There may be other *property* dependent effects.
+  Remark: There may be other *property* dependent effects.
 
 **view & operator = ( const view & rhs )**
 
   Effect: Assigns **this** to view the array viewed by **rhs**.
 
-  There may be other *property* dependent effects.
+  Remark: There may be other *property* dependent effects.
 
 **constexpr view( view && rhs )**
 
   Effect: Construct a view of the array viewed by **rhs** and then **rhs** is *null* view.
 
-  There may be other *property* dependent effects.
+  Remark: There may be other *property* dependent effects.
 
 **view & operator = ( view && rhs )**
 
   Effect: Assigns **this** to view the array viewed by **rhs** then assigns **rhs** to be a *null* view.
 
-  There may be other *property* dependent effects.
+  Remark: There may be other *property* dependent effects.
 
 **~view()**
 
   Effect: Assigns **this** to be a *null* view.
 
-  There may be other *property* dependent effects.
+  Remark: There may be other *property* dependent effects.
 
-.. code-block:: c++
+**constexpr view( pointer ptr , size_t implicit_N0 = 0 , size_t implicit_N1 = 0 , size_t implicit_N2 = 0 , size_t implicit_N3 = 0 , size_t implicit_N4 = 0 , size_t implicit_N5 = 0 , size_t implicit_N6 = 0 , size_t implicit_N7 = 0 , size_t implicit_N8 = 0 , size_t implicit_N9 = 0 );**
 
-  constexpr view( pointer ptr
-                , size_t implicit_N0 = 0
-                , size_t implicit_N1 = 0
-                , size_t implicit_N2 = 0
-                , size_t implicit_N3 = 0
-                , size_t implicit_N4 = 0
-                , size_t implicit_N5 = 0
-                , size_t implicit_N6 = 0
-                , size_t implicit_N7 = 0
-                , size_t implicit_N8 = 0
-                , size_t implicit_N9 = 0
-                );
+  Requires: The input **ptr** references memory ``[ ptr .. ptr + S )``
+  where S = **view::span(implicit_N0,implicit_N1,...,implicit_N9)**.
 
-..
+  Effects: The *wrapping constructor** constructs a multidimensional array view of the given member memory
+  such that all data members are in the span ``[ ptr .. ptr + span() )``.
 
-  Effects:
-  The *wrapping constructor** of a view with regular layout mapping
-  constructs a multidimensional array view of the given member memory.
-
-  Requires: Regular layout mapping.
-
-  Requires: The input **ptr** references memory ``[ ptr .. ptr + span() )``.
-  Note that the span requirement may be queried without constructing a view
-  with the static **span** member function.
 
 **template< class UType , class ... UProperties > constexpr view( const view< UType , UProperties ... > & rhs )**
 
-  Effect: Constructs a view of the array viewed by **rhs**.
-
   Requires: This view type is assignable to the **rhs** view type.
+  View assignability includes compatibility of the value type, dimensions, and properties.
 
-  View compatibility includes compatibility of the value type, dimensions, and properties.
+  Effect: Constructs a view of the array viewed by **rhs**.
 
 .. code-block:: c++
 
@@ -1296,12 +1108,12 @@ setting it to **void**.
 
 **template< class UType , class ... UProperties > view & operator = ( const view< UType , UProperties ... > & rhs )**
 
-  Effect: Assigns **this** to view the array viewed by **rhs**.
-
   Requires: This view type is assignable to the **rhs** view type.
 
+  Effect: Assigns **this** to view the array viewed by **rhs**.
+
 --------------------------------------------------------------------
-Assignable View
+Assignability of Views of Non-identical Types
 --------------------------------------------------------------------
 
 It is essential that view of non-identical, compatible types be assignable.
@@ -1314,40 +1126,107 @@ For example:
 
 ..
 
-The 'std::is_assignable' meta-function will be partial specialized to
+The 'std::is_assignable' meta-function must be partial specialized to
 implement the view assignability rules regarding value type, dimensions, and properties.
 
 .. code-block:: c++
 
-  template< class Utype , class ... Uprop , class Vtype , class ... Vprop >
-  struct is_assignable< view< Utype , Uprop ... > , view< Vtype , Vprop ... > >
+  template< class Utype , class ... Uprop
+          , class Vtype , class ... Vprop >
+  struct is_assignable< view< Utype , Uprop ... >
+                      , view< Vtype , Vprop ... > >
     : public integral_const< bool ,
         is_assignable< typename view< Utype , Uprop ... >::pointer
                      , typename view< Vtype , Vprop ... >::pointer >::value
         &&
         ( view< Utype , Uprop ... >::rank() == view< Vtype , Vprop ... >::rank() )
         &&
-        /* other conditions */
+        (
+          // Extent is either equal or impplicit.
+          extent<Utype,#>::value == extent<Vtype,#>::value ||
+          extent<Utype,#>::value == 0
+        )
+        &&
+        // other possible conditions
         > {}
     
-.. /*
+..
 
+--------------------------------------------------------------------
+Subview of View
+--------------------------------------------------------------------
+
+The capability to **easily** extract subviews of a view, or subviews of subviews,
+is essential for usability.
+Non-trivial subviews of regular views will often have **view_layout_stride**.
+
+.. code-block:: c++
+
+  using U = view< int[][][] > ;
+
+  U x(buffer,N0,N1,N2);
+
+  // Using std::pair<int,int> for an integral range
+  auto y = subview( x , std::pair<int,int>(1,N0-1) , std::pair<int,int>(1,N1-1) , 1 );
+
+  assert( y.rank() == 2 );
+  assert( y.extent(0) == N0 - 2 );
+  assert( y.extent(0) == N1 - 2 );
+  assert( & y(0,0) == & x(1,1,1) );
+
+  // Using initializer_list of size 2 as an integral range
+  auto z = subview( x , 1 , {1,N1-1} , 1 );
+
+  assert( z.rank() == 1 );
+  assert( & z(0) == & x(1,1,1) );
+
+..
+
+Subview types are generated with a meta-function.
+
+  | namespace std {
+  | namespace experimental {
+  |
+  | template< typename ViewType , class ... Indices_And_Ranges >
+  | struct subview_type ;
+  |
+  | template< typename ViewType , class ... Indices_And_Ranges >
+  | using subview_t = typename subview_type< ViewType , Indices_And_Ranges >::type ;
+  |
+  | template< typename DataType , class ... Parameters , class ... Indices_And_Ranges >
+  | subview_t< view< DataType, Parameters ... > , Indices_And_Ranges ... >
+  | subview( const view< DataType, Parameters ... > & , Indices_And_Ranges ... );
+  |
+  | template< typename T >
+  | struct is_integral_range ;
+  |
+  | }}
+
+**template< typename T > struct is_integral_range : public integral_constant<bool,**\ *F*\ **>**
+
+  Returns: Meta function indicating whether T is an integral range.
+  
+
+**template< typename ViewType , class ... Indices_And_Ranges > struct subview_type ;**
+
+  | Requires:  ViewType::rank() == sizeof...(Indices_And_Ranges)
+  | Requires:  Each parameter in Indices_And_Ranges is either is_integral<T> or is_integral_range<T>.
+
+  Returns: The view type of the subview from the input view and parameter pack of indices and integral ranges.
+  The rank of the subview is equal to the number of integral ranges in the parameter pack.
 
 --------------------------------------------------------------------
 View Property : Member Access Array Bounds Checking
 --------------------------------------------------------------------
 
-.. code-block:: c++
+  |  namespace std {
+  |  namespace experimental {
+  |  struct view_bounds_checking ;
+  |  }}
 
-  namespace std {
-  namespace experimental {
-  struct view_bounds_checking ;
-  }}
-
-..
 
 Array bounds checking is an invaluable tool for debugging user code.
-Thus functionality traditionally requires global injection through
+This functionality traditionally requires global injection through
 special compiler support.
 In large, long running code global array bounds checking introduces
 a signficant overhead that impedes the debugging process.
