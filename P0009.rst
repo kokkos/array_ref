@@ -506,18 +506,6 @@ setting it to **void**.
   |
   |    static constexpr unsigned rank() const ;
   |
-  |    // Rank upper bound is at least ten.
-  |    constexpr size_t  extent_0() const ;
-  |    constexpr size_t  extent_1() const ;
-  |    constexpr size_t  extent_2() const ;
-  |    constexpr size_t  extent_3() const ;
-  |    constexpr size_t  extent_4() const ;
-  |    constexpr size_t  extent_5() const ;
-  |    constexpr size_t  extent_6() const ;
-  |    constexpr size_t  extent_7() const ;
-  |    constexpr size_t  extent_8() const ;
-  |    constexpr size_t  extent_9() const ;
-  |
   |    template< typename IntegralType >
   |    constexpr size_t extent( const IntegralType & ) const ;
   |
@@ -532,17 +520,6 @@ setting it to **void**.
   |
   |    // If the layout mapping is regular then return the
   |    // distance between members when index \# is increased by one.
-  |    constexpr size_t  stride_0() const ;
-  |    constexpr size_t  stride_1() const ;
-  |    constexpr size_t  stride_2() const ;
-  |    constexpr size_t  stride_3() const ;
-  |    constexpr size_t  stride_4() const ;
-  |    constexpr size_t  stride_5() const ;
-  |    constexpr size_t  stride_6() const ;
-  |    constexpr size_t  stride_7() const ;
-  |    constexpr size_t  stride_8() const ;
-  |    constexpr size_t  stride_9() const ;
-  |
   |    template< typename IntegralType >
   |    constexpr size_t stride( const IntegralType & ) const ;
   |
@@ -881,16 +858,11 @@ setting it to **void**.
 
   Returns: The rank of the viewed array.
 
-**constexpr size_t extent_#() const**
-  
-  Returns: The exent of dimension \# when ``# < rank()``
-  and 1 when ( **rank** <= \# < *rank upper bound* ).
-
 **template< typename IntegralType > constexpr size_t extent( const IntegralType & r ) const**
 
   Returns: The exent of dimension r when ``r < rank()``
   and 1 when ( **rank** <= r < *rank upper bound* ).
-  
+
 **constexpr size_t size() const**
 
   Returns: The product of the extents.
@@ -906,17 +878,12 @@ setting it to **void**.
   incrementing a particular dereferencing index and holding all
   other indices fixed.
 
-**constexpr size_t stride_#() const**
-
-  For regular layout mapping returns the distance between members
-  when index \# is incremented by one.
-  For not-regular layout mapping the return value is undefined.
-
 **template< typename IntegralType > constexpr size_t stride( const IntegralType & r ) const**
 
-  For regular layout mapping returns the distance between members
-  when index **r** is incremented by one.
-  For not-regular layout mapping the return value is undefined.
+  Requires: is_regular::value
+
+  Returns:  The distance between members when index **r** is incremented by one.
+  If is_regular::value == false the return value is undefined.
 
 **constexpr size_t span() const**
 
