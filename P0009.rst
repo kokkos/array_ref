@@ -12,11 +12,9 @@ P0009r01 : Polymorphic Multidimensional Array View
 :Contact: jesse.perla@ubc.ca
 :Author: Mauro Bianco
 :Contact: mbianco@cscs.ch
-:Author: Agustín K-ballo Bergé 
-:Contact: kaballo86@hotmail.com
-:Author: Maffeo, Robin 
+:Author: Robin Maffeo
 :Contact: Robin.Maffeo@amd.com
-:Author: Sander, Ben
+:Author: Ben Sander
 :Contact: ben.sander@amd.com
 :Author: Bryce Lelbach 
 :Contact: balelbach@lbl.gov
@@ -27,9 +25,9 @@ P0009r01 : Polymorphic Multidimensional Array View
 
 .. sectnum::
 
----------
+******************************************************************
 Rationale
----------
+******************************************************************
 
 Multidimensional arrays are a foundational data structure
 for science and engineering codes, as demonstrated by their
@@ -56,9 +54,9 @@ maintenance of functionally redundant code.
 Layout polymorphism is a critical capability; however, it is not the only
 beneficial form of polymorphism.
 
---------
+******************************************************************
 The View
---------
+******************************************************************
 
 The proposed **view** has template arguments for the data type of the array
 and a parameter pack for polymorphic properties of the view.
@@ -75,9 +73,23 @@ included at the end of this paper.
 We present the specification incrementally to
 convey the rational for this specification.
 
------------------------------------------------
+An initial set of view properties are proposed.
+These properties are defined by class and templated class types.
+It is an open question as to whether these view properties
+should resided in the same namespace as the **view**,
+or in a designated namespace such as the **std::rel_ops** functions,
+**std::chrono** classes, or **std::regex_constants** constants.
+
+  | namespace std {
+  | namespace experimental {
+  | namespace view_property {
+  |   // view property classes
+  | }}}
+
+
+******************************************************************
 View of a One-Dimensional Array
------------------------------------------------
+******************************************************************
 
 A view of a one-dimension array is anticipated to subsume the functionality
 of a pointer to memory extent combined with an array length.
@@ -113,9 +125,9 @@ modifid but the viewed extent of memory may be modified.
 A view-of-const is similar to a pointer-to-const in that the viewed
 extent of memory may not be modified.
 
-----------------------------------------------------------------------------
+***********************************************************************
 View of Traditional Multidimensional Array with Explicit Dimensions
-----------------------------------------------------------------------------
+***********************************************************************
 
 A traditional multidimensional array with explicit dimensions
 (for example, an array of 3x3 tensors) is passed to a function as follows.
@@ -143,9 +155,9 @@ A traditional multidimensional array with explicit dimensions
 
 ..
 
---------------------------------------------------------------------------------
+******************************************************************************
 View of Multidimensional Array with Multiple Implicit Dimensions (Preferred)
---------------------------------------------------------------------------------
+******************************************************************************
 
 **Requires language change for slight relaxation of array declaration.**
 
@@ -262,9 +274,9 @@ demonstrated by the following error-free and warning-free meta function.
 ..
 
 
-------------------------------------------------------------------------------
+********************************************************************************
 View of Multidimensional Array with Multiple Implicit Dimensions (alternative)
-------------------------------------------------------------------------------
+********************************************************************************
 
 If the array declaration constraint in **8.3.4.p3** is not relaxed then
 an alternative mechanism will be required to define mixed explicit and implicit
@@ -275,16 +287,16 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
 
 .. code-block:: c++
 
-  std::view< int[][][3] > x(ptr,N0,N1);                       // preferred concise syntax
-  std::view< int , std::view_dimension<0,0,3> > y(ptr,N0,N1); // verbose syntax
+  view< int[][][3] > x(ptr,N0,N1); // preferred concise syntax
+  view< int , view_property::dimension<0,0,3> > y(ptr,N0,N1); // verbose syntax
 
   assert( extent< int[][][3] , 0 >::value == 0 );
   assert( extent< int[][][3] , 1 >::value == 0 );
   assert( extent< int[][][3] , 2 >::value == 3 );
 
-  assert( view_dimension<0,0,3>::extent_0 == 0 );
-  assert( view_dimension<0,0,3>::extent_1 == 0 );
-  assert( view_dimension<0,0,3>::extent_2 == 3 );
+  assert( view_property::dimension<0,0,3>::extent_0 == 0 );
+  assert( view_property::dimension<0,0,3>::extent_1 == 0 );
+  assert( view_property::dimension<0,0,3>::extent_2 == 3 );
 
   assert( x.extent(0) == N0 );
   assert( x.extent(1) == N1 );
@@ -296,13 +308,27 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
 
 ..
 
-If this aternative *properties* mechanism is required the array declaration syntax
-is still available when only the leading dimension is implicit.
+If this alternative *properties* mechanism is required then the
+simple array declaration syntax is still available and will 
+be supported when only the leading dimension is implicit.
 
 .. code-block:: c++
 
-  std::view< int[] > x ;                        // concise syntax
-  std::view< int , std::view_dimension<0> > y ; // property syntax
+  view< int[] > x ; // concise syntax
+  view< int , view_property::dimension<0> > y ; // property syntax
+
+..
+
+A concern with this alternative *properties* mechanism is that
+if a zero value becomes accepted within dimension statements
+then there is potential confusion between implicit dimensions
+and explicit dimensions of zero.
+For example, are the following declarations equivalent?
+
+.. code-block:: c++
+
+  view<int[0][0]> // If permitted
+  view<int, view_dimension<0,0> >
 
 ..
 
@@ -311,13 +337,14 @@ of rank **R** with all-implicit dimension.
 
 .. code-block:: c++
 
-  std::view< int , std::view_implicit_rank<R> > z ;
+  view< int , view_property::implicit_rank<R> > z ;
 
 ..
 
---------------------------------------------------------------------
+
+******************************************************************
 View Properties: Layout Polymorphism
---------------------------------------------------------------------
+******************************************************************
 
 The **view::operator()** maps the input multi-index from the array's
 cartesian product multi-index *domain* space to a member in the array's *range* space.
@@ -361,25 +388,26 @@ monotonically from the right most to the left most dimension.
 ..
 
 An initial set of layout properties are
-**view_layout_right**, **view_layout_left**, and **view_layout_stride**.
+**layout_right**, **layout_left**, and **layout_stride**.
 
   |  namespace std {
   |  namespace experimental {
-  |    struct view_layout_right ;
-  |    struct view_layout_left ;
-  |    struct view_layout_stride ;
-  |  }}
+  |  namespace view_property {
+  |    struct layout_right ;
+  |    struct layout_left ;
+  |    struct layout_stride ;
+  |  }}}
 
 
 .. code-block:: c++
 
   typedef view< int[][][] > view_native ;
-  typedef view< int[][][] , view_layout_right > view_right ;
-  typedef view< int[][][] , view_layout_left >  view_left ;
+  typedef view< int[][][] , view_property::layout_right > view_right ;
+  typedef view< int[][][] , view_property::layout_left >  view_left ;
 
   assert( std::is_same< typename view_native::layout , void >::value );
-  assert( std::is_same< typename view_right ::layout , view_layout_right >::value );
-  assert( std::is_same< typename view_left  ::layout , view_layout_left >::value );
+  assert( std::is_same< typename view_right ::layout , view_property::layout_right >::value );
+  assert( std::is_same< typename view_left  ::layout , view_property::layout_left >::value );
 
   assert( view_native::is_regular::value );
   assert( view_right ::is_regular::value );
@@ -387,11 +415,11 @@ An initial set of layout properties are
 
 ..
 
-A view_layout_right mapping is regular and injective with
+A **layout_right** mapping is regular and injective with
 strides increasing from right most to left most dimension.
-A view_layout_left mapping is regular and injective with
+A **layout_left** mapping is regular and injective with
 strides increasing from left most to right most dimension.
-A view_layout_stride mapping is regular; however, it may
+A **layout_stride** mapping is regular; however, it may
 not be injective or surjective.
 
 .. code-block:: c++
@@ -427,9 +455,9 @@ not be injective or surjective.
 
 ..
 
---------------------------------------------------------------------
+******************************************************************
 View Properties: Extensible Layout Polymorphism
---------------------------------------------------------------------
+******************************************************************
 
 The **view** is intended to be extensible such that a user may supply
 a customized layout mapping.
@@ -466,13 +494,15 @@ through tiles as *subviews* of the array.
 
 Note that a tiled layout mapping is irregular and if padding is 
 required to align with tile boundarries then the span will exceed the size.
+A customized layout mapping will have slightly different requirements
+depending on whether the layout is regular or irregular.
 
---------------------------------------------------------------------
+******************************************************************
 Specification with Simple View Properties
---------------------------------------------------------------------
+******************************************************************
 
 Simple view properties include the array layout and if necessary 
-a **view_dimension** type for arrays with multiple implicit dimensions.
+a **view_property::dimension** type for arrays with multiple implicit dimensions.
 View properties are provided through a variadic template to 
 support extensibility of the view.
 Possible additional properties include array bounds checking,
@@ -817,30 +847,10 @@ setting it to **void**.
   |    template< class UType , class ... UProperties >
   |    view & operator = ( const view< UType , UProperties ... > & );
   |  };
+  |  }}
   |
-  |  // Meta function to generate an array type with Rank implicit dimensions.
-  |  // Example:  view< implicit_array_t<int,10> >
-  |
-  |  template< typename T , unsigned Rank >
-  |  struct implicit_array_type {
-  |    using type = typename implict_array_type<T,Rank-1>::type [] ;
-  |  };
-  |  template< typename T >
-  |  struct implicit_array_type<T,0> {
-  |    using type = T ;
-  |  };
-  |
-  |  template< typename T , unsigned Rank >
-  |  using implicit_array_t = typename implicit_array_type<T,Rank>::type ;
-  |
-  |  // If necessary
-  |  template< size_t , size_t , size_t , size_t , size_t
-  |          , size_t , size_t , size_t , size_t , size_t >
-  |  struct view_dimension ;
-  |
-  | }}
 
-**uisng value_type = typename std::remove_all_extents< DataType >::type ;**
+**using value_type = typename std::remove_all_extents< DataType >::type ;**
 
 **using reference =**
 
@@ -862,6 +872,8 @@ setting it to **void**.
 
   Returns: The exent of dimension r when ``r < rank()``
   and 1 when ( **rank** <= r < *rank upper bound* ).
+  [Note: A default constructed view will have extent(r) == 0
+  for all implicit dimensions.]
 
 **constexpr size_t size() const**
 
@@ -1079,9 +1091,44 @@ size_t implicit_N9 = 0 )**
 
   Effect: Assigns **this** to view the array viewed by **rhs**.
 
---------------------------------------------------------------------
+******************************************************************
+View Properties
+******************************************************************
+
+  |  namespace std {
+  |  namespace experimental {
+  |  namespace view_property {
+  |
+  |  // If relaxed array dimension syntax is unavailable
+  |  template< size_t , size_t , size_t , size_t , size_t
+  |          , size_t , size_t , size_t , size_t , size_t >
+  |  struct dimension ;
+  |
+  |  // Meta function to generate an array type with Rank implicit dimensions.
+  |  // Example:  view< implicit_array_t<int,10> >
+  |
+  |  template< typename T , unsigned Rank >
+  |  struct implicit_array_type {
+  |    using type = typename implict_array_type<T,Rank-1>::type [] ;
+  |  };
+  |  template< typename T >
+  |  struct implicit_array_type<T,0> {
+  |    using type = T ;
+  |  };
+  |
+  |  }}}
+  |
+  |  namespace std {
+  |  namespace experimental {
+  |
+  |  template< typename T , unsigned Rank >
+  |  using view_implicit = typename view_property::implicit_array_type<T,Rank>::type ;
+  |
+  |  }}
+
+******************************************************************
 Assignability of Views of Non-identical Types
---------------------------------------------------------------------
+******************************************************************
 
 It is essential that view of non-identical, compatible types be assignable.
 For example:
@@ -1119,9 +1166,9 @@ implement the view assignability rules regarding value type, dimensions, and pro
     
 ..
 
---------------------------------------------------------------------
+******************************************************************
 Subview of View
---------------------------------------------------------------------
+******************************************************************
 
 The capability to **easily** extract subviews of a view, or subviews of subviews,
 is essential for usability.
@@ -1182,9 +1229,9 @@ Subview types are generated with a meta-function.
   Returns: The view type of the subview from the input view and parameter pack of indices and integral ranges.
   The rank of the subview is equal to the number of integral ranges in the parameter pack.
 
---------------------------------------------------------------------
+******************************************************************
 View Property : Member Access Array Bounds Checking
---------------------------------------------------------------------
+******************************************************************
 
   |  namespace std {
   |  namespace experimental {

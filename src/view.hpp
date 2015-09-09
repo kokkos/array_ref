@@ -370,6 +370,21 @@ public:
 
   static constexpr unsigned rank() { return properties::dimension::rank ; }
 
+  template< typename iType >
+  constexpr size_t extent( const iType & i ) const
+    {
+      return ( i == 0 ? m_offset.m_dim.n0 :
+             ( i == 1 ? m_offset.m_dim.n1 :
+             ( i == 2 ? m_offset.m_dim.n2 :
+             ( i == 3 ? m_offset.m_dim.n3 :
+             ( i == 4 ? m_offset.m_dim.n4 :
+             ( i == 5 ? m_offset.m_dim.n5 :
+             ( i == 6 ? m_offset.m_dim.n6 :
+             ( i == 7 ? m_offset.m_dim.n7 :
+             ( i == 8 ? m_offset.m_dim.n8 :
+             ( i == 9 ? m_offset.m_dim.n9 : 1 ))))))))));
+    }
+
   constexpr size_t extent_0() const { return m_offset.dim.n0 ; }
   constexpr size_t extent_1() const { return m_offset.dim.n1 ; }
   constexpr size_t extent_2() const { return m_offset.dim.n2 ; }
@@ -394,6 +409,21 @@ public:
              m_offset.m_dim.n9 ; }
 
   using is_regular = typename offset::is_regular ;
+
+  template< typename iType >
+  constexpr size_t stride( const iType & i ) const
+    {
+      return ( i == 0 ? m_offset.m_dim.stride_0() :
+             ( i == 1 ? m_offset.m_dim.stride_1() :
+             ( i == 2 ? m_offset.m_dim.stride_2() :
+             ( i == 3 ? m_offset.m_dim.stride_3() :
+             ( i == 4 ? m_offset.m_dim.stride_4() :
+             ( i == 5 ? m_offset.m_dim.stride_5() :
+             ( i == 6 ? m_offset.m_dim.stride_6() :
+             ( i == 7 ? m_offset.m_dim.stride_7() :
+             ( i == 8 ? m_offset.m_dim.stride_8() :
+             ( i == 9 ? m_offset.m_dim.stride_9() : 0 ))))))))));
+    }
 
   constexpr size_t stride_0() const { return m_offset.stride_0(); }
   constexpr size_t stride_1() const { return m_offset.stride_1(); }
