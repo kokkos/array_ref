@@ -66,11 +66,34 @@ the viewed data resides and algorithmic access intent properties.
 Examples of access intent properties include
 1.  *read-only random with locality* such that member queries are
 performed through GPU texture cache hardware for GPU memory spaces,
-2. *atomic protected* such that member access operations are overloaded
-via proxy objects to atomic operations,
+2. *atomic* such that member access operations are overloaded
+via proxy objects to atomic operations (see P0019, Atomic View),
 3. *non-temporal* such that member access operations can be overloaded
 with non-caching reads and writes, and
 4. *restrict* to guarantee non-aliasing of viewed data within the current context.
+
+
+******************************************************************
+Compare and contrast summary re: previous **array_view** proposal
+******************************************************************
+
+The essential issue with **array_view** in
+N4512 "Multidimensional bounds, offset and array_view, revision 7"
+is that it did not fulfill C++'s *zero-overhead abstraction* requirement
+(for both dynamic and static extents), and does not provide a
+zero-overhead abstraction to different memory layouts which are
+essential for library interoperability with a variety of C++ (e.g. Eigen)
+and other languages (e.g. Fortran and Matlab's C++ interface).
+Were it to be accepted, another library would be necessary to provide
+"direct mapping to the hardware" for views of arrays.
+Many of the issues are discussed in more detail in N4355, N4300, and N4222.
+
+Unlike N4512, this proposal leaves the layout more general to allow padding and different orderings essential for performance, and keeps all constexpr extents, which allows the compiler to optimize operator(), and allows interoperability with libraries using compile-time extents.
+Furthemore, this proposal provides a path for seemless extensibility
+for view properties beyond array dimensions and array layout.
+Thus we choose the name **view** as opposed to **array_view**
+in anticipation of this new fundamental mechanism for *viewing*
+spans of memory with an easily extensible set of properties.
 
 
 ******************************************************************
@@ -267,8 +290,9 @@ with multiple implicit dimensions, and preserve correctness for conventional arr
 
   *When several “array of” specifications are adjacent
   to form a multidimensional array type specification
-  only the first of the sequence of array bound constant expressions
-  may be omitted for types used in the explicit declaration of a multidimensional array;
+  and that type is used in the explicit declaration of a
+  multidimensional array then only the first of the
+  sequence of array bound constant expressions may be omitted;
   otherwise any or all of the array bound constant expressions may be omitted.*
 
 There exists at least two precedents for types that can be defined but not used to declare objects:
@@ -891,8 +915,9 @@ setting it to **void**.
 
   Returns: The exent of dimension r when ``r < rank()``
   and 1 when ( **rank** <= r < *rank upper bound* ).
-  [Note: A default constructed view will have extent(r) == 0
-  for all implicit dimensions.]
+  A default constructed view will have extent(r) == 0
+  for all implicit dimensions.
+  The return value of an explicit dimension queried with a literal input value must be "constexpr" observable.
 
 **constexpr size_t size() const**
 
@@ -1221,6 +1246,10 @@ Non-trivial subviews of regular views will often have **view_layout_stride**.
   assert( z.rank() == 1 );
   assert( & z(0) == & x(1,1,1) );
 
+  // Conveniently extracting subview for all of a extent
+  // without having to explicitly extract the dimensions.
+  auto x = subview( x , view_property::all , 1 , 1 );
+
 ..
 
 Subview types are generated with a meta-function.
@@ -1231,6 +1260,9 @@ Subview types are generated with a meta-function.
   |
   | template< typename ViewType , class ... Indices_And_Ranges >
   | struct subview_type ;
+  |
+  | struct all_type {};
+  | constexpr all_type all = all_type();
   |
   | }}}
   |
@@ -1261,6 +1293,7 @@ Subview types are generated with a meta-function.
 
   Returns: The view type of the subview from the input view and parameter pack of indices and integral ranges.
   The rank of the subview is equal to the number of integral ranges in the parameter pack.
+  When a dimension of the source **ViewType** is explicit and the corresponding range argument is **all** then the dimension of the resulting view type is explicit and equal to the source dimension
 
 ******************************************************************
 View Property : Member Access Array Bounds Checking
