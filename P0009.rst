@@ -20,13 +20,13 @@ P0009r01 : Polymorphic Multidimensional Array View
 :Contact: balelbach@lbl.gov
 :Date: 2015-08-06
 :URL: https://github.com/kokkos/PolyView/blob/master/P0009.rst
-:WG21: Library Evolution
-:WG21: Evolution (array declaration)
+:WG21: Library Evolution Working Group (LEWG)
+:WG21: Evolution Working Group (EWG) for array declaration
 
 .. sectnum::
 
 ******************************************************************
-Rationale
+Rationale for polymorphic multidimensional array view
 ******************************************************************
 
 Multidimensional arrays are a foundational data structure
@@ -53,6 +53,25 @@ to enable changing array layout without extensive code refactoring and
 maintenance of functionally redundant code.
 Layout polymorphism is a critical capability; however, it is not the only
 beneficial form of polymorphism.
+
+******************************************************************
+Extensibility beyond multdimensional array layout
+******************************************************************
+
+The polymorphic **view** abstraction and interface has utility
+well beyond the multidimensional array layout property.
+Other planned and prototyped properties include specification
+of which *memory space* within a heterogeneous memory system
+the viewed data resides and algorithmic access intent properties.
+Examples of access intent properties include
+1.  *read-only random with locality* such that member queries are
+performed through GPU texture cache hardware for GPU memory spaces,
+2. *atomic protected* such that member access operations are overloaded
+via proxy objects to atomic operations,
+3. *non-temporal* such that member access operations can be overloaded
+with non-caching reads and writes, and
+4. *restrict* to guarantee non-aliasing of viewed data within the current context.
+
 
 ******************************************************************
 The View
@@ -1126,6 +1145,7 @@ View Properties
   |
   |  }}
 
+
 ******************************************************************
 Assignability of Views of Non-identical Types
 ******************************************************************
@@ -1166,6 +1186,13 @@ implement the view assignability rules regarding value type, dimensions, and pro
     
 ..
 
+Assignability extends beyond the **cv** qualification of the view's data.  
+For example,
+1. implicitly dimensioned views are assignable from equal rank explicitly dimensioned views,
+2. strided layout views with implicit dimensions are assignable from equal rank views with regular layout, or
+3. a view with an access intent property, such as *random* or *restrict* may be assigned from a view without such a property.
+
+
 ******************************************************************
 Subview of View
 ******************************************************************
@@ -1200,12 +1227,18 @@ Subview types are generated with a meta-function.
 
   | namespace std {
   | namespace experimental {
+  | namespace view_property {
   |
   | template< typename ViewType , class ... Indices_And_Ranges >
   | struct subview_type ;
   |
+  | }}}
+  |
+  | namespace std {
+  | namespace experimental {
+  |
   | template< typename ViewType , class ... Indices_And_Ranges >
-  | using subview_t = typename subview_type< ViewType , Indices_And_Ranges >::type ;
+  | using subview_t = typename view_property::subview_type< ViewType , Indices_And_Ranges >::type ;
   |
   | template< typename DataType , class ... Parameters , class ... Indices_And_Ranges >
   | subview_t< view< DataType, Parameters ... > , Indices_And_Ranges ... >
@@ -1235,8 +1268,9 @@ View Property : Member Access Array Bounds Checking
 
   |  namespace std {
   |  namespace experimental {
-  |  struct view_bounds_checking ;
-  |  }}
+  |  namespace view_property {
+  |  struct bounds_checking ;
+  |  }}}
 
 
 Array bounds checking is an invaluable tool for debugging user code.
@@ -1252,13 +1286,13 @@ the need for special compiler support.
 
   // User enables array bounds checking for selected views.
 
-  using x_property = typename std::conditional< ENABLE_ARRAY_BOUNDS_CHECKING , view_bounds_checking , void >::type ;
+  using x_property = typename std::conditional< ENABLE_ARRAY_BOUNDS_CHECKING , view_property::bounds_checking , void >::type ;
 
   view< int[][][3] , x_property > x(ptr,N0,N1);
 
 ..
 
-Adding **view_bounds_checking** to the properties of a view has the
+Adding **bounds_checking** to the properties of a view has the
 effect of introducing an array bounds check to each member access operation.
 If the requirement ``0 <= i# < extent_#()`` fails **std::out_of_range** is thrown.
 
