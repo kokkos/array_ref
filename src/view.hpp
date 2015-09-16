@@ -7,6 +7,7 @@
 
 namespace std {
 namespace experimental {
+namespace view_property {
 
 // For explicit dimensions either
 // static constexpr size_t
@@ -152,16 +153,16 @@ public:
 
 //----------------------------------------------------------------------------
 
-struct view_layout_left {};
-struct view_layout_right {};
-struct view_layout_stride {};
+struct layout_left {};
+struct layout_right {};
+struct layout_stride {};
 
 template< typename Dimension , typename Layout >
-struct view_offset ;
+struct offset ;
 
 template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
         , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9 >
-struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , view_layout_left >
+struct offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , layout_left >
 {
   dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
 
@@ -186,20 +187,20 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
   constexpr size_t span() const
     { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
 
-  view_offset() = default ;
-  view_offset( const view_offset & ) = default ;
-  view_offset( view_offset && ) = default ;
-  view_offset & operator = ( const view_offset & ) = default ;
-  view_offset & operator = ( view_offset && ) = default ;
+  offset() = default ;
+  offset( const offset & ) = default ;
+  offset( offset && ) = default ;
+  offset & operator = ( const offset & ) = default ;
+  offset & operator = ( offset && ) = default ;
 
-  constexpr view_offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
+  constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
                        , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
     : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
 };
 
 template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
         , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9 >
-struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , void >
+struct offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , void >
 {
   dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
 
@@ -225,20 +226,20 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
   constexpr size_t span() const
     { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
 
-  view_offset() = default ;
-  view_offset( const view_offset & ) = default ;
-  view_offset( view_offset && ) = default ;
-  view_offset & operator = ( const view_offset & ) = default ;
-  view_offset & operator = ( view_offset && ) = default ;
+  offset() = default ;
+  offset( const offset & ) = default ;
+  offset( offset && ) = default ;
+  offset & operator = ( const offset & ) = default ;
+  offset & operator = ( offset && ) = default ;
 
-  constexpr view_offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
+  constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
                        , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
     : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
 };
 
 template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
         , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9 >
-struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , view_layout_right >
+struct offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , layout_right >
 {
   dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
 
@@ -264,43 +265,74 @@ struct view_offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>
   constexpr size_t span() const
     { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
 
-  view_offset() = default ;
-  view_offset( const view_offset & ) = default ;
-  view_offset( view_offset && ) = default ;
-  view_offset & operator = ( const view_offset & ) = default ;
-  view_offset & operator = ( view_offset && ) = default ;
+  offset() = default ;
+  offset( const offset & ) = default ;
+  offset( offset && ) = default ;
+  offset & operator = ( const offset & ) = default ;
+  offset & operator = ( offset && ) = default ;
 
-  constexpr view_offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
+  constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
                        , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
     : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
 };
+
+
+template< size_t ExN0
+        , size_t ExN1
+        , size_t ExN2
+        , size_t ExN3
+        , size_t ExN4
+        , size_t ExN5
+        , size_t ExN6
+        , size_t ExN7
+        , size_t ExN8
+        , size_t ExN9
+        >
+inline
+std::ostream & operator << ( std::ostream & s , const dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> & dim )
+{
+  s << "{" ;
+  if ( 0 < dim.rank ) s << " " << dim.n0 ;
+  if ( 1 < dim.rank ) s << " , " << dim.n1 ;
+  if ( 2 < dim.rank ) s << " , " << dim.n2 ;
+  if ( 3 < dim.rank ) s << " , " << dim.n3 ;
+  if ( 4 < dim.rank ) s << " , " << dim.n4 ;
+  if ( 5 < dim.rank ) s << " , " << dim.n5 ;
+  if ( 6 < dim.rank ) s << " , " << dim.n6 ;
+  if ( 7 < dim.rank ) s << " , " << dim.n7 ;
+  if ( 8 < dim.rank ) s << " , " << dim.n8 ;
+  if ( 9 < dim.rank ) s << " , " << dim.n9 ;
+  s << " }" ;
+
+  return s ;
+}
 
 //----------------------------------------------------------------------------
 
 template< class ... Properties >
-struct view_properties ;
+struct unpack ;
 
 template<>
-struct view_properties<>
+struct unpack<>
 {
   using dimension = void ;
   using layout    = void ;
 };
 
 template< class ... Properties >
-struct view_properties< void , Properties... >
+struct unpack< void , Properties... >
 {
-  using dimension = typename view_properties< Properties... >::dimension ;
-  using layout    = typename view_properties< Properties... >::layout ;
+  using dimension = typename unpack< Properties... >::dimension ;
+  using layout    = typename unpack< Properties... >::layout ;
 };
 
 template< class DataType , class ... Properties >
-struct view_properties< DataType , Properties... >
+struct unpack< DataType , Properties... >
 {
   static constexpr size_t max = std::numeric_limits<size_t>::max();
 
   // Assume an unknown property is the DataType
-  using dimension = std::experimental::dimension
+  using dimension = std::experimental::view_property::dimension
     < ( 0 < std::rank<DataType>::value ? std::extent<DataType,0>::value : max )
     , ( 1 < std::rank<DataType>::value ? std::extent<DataType,1>::value : max )
     , ( 2 < std::rank<DataType>::value ? std::extent<DataType,2>::value : max )
@@ -313,45 +345,50 @@ struct view_properties< DataType , Properties... >
     , ( 9 < std::rank<DataType>::value ? std::extent<DataType,9>::value : max )
     > ;
 
-  using layout    = typename view_properties< Properties... >::layout ;
+  using layout    = typename unpack< Properties... >::layout ;
 };
 
 template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
         , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9
         , class ... Properties >
-struct view_properties< std::experimental::dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , Properties... >
+struct unpack< std::experimental::view_property::dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , Properties... >
 {
-  using dimension = std::experimental::dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> ;
-  using layout    = typename view_properties< Properties ... >::layout ;
+  using dimension = std::experimental::view_property::dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> ;
+  using layout    = typename unpack< Properties ... >::layout ;
 };
 
 template< class ... Properties >
-struct view_properties< view_layout_left , Properties ... >
+struct unpack< layout_left , Properties ... >
 {
-  using dimension = typename view_properties< Properties... >::dimension ;
-  using layout    = view_layout_left ;
+  using dimension = typename unpack< Properties... >::dimension ;
+  using layout    = layout_left ;
 };
 
 template< class ... Properties >
-struct view_properties< view_layout_right , Properties ... >
+struct unpack< layout_right , Properties ... >
 {
-  using dimension = typename view_properties< Properties... >::dimension ;
-  using layout    = view_layout_right ;
+  using dimension = typename unpack< Properties... >::dimension ;
+  using layout    = layout_right ;
 };
 
 template< class ... Properties >
-struct view_properties< view_layout_stride , Properties ... >
+struct unpack< layout_stride , Properties ... >
 {
-  using dimension = typename view_properties< Properties... >::dimension ;
-  using layout    = view_layout_stride ;
+  using dimension = typename unpack< Properties... >::dimension ;
+  using layout    = layout_stride ;
 };
+
+}}} // namespace std::experimental::view_property
 
 //----------------------------------------------------------------------------
+
+namespace std {
+namespace experimental {
 
 template< typename DataType , class ... Properties >
 struct view 
 {
-  typedef view_properties< DataType , Properties ... > properties ;
+  typedef view_property::unpack< DataType , Properties ... > properties ;
 
   using value_type = typename std::remove_all_extents< DataType >::type ;
   using pointer    = value_type * ;
@@ -359,9 +396,9 @@ struct view
   
 private:
 
-  typedef view_offset< typename properties::dimension
-                     , typename properties::layout
-                     > offset ;
+  typedef view_property::offset< typename properties::dimension
+                               , typename properties::layout
+                               > offset ;
 
   pointer m_ptr ;
   offset  m_offset ;
@@ -373,73 +410,66 @@ public:
   template< typename iType >
   constexpr size_t extent( const iType & i ) const
     {
-      return ( i == 0 ? m_offset.m_dim.n0 :
-             ( i == 1 ? m_offset.m_dim.n1 :
-             ( i == 2 ? m_offset.m_dim.n2 :
-             ( i == 3 ? m_offset.m_dim.n3 :
-             ( i == 4 ? m_offset.m_dim.n4 :
-             ( i == 5 ? m_offset.m_dim.n5 :
-             ( i == 6 ? m_offset.m_dim.n6 :
-             ( i == 7 ? m_offset.m_dim.n7 :
-             ( i == 8 ? m_offset.m_dim.n8 :
-             ( i == 9 ? m_offset.m_dim.n9 : 1 ))))))))));
+      return ( i == 0 ? m_offset.dim.n0 :
+             ( i == 1 ? m_offset.dim.n1 :
+             ( i == 2 ? m_offset.dim.n2 :
+             ( i == 3 ? m_offset.dim.n3 :
+             ( i == 4 ? m_offset.dim.n4 :
+             ( i == 5 ? m_offset.dim.n5 :
+             ( i == 6 ? m_offset.dim.n6 :
+             ( i == 7 ? m_offset.dim.n7 :
+             ( i == 8 ? m_offset.dim.n8 :
+             ( i == 9 ? m_offset.dim.n9 : 1 ))))))))));
     }
 
-  constexpr size_t extent_0() const { return m_offset.dim.n0 ; }
-  constexpr size_t extent_1() const { return m_offset.dim.n1 ; }
-  constexpr size_t extent_2() const { return m_offset.dim.n2 ; }
-  constexpr size_t extent_3() const { return m_offset.dim.n3 ; }
-  constexpr size_t extent_4() const { return m_offset.dim.n4 ; }
-  constexpr size_t extent_5() const { return m_offset.dim.n5 ; }
-  constexpr size_t extent_6() const { return m_offset.dim.n6 ; }
-  constexpr size_t extent_7() const { return m_offset.dim.n7 ; }
-  constexpr size_t extent_8() const { return m_offset.dim.n8 ; }
-  constexpr size_t extent_9() const { return m_offset.dim.n9 ; }
-
   constexpr size_t size() const
-    { return m_offset.m_dim.n0 *
-             m_offset.m_dim.n1 *
-             m_offset.m_dim.n2 *
-             m_offset.m_dim.n3 *
-             m_offset.m_dim.n4 *
-             m_offset.m_dim.n5 *
-             m_offset.m_dim.n6 *
-             m_offset.m_dim.n7 *
-             m_offset.m_dim.n8 *
-             m_offset.m_dim.n9 ; }
+    { return m_offset.dim.n0 *
+             m_offset.dim.n1 *
+             m_offset.dim.n2 *
+             m_offset.dim.n3 *
+             m_offset.dim.n4 *
+             m_offset.dim.n5 *
+             m_offset.dim.n6 *
+             m_offset.dim.n7 *
+             m_offset.dim.n8 *
+             m_offset.dim.n9 ; }
 
   using is_regular = typename offset::is_regular ;
 
   template< typename iType >
   constexpr size_t stride( const iType & i ) const
     {
-      return ( i == 0 ? m_offset.m_dim.stride_0() :
-             ( i == 1 ? m_offset.m_dim.stride_1() :
-             ( i == 2 ? m_offset.m_dim.stride_2() :
-             ( i == 3 ? m_offset.m_dim.stride_3() :
-             ( i == 4 ? m_offset.m_dim.stride_4() :
-             ( i == 5 ? m_offset.m_dim.stride_5() :
-             ( i == 6 ? m_offset.m_dim.stride_6() :
-             ( i == 7 ? m_offset.m_dim.stride_7() :
-             ( i == 8 ? m_offset.m_dim.stride_8() :
-             ( i == 9 ? m_offset.m_dim.stride_9() : 0 ))))))))));
+      return ( i == 0 ? m_offset.dim.stride_0() :
+             ( i == 1 ? m_offset.dim.stride_1() :
+             ( i == 2 ? m_offset.dim.stride_2() :
+             ( i == 3 ? m_offset.dim.stride_3() :
+             ( i == 4 ? m_offset.dim.stride_4() :
+             ( i == 5 ? m_offset.dim.stride_5() :
+             ( i == 6 ? m_offset.dim.stride_6() :
+             ( i == 7 ? m_offset.dim.stride_7() :
+             ( i == 8 ? m_offset.dim.stride_8() :
+             ( i == 9 ? m_offset.dim.stride_9() : 0 ))))))))));
     }
-
-  constexpr size_t stride_0() const { return m_offset.stride_0(); }
-  constexpr size_t stride_1() const { return m_offset.stride_1(); }
-  constexpr size_t stride_2() const { return m_offset.stride_2(); }
-  constexpr size_t stride_3() const { return m_offset.stride_3(); }
-  constexpr size_t stride_4() const { return m_offset.stride_4(); }
-  constexpr size_t stride_5() const { return m_offset.stride_5(); }
-  constexpr size_t stride_6() const { return m_offset.stride_6(); }
-  constexpr size_t stride_7() const { return m_offset.stride_7(); }
-  constexpr size_t stride_8() const { return m_offset.stride_8(); }
-  constexpr size_t stride_9() const { return m_offset.stride_9(); }
 
   constexpr size_t span() const { return m_offset.span(); }
 
+  static constexpr
+  size_t span
+      ( size_t a0 = 0
+      , size_t a1 = 0
+      , size_t a2 = 0
+      , size_t a3 = 0
+      , size_t a4 = 0
+      , size_t a5 = 0
+      , size_t a6 = 0
+      , size_t a7 = 0
+      , size_t a8 = 0
+      , size_t a9 = 0
+      )
+    { return offset(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9).span(); }
+
   //----------------------------------------
-  // Proper dereference operators
+  // Proper dereference operators for rank 0..3
 
   struct error_tag_invalid_access_to_non_rank_zero_view
     {
@@ -491,7 +521,24 @@ public:
     { return m_ptr[ m_offset(i0,i1,i2) ]; }
 
   //----------------------------------------
-  // Improper deference operators
+  // Improper deference operators for rank 1..3
+
+  template< typename t0 >
+  typename std::enable_if<( properties::dimension::rank == 0 &&
+                            std::is_integral<t0>::value
+                         ), reference >::type
+  operator()( const t0 &
+            , const int = 0
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            , const int = 0 
+            ) const
+    { return m_ptr[0]; }
 
   template< typename t0 >
   typename std::enable_if<( properties::dimension::rank == 1 &&
@@ -569,7 +616,7 @@ public:
 
 //----------------------------------------------------------------------------
 
-#if defined( __GNUC__ ) && ( 4 <= __GNUC__ && __GNUC__ < 5 )
+#if ( defined( __GNUC__ ) && ( 4 <= __GNUC__ && __GNUC__ < 5 ) )
 
 template< typename T , unsigned R >
 struct implicit_array_type
@@ -586,45 +633,16 @@ struct implicit_array_type<T,0>
 #else
 
 template< typename T , unsigned R >
-struct implicit_array_type { using type = void ; };
+struct implicit_array_type {
+  typedef struct multiple_ommitted_array_dimensions_are_prohibited {} type ;
+};
 
 #endif
 
 //----------------------------------------------------------------------------
 
 
-
-template< size_t ExN0
-        , size_t ExN1
-        , size_t ExN2
-        , size_t ExN3
-        , size_t ExN4
-        , size_t ExN5
-        , size_t ExN6
-        , size_t ExN7
-        , size_t ExN8
-        , size_t ExN9
-        >
-inline
-std::ostream & operator << ( std::ostream & s , const dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> & dim )
-{
-  s << "{" ;
-  if ( 0 < dim.rank ) s << " " << dim.n0 ;
-  if ( 1 < dim.rank ) s << " , " << dim.n1 ;
-  if ( 2 < dim.rank ) s << " , " << dim.n2 ;
-  if ( 3 < dim.rank ) s << " , " << dim.n3 ;
-  if ( 4 < dim.rank ) s << " , " << dim.n4 ;
-  if ( 5 < dim.rank ) s << " , " << dim.n5 ;
-  if ( 6 < dim.rank ) s << " , " << dim.n6 ;
-  if ( 7 < dim.rank ) s << " , " << dim.n7 ;
-  if ( 8 < dim.rank ) s << " , " << dim.n8 ;
-  if ( 9 < dim.rank ) s << " , " << dim.n9 ;
-  s << " }" ;
-
-  return s ;
-}
-
-}}
+}} // namespace std::experimental
 
 #endif
 

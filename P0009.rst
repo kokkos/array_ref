@@ -64,13 +64,13 @@ Other planned and prototyped properties include specification
 of which *memory space* within a heterogeneous memory system
 the viewed data resides and algorithmic access intent properties.
 Examples of access intent properties include
-1.  *read-only random with locality* such that member queries are
+(1)  *read-only random with locality* such that member queries are
 performed through GPU texture cache hardware for GPU memory spaces,
-2. *atomic* such that member access operations are overloaded
+(2) *atomic* such that member access operations are overloaded
 via proxy objects to atomic operations (see P0019, Atomic View),
-3. *non-temporal* such that member access operations can be overloaded
+(3) *non-temporal* such that member access operations can be overloaded
 with non-caching reads and writes, and
-4. *restrict* to guarantee non-aliasing of viewed data within the current context.
+(4) *restrict* to guarantee non-aliasing of viewed data within the current context.
 
 
 ******************************************************************
