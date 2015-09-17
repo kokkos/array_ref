@@ -95,10 +95,6 @@ Thus we choose the name **view** as opposed to **array_view**
 in anticipation of this new fundamental mechanism for *viewing*
 spans of memory with an easily extensible set of properties.
 
-This proposal does not include an iterator-based interface.
-An explanation of this decision involves mechanisms from the proposal;
-therefore, this explanation appears later.
-
 ******************************************************************
 The View
 ******************************************************************
@@ -1300,7 +1296,7 @@ Subview types are generated with a meta-function.
 
 
 ******************************************************************
-Omission of an iterator interface
+Limited iterator interface
 ******************************************************************
 
 A **view** may have a non-isomorphic mapping between its
@@ -1311,21 +1307,38 @@ An iterator for the members of a non-isomorphic view must be
 non-trivial in order to skip over non-member spans of memory.
 Thus a general iterator implementation would necessarily
 be non-trivial both in state and algorithm.
-As such we omit an iterator mechanism in preference to
-maintaining a performant interface.
+As such we provide a very limited iterator interface
+conforming to **24.6.5 range access** for a rank-one view with
+isomorphic layout (*e.g.*, default, **layout_left**, **layout_right**)
+and no incompatible access intent properties
+(*e.g.*, the **reference** type is truly a reference and not a proxy).
+For example, a simple **view<T[]>** will have **begin** and **end** overloads.
 
-Note that in the special case of an isomorphic view
-where **size() == span()**
-a pointer (iterator) range for view member data can be queried.
+  | namespace std {
+  |
+  | template< class T , class ...P >
+  | typename std::enable_if< *(rank one and isomorphic layout and no incompatible access intent properties)* , typename view<T,P...>::pointer >::type
+  | begin( const std::experimental::view<T,P...> & v )
+  | { return v.data(); }
+  |
+  | template< class T , class ...P >
+  | typename std::enable_if< *(rank one and isomorphic layout and no incompatible access intent properties)* , typename view<T,P...>::pointer >::type
+  | end( const std::experimental::view<T,P...> & v )
+  | { return v.data() + v.size(); }
+  |
+  | }
+
+Note that in the more general case of an isomorphic view
+of any rank a pointer (iterator) range for view member data can be queried.
 
 .. code-block:: c++
 
   template< typename T , class ... P >
-  void foo( view< T , P... > a )
+  void foo( view<T,P...> a )
   {
-    if ( a.size() == a.span() ) {
+    if ( std::is_reference< typename view<T,P...>::reference >::value && a.size() == a.span() ) {
       // Iteration via pointer type is valid and performant
-      typename view< T , P... >::pointer
+      typename view<T,P...>::pointer
         begin = a.data() ,
         end   = a.data() + a.span() ;
     }
