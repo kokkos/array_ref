@@ -95,6 +95,9 @@ Thus we choose the name **view** as opposed to **array_view**
 in anticipation of this new fundamental mechanism for *viewing*
 spans of memory with an easily extensible set of properties.
 
+This proposal does not include an iterator-based interface.
+An explanation of this decision involves mechanisms from the proposal;
+therefore, this explanation appears later.
 
 ******************************************************************
 The View
@@ -296,7 +299,7 @@ with multiple implicit dimensions, and preserve correctness for conventional arr
   otherwise any or all of the array bound constant expressions may be omitted.*
 
 There exists at least two precedents for types that can be defined but not used to declare objects:
-(1) an array with an ommitted leading bound and (2) **void**.
+(1) an array with an omitted leading bound and (2) **void**.
 
 Relaxing this constraint is a simple one-line change in Clang that merely disables the error message and
 allows omission of second and subsequent dimensions.
@@ -405,7 +408,7 @@ requiring both dimensions and **LDA** parameters to fully declare a matrix layou
 
 
 A view property template parameter specifies a layout mapping.
-If this property is ommitted the layout mapping of the view 
+If this property is omitted the layout mapping of the view 
 conforms to a corresponding natively declared multidimensional array
 as if implicit dimensions were declared explicitly.
 The default layout is *regular* - the distance is constant between
@@ -1294,6 +1297,42 @@ Subview types are generated with a meta-function.
   Returns: The view type of the subview from the input view and parameter pack of indices and integral ranges.
   The rank of the subview is equal to the number of integral ranges in the parameter pack.
   When a dimension of the source **ViewType** is explicit and the corresponding range argument is **all** then the dimension of the resulting view type is explicit and equal to the source dimension
+
+
+******************************************************************
+Omission of an iterator interface
+******************************************************************
+
+A **view** may have a non-isomorphic mapping between its
+multi-index space (domain) and span of member memory (range).
+For example, a subview or dimension padded view will be
+non-isomorphic.
+An iterator for the members of a non-isomorphic view must be
+non-trivial in order to skip over non-member spans of memory.
+Thus a general iterator implementation would necessarily
+be non-trivial both in state and algorithm.
+As such we omit an iterator mechanism in preference to
+maintaining a performant interface.
+
+Note that in the special case of an isomorphic view
+where **size() == span()**
+a pointer (iterator) range for view member data can be queried.
+
+.. code-block:: c++
+
+  template< typename T , class ... P >
+  void foo( view< T , P... > a )
+  {
+    if ( a.size() == a.span() ) {
+      // Iteration via pointer type is valid and performant
+      typename view< T , P... >::pointer
+        begin = a.data() ,
+        end   = a.data() + a.span() ;
+    }
+  }
+
+..
+
 
 ******************************************************************
 View Property : Member Access Array Bounds Checking
