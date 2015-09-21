@@ -61,7 +61,7 @@ and other access properties as well.
 Until recently the Kokkos implementation was limited
 to C++1998 standard due and is incrementally being refactored
 to C++2011 standard.
-As such deviations from the Kokkos interface that leverage C++2013
+As such deviations from the Kokkos interface that leverage C++2011
 capabilities which are included in this proposed have been
 successfully prototyped in a separate repository
 (github.com/kokkos/PolyView).
