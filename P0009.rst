@@ -103,7 +103,7 @@ Many of the issues are discussed in more detail in N4355, N4300, and N4222.
 Unlike N4512, this proposal
   - allows the layout to be more general with different orderings and padding essential for performant member access (*e.g.*, caching, coalescing),
   - enables interoperability with libraries using compile-time extents, and
-  - achieves zero-overhead abstraction for *constexpr* extents and strides whichprovides more opportunities for the compiler to optimize member access functions.
+  - achieves zero-overhead abstraction for *constexpr* extents and strides which provides more opportunities for the compiler to optimize member access functions.
 
 Furthemore, this proposal provides a path for seemless extensibility
 for view properties beyond array dimensions and array layout.
