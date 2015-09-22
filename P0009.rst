@@ -154,13 +154,11 @@ For example, a one-dimensional array is passed to a function as follows.
 
 .. code-block:: c++
 
-  // Traditional API
-  void foo( int array[] , size_t N );
-  void foo( const int array[] , size_t N );
+  void foo( int array[] , size_t N ); // Traditional API
+  void foo( const int array[] , size_t N ); // Traditional API
 
-  // Corresponding view API
-  void foo( view< int[] > array );
-  void foo( view< const int[] > array );
+  void foo( view< int[] > array ); // View API
+  void foo( view< const int[] > array ); // View API
 
   void bar()
   {
@@ -198,7 +196,7 @@ A traditional multidimensional array with explicit dimensions
   {
     enum { L = ... };
     int buffer[ L * 3 * 3 ];
-    view< int[][3][3] > array( buffer , L );
+    view< double[][3][3] > array( buffer , L );
 
     assert( 3 == array.rank() );
     assert( L == array.extent(0) );
@@ -216,7 +214,7 @@ A traditional multidimensional array with explicit dimensions
 View of Multidimensional Array with Multiple Implicit Dimensions (Preferred)
 ******************************************************************************
 
-**Requires language change for slight relaxation of array declaration.**
+**Requires slight language specification change for correction and relaxation of array declaration.**
 
 Multidimensional arrays are used with multiple implicit dimensions;
 i.e., more dimensions than the leading dimension are declared at runtime.
@@ -287,16 +285,16 @@ array of integers with unprescribed dimensions.
 Relaxed array type declarator
 ------------------------------------------------------------------------------
 
-Changing the **8.3.4.p3** constraint as follows would allow the proposed syntax for a view of an array
-This syntax requires a relaxation of array type declarator constraints defined in **8.3.4 Arrays paragraph 3**.
+The current array type declarator constraints are defined in in **8.3.4 Arrays paragraph 3** as follows.
 
   *When several “array of” specifications are adjacent,
   a multidimensional array is created;
   only the first of the constant expressions
   that specify the bounds of the arrays may be omitted.*
 
-Note that this existing specification is in error when array syntax is used in a type definition;
-as a type definition does not create a multidimensional array.
+Note that this existing specification is in error when
+array syntax is used in a type definition -
+a type definition does not create a multidimensional array.
 
 .. code-block:: c++
 
@@ -305,8 +303,14 @@ as a type definition does not create a multidimensional array.
 
 ..
 
+This syntax requires a relaxation of array type declarator constraints defined in **8.3.4 Arrays paragraph 3**.
 
-with multiple implicit dimensions, and preserve correctness for conventional array declarations.
+Relaxing the **8.3.4.p3** constraint as follows will
+
+  - clarify the difference between array type and array object declarations,
+  - preserve correctness for conventional array object declarations,
+  - allow the proposed syntax for a view of an array with multiple implicit dimensions, and
+  - have zero impact on a compiler's processing of executable statements.
 
   *When several “array of” specifications are adjacent
   to form a multidimensional array type specification
