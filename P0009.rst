@@ -102,6 +102,7 @@ Many of the issues are discussed in more detail in N4355, N4300, and N4222.
 
 Unlike N4512, this proposal
   - allows the layout to be more general with different orderings and padding essential for performant member access (*e.g.*, caching, coalescing),
+  **What is the "member" mentioned here?**
   - enables interoperability with libraries using compile-time extents, and
   - achieves zero-overhead abstraction for *constexpr* extents and strides which provides more opportunities for the compiler to optimize member access functions.
 
@@ -109,7 +110,7 @@ Furthemore, this proposal provides a path for seemless extensibility
 for view properties beyond array dimensions and array layout.
 Thus we choose the name **view** as opposed to **array_view**
 in anticipation of this new fundamental mechanism for *viewing*
-spans of memory with an easily extensible set of properties.
+spans of memory with an easily extensible set of properties. **AMAZING**
 
 ******************************************************************
 The View
@@ -276,7 +277,7 @@ array of integers with unprescribed dimensions.
     assert( array.size() == array.extent(0) * array.extent(1) * array.extent(2) );
     assert( & array(0,0,0) == buffer );
 
-    foo( array );
+    foo( array ); // What foo is it? The code is not self contained
   }
 
 ..
@@ -443,7 +444,7 @@ as if implicit dimensions were declared explicitly.
 The default layout is *regular* - the distance is constant between
 entries when a single index of the multi-index is incremented.
 This distance is the *stride* of the corresponding dimension.
-In the default layout mapping is bijective and the stride increases
+The default layout mapping is bijective and the stride increases
 monotonically from the right most to the left most dimension.
 
 .. code-block:: c++
@@ -451,7 +452,7 @@ monotonically from the right most to the left most dimension.
   // The default layout mapping of a rank-four multidimensional
   // array is as if implemented as follows.
 
-  template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
+  template< size_t N0 , size_t N1 , size_t N2 , size_t N3 >
   size_t native_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
     {
       return i0 * N3 * N2 * N1 // stride == N3 * N2 * N1
@@ -480,7 +481,7 @@ An initial set of layout properties are
   typedef view< int[][][] , view_property::layout_right > view_right ;
   typedef view< int[][][] , view_property::layout_left >  view_left ;
 
-  assert( std::is_same< typename view_native::layout , void >::value );
+  assert( std::is_same< typename view_native::layout , void >::value ); // in code void and right appear to be the same? why do we need to specialize here?
   assert( std::is_same< typename view_right ::layout , view_property::layout_right >::value );
   assert( std::is_same< typename view_left  ::layout , view_property::layout_left >::value );
 
@@ -503,7 +504,7 @@ not be injective or surjective.
   // array is as if implemented as follows.
 
   template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
-  size_t right_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
+  size_t right_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 ) // the implementation has view_property::offset< ***, layout_right>. It maybe complex for a reader to see how these are used
     {
       const size_t S3 = // stride of dimension 3
       const size_t P3 = // padding of dimension 3
@@ -588,6 +589,10 @@ One or more view properties of **void** are acceptable and have no effect.
 This allows user code to define a template argument list of potential
 view properties and then enabling/disabling a particular property by conditionally
 setting it to **void**.
+
+** If unspecified, is a default value picked? I find it confusing to
+   say *void* will have no effects, since it would be unclear what the
+   view will do**
 
 
   |  namespace std {
