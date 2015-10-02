@@ -10,7 +10,7 @@ Multidimensional Declaration and Access
 
 The **array_view** API requires the magic number **dynamic_length** to specify implicit dimensions.  In contrast the base **view** proposal uses **[]** to denote an implicit dimension, and resorts to **0** for the magic value for compatibility with **std::extent**.
 
-The **array_view** range check is always enable which necessarily
+The **array_view** range check is always enabled which necessarily
 incurs an overhead.  In contrast the **view** proposal bounds check
 is optional and selectable on a per-view basis.
 
