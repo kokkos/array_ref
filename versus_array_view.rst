@@ -55,6 +55,8 @@ They suggest using a strided_array_view to represent column-major data.
 (2) Column-major data is fully contiguous and can rely on all contiguous optimizations; and
 (3) It is essential that the storage-order can be checked staticically to dispatch to the appropriate algorithm (e.g., with 2 dimensions, you change whether you iterate through rows or columns first depending on the storage order).
 
+The **array_view** is written to have support for ranges.  There seems to be nothing to prevent the same patterns to be used with the **view** class.
+
 ******************************************************************************
 Extensibility
 ******************************************************************************
