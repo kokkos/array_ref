@@ -50,7 +50,11 @@ for practical purposes has multdimensional capability as an
 awkward add-on.  The **view** proposal is a multidimensional array 
 proposal targeting numerical computations.
 
-They suggest using a **strided_array_view** to represent column-major data.  (1) As noted above, the strided view is butchered due to its lack of explicit dimensions, and couldn't possibly generate optimal assembler code for element access;  (2) Column-major data is fully contiguous and can rely on all contiguous optimizations; and (3) It is essential that the storage-order can be checked staticically to dispatch to the appropriate algorithm (e.g., with 2 dimensions, you change whether you iterate through rows or columns first depending on the storage order).
+They suggest using a strided_array_view to represent column-major data.
+(1) As noted above, the strided view is butchered due to its lack of explicit dimensions, and couldn't possibly generate optimal assembler code for element access;
+(2) Column-major data is fully contiguous and can rely on all contiguous optimizations; and
+(3) It is essential that the storage-order can be checked staticically to dispatch to the appropriate algorithm (e.g., with 2 dimensions, you change whether you iterate through rows or columns first depending on the storage order).
+
 ******************************************************************************
 Extensibility
 ******************************************************************************
