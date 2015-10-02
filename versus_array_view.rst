@@ -35,13 +35,13 @@ In contrast the element access operators for **view** have resulted
 in optimized instruction generation and even allowed vectorizaton without
 any special recognition or treatment by a compiler.
 
-The **array_view** proposal for **strided_array_view** is wholely
+The array_view proposal for strided_array_view is wholely
 inadequate to optimally express and implement the variety of
 multidimensional layouts that are required for portable and
 performant numerical computations.
-Note that the **strided_array_view** is incompatible with
-the **array_view** template arguments,
-Note that **strided_array_view** cannot accept explicit dimensions
+Note that the strided_array_view is incompatible with
+the array_view template arguments,
+Note that strided_array_view cannot accept explicit dimensions
 and as such cannot have optimized member access for explicit dimensions
 and is not vectorizable with all dimensions requiring strides.
 
