@@ -11,8 +11,10 @@ Multidimensional Declaration and Access
 The **array_view** API requires the magic number **dynamic_length** to specify implicit dimensions.  In contrast the base **view** proposal uses **[]** to denote an implicit dimension, and resorts to **0** for the magic value for compatibility with **std::extent**.
 
 The **array_view** range check is always enabled which necessarily
-incurs an overhead.  In contrast the **view** proposal bounds check
-is optional and selectable on a per-view basis.
+incurs an overhead - a showblocker for numerical users.  In contrast the **view** proposal bounds check
+is optional and selectable on a per-view basis.  Even with static extents,
+the bounds check incurs overhead unless the index itself is **constexpr**
+(which we suspect this implementation can support as an optimization).
 
 The **array_view** design requires numerous public helper classes
 for multidimensional array declarations and access.
@@ -25,7 +27,10 @@ intuitive across multiple mathematically-oriented languages,
 and has been in use for over five decades.
 Multidimensional arrays are the bedrock of numerical computations
 in mathematics, science, and engineering.  A multidimensional array
-capability must be appealing to these communities.
+capability must be appealing to these communities.  Furthermore, how can
+slices of the type **myarray(1, std::all, 4)**, an essential feture,
+be easily supported and optimized with a **myarray[{1, std::all, 4}]** index
+without overhead or an extremely complicated index class?
 
 Element access operators for **array_view** are highly unlikely
 to result in optimal element access code generation,
@@ -35,15 +40,20 @@ In contrast the element access operators for **view** have resulted
 in optimized instruction generation and even allowed vectorizaton without
 any special recognition or treatment by a compiler.
 
-The array_view proposal for strided_array_view is wholely
+The array_view proposal for **strided_array_view** is wholely
 inadequate to optimally express and implement the variety of
 multidimensional layouts that are required for portable and
 performant numerical computations.
-Note that the strided_array_view is incompatible with
+Note that the **strided_array_view** is incompatible with
 the array_view template arguments,
-Note that strided_array_view cannot accept explicit dimensions
+Note that **strided_array_view** cannot accept explicit dimensions
 and as such cannot have optimized member access for explicit dimensions
 and is not vectorizable with all dimensions requiring strides.
+
+Moreover, the incomplete **strided_array_view** has no support for static extents
+and strides, and makes slices of statically sized **array_view** almost useless.
+All of the useful static information kept around for compiler optimizations is then
+thrown away.
 
 In summary **array_view** is a rank-one focused proposal that
 for practical purposes has multdimensional capability as an
