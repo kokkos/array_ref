@@ -7,7 +7,7 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include "view.hpp"
+#include "span.hpp"
 
 int main()
 {
