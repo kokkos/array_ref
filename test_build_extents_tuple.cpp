@@ -7,13 +7,10 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include "span.hpp"
+#include "space.hpp"
 
 int main()
 {
-    using std::rank;
-    using std::extent;
-
     using boost::extents;
     constexpr auto ext = boost::dynamic_extent;
 

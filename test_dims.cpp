@@ -7,7 +7,7 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include "span.hpp"
+#include "space.hpp"
 
 int main()
 {

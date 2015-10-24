@@ -23,6 +23,7 @@ constexpr std::size_t dynamic_extent = std::size_t(-1);
 namespace detail
 {
 
+// Builds a std::tuple with one entry for each dynamic extent.
 template <typename Tuple, std::size_t... Dimensions>
 struct build_extents_tuple;
 
@@ -33,7 +34,7 @@ struct build_extents_tuple<std::tuple<T...> >
     using type = std::tuple<T...>;
 };
 
-template <typename... T, typename std::size_t Head, std::size_t... Tail>
+template <typename... T, std::size_t Head, std::size_t... Tail>
 struct build_extents_tuple<std::tuple<T...>, Head, Tail...>
   : build_extents_tuple<
         typename std::conditional<
@@ -44,17 +45,36 @@ struct build_extents_tuple<std::tuple<T...>, Head, Tail...>
       , Tail...
     > {};
 
+// Maps an actual dynamic extent index (Idx) to an index in the dynamic extent
+// tuple. E.g. if you have extents<3, dynamic_extent, 4, dynamic_extent>, this
+// metafunction would map 1 to 0 (the first dynamic extent) and 3 to 1 (the
+// second one). Pass the input index as Idx, 0 for MappedIdx and the list of
+// extents as Dimensions when calling. 
+template <std::size_t Idx, std::size_t MappedIdx, std::size_t... Dimensions>
+struct dynamic_extent_tuple_index;
+
+// Base case.
+template <std::size_t Idx, std::size_t MappedIdx>
+struct dynamic_extent_tuple_index<Idx, MappedIdx>
+  : std::integral_constant<std::size_t, MappedIdx> {};
+
+template <std::size_t Idx, std::size_t MappedIdx
+        , std::size_t Head, std::size_t... Tail>
+struct dynamic_extent_tuple_index<Idx, MappedIdx, Head, Tail...>
+  : dynamic_extent_tuple_index<
+        (Idx != 0 ? Idx - 1 : Idx)
+      , std::conditional<
+            Head == dynamic_extent && Idx != 0 
+          , std::integral_constant<std::size_t, MappedIdx + 1> 
+          , std::integral_constant<std::size_t, MappedIdx> 
+        >::type::value
+      , Tail...
+    > {};
+
 }
 
 template <std::size_t... Dimensions>
-struct extents
-{
-    using dynamic_extents_type =
-        typename detail::build_extents_tuple<std::tuple<>, Dimensions...>::type;
-
-  private:
-    dynamic_extents_type dynamic_extents;
-};
+struct extents;
 
 }
 
@@ -77,7 +97,39 @@ struct extent<boost::extents<Head, Tail...>, ND>
 
 }
 
-namespace boost { namespace detail
+namespace boost
+{
+
+template <std::size_t... Dimensions>
+struct extents
+{
+    using size_type = std::size_t;
+
+    using dynamic_extents_type =
+        typename detail::build_extents_tuple<std::tuple<>, Dimensions...>::type;
+
+    template <std::size_t Idx>
+    size_type get() const noexcept
+    {
+        typedef std::integral_constant<
+            bool, std::extent<extents, Idx>::value == dynamic_extent
+        > dispatch;
+        return get_impl<Idx>(dispatch());
+    }
+
+  private:
+    // Dynamic extent.
+    template <std::size_t Idx>
+    size_type get_impl(std::true_type) const noexcept;
+
+    // Static extent.
+    template <std::size_t Idx>
+    constexpr size_type get_impl(std::false_type) noexcept;
+
+    dynamic_extents_type dynamic_extents;
+};
+
+namespace detail
 {
 
 // Metafunction which returns true if std::is_integral<> is true for all of the
