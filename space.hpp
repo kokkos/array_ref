@@ -20,6 +20,9 @@ namespace boost
 
 constexpr std::size_t dynamic_extent = std::size_t(-1);
 
+template <std::size_t... Dimensions>
+struct extents;
+
 namespace detail
 {
 
@@ -71,14 +74,39 @@ struct dynamic_extent_tuple_index<Idx, MappedIdx, Head, Tail...>
       , Tail...
     > {};
 
-}
-
+// Counts the number of dynamic extents.
 template <std::size_t... Dimensions>
-struct extents;
+struct count_dynamic_extents;
 
-}
+// Base case.
+template <>
+struct count_dynamic_extents<> : std::integral_constant<std::size_t, 0> {};
 
-namespace std {
+template <std::size_t Head, std::size_t... Tail>
+struct count_dynamic_extents<Head, Tail...>
+  : std::integral_constant<std::size_t,
+        ( Head == dynamic_extent
+        ? count_dynamic_extents<Tail...>::value + 1
+        : count_dynamic_extents<Tail...>::value) 
+    >{};
+
+// Metafunction which returns true if std::is_integral<> is true for all of the
+// types in the parameter pack.
+template <typename... T>
+struct pack_is_integral;
+
+// Base case.
+template <>
+struct pack_is_integral<> : std::true_type {};
+
+template <typename Head, typename... Tail>
+struct pack_is_integral<Head, Tail...>
+  : boost::mpl::and_<std::is_integral<Head>, pack_is_integral<Tail...> > {};
+
+}} // boost::detail
+
+namespace std
+{
 
 template <std::size_t... Dimensions>
 struct rank<boost::extents<Dimensions...> >
@@ -95,36 +123,65 @@ struct extent<boost::extents<Head, Tail...>, ND>
       , std::extent<boost::extents<Tail...>, ND - 1>::value
     > {};
 
-}
+} // std
 
 namespace boost
 {
 
+namespace detail
+{
+
+template <std::size_t Idx, std::size_t... Dimensions>
+constexpr typename extents<Dimensions...>::size_type
+get_value_impl(extents<Dimensions...>, std::true_type) noexcept;
+
+} // detail
+
 template <std::size_t... Dimensions>
 struct extents
 {
+    // TYPES
+
     using size_type = std::size_t;
 
+    // NOTE: Not defined in the spec, public for unit tests. 
     using dynamic_extents_type =
         typename detail::build_extents_tuple<std::tuple<>, Dimensions...>::type;
 
-    template <std::size_t Idx>
-    size_type get() const noexcept
+    // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
+
+    constexpr extents() : dynamic_extents() {}
+
+    template <typename... DynamicDimensions>
+    constexpr extents(DynamicDimensions... exts) : dynamic_extents(exts...)
     {
-        typedef std::integral_constant<
-            bool, std::extent<extents, Idx>::value == dynamic_extent
-        > dispatch;
-        return get_impl<Idx>(dispatch());
+        static_assert(
+            detail::pack_is_integral<DynamicDimensions...>::value
+          , "Non-integral types passed to extents<> constructor" 
+            );
+        static_assert(
+            detail::count_dynamic_extents<Dimensions...>::value
+            == sizeof...(DynamicDimensions)
+          , "Incorrect number of dynamic extents passed to extents<>."
+            );
+    }
+
+    constexpr extents(extents const&) = default;
+    extents& operator=(extents const&) = default;
+    constexpr extents(extents&&) = default;
+    extents& operator=(extents&&) = default;
+
+    // METADATA ACCESS
+
+    static constexpr size_type rank() noexcept
+    {
+        return std::rank<extents>::value;
     }
 
   private:
-    // Dynamic extent.
-    template <std::size_t Idx>
-    size_type get_impl(std::true_type) const noexcept;
-
-    // Static extent.
-    template <std::size_t Idx>
-    constexpr size_type get_impl(std::false_type) noexcept;
+    template <std::size_t Idx, std::size_t... BDimensions>
+    friend constexpr typename extents<BDimensions...>::size_type
+    detail::get_value_impl(extents<BDimensions...>, std::true_type) noexcept;
 
     dynamic_extents_type dynamic_extents;
 };
@@ -132,18 +189,39 @@ struct extents
 namespace detail
 {
 
-// Metafunction which returns true if std::is_integral<> is true for all of the
-// types in the parameter pack.
-template <typename... T>
-struct pack_is_integral;
+// Dynamic extent.
+template <std::size_t Idx, std::size_t... Dimensions>
+constexpr typename extents<Dimensions...>::size_type
+get_value_impl(extents<Dimensions...> ext, std::true_type) noexcept
+{
+    typedef dynamic_extent_tuple_index<Idx, 0, Dimensions...> mapping;
+    return std::get<mapping::type::value>(ext.dynamic_extents);
+}
 
-// Base case.
-template <>
-struct pack_is_integral<> : std::true_type {};
+// Static extent.
+template <std::size_t Idx, std::size_t... Dimensions>
+constexpr typename extents<Dimensions...>::size_type
+get_value_impl(extents<Dimensions...> ext, std::false_type) noexcept
+{
+    return std::extent<extents<Dimensions...>, Idx>::value;
+}
 
-template <typename Head, typename... Tail>
-struct pack_is_integral<Head, Tail...>
-  : boost::mpl::and_<std::is_integral<Head>, pack_is_integral<Tail...> > {};
+} // detail
+
+template <std::size_t Idx, std::size_t... Dimensions>
+constexpr typename std::enable_if<
+    Idx < extents<Dimensions...>::rank() 
+  , typename extents<Dimensions...>::size_type
+>::type get_value(extents<Dimensions...> ext) noexcept
+{
+    typedef std::integral_constant<
+        bool, std::extent<extents<Dimensions...>, Idx>::value == dynamic_extent
+    > dispatch;
+    return detail::get_value_impl<Idx>(ext, dispatch());
+}
+
+namespace detail
+{
 
 template <typename ValueType, typename Dimensions, typename Layout
         , typename... Properties>
@@ -209,14 +287,14 @@ struct view_impl
     // ELEMENT ACCESS
     template <typename... Idx>
     typename std::enable_if<
-        rank() == sizeof...(Idx) && pack_is_integral<Idx...>::value
+        rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
       , reference
     >::type operator()(Idx... idx) const;
 };
 
-}
+} // detail
 
-}
+} // boost
 
 #endif // BOOST_VIEW_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
 

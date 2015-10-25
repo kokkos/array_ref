@@ -14,10 +14,10 @@ int main()
     using boost::detail::dynamic_extent_tuple_index;
     constexpr auto ext = boost::dynamic_extent;
 
-    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0         >::value), 0);
-    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, 3      >::value), 0);
-    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, 3, 5   >::value), 0);
-    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, 3, 5, 9>::value), 0);
+    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0               >::value), 0);
+    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, 3            >::value), 0);
+    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, 3,   5       >::value), 0);
+    BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, 3,   5,   9  >::value), 0);
 
     BOOST_TEST_EQ((dynamic_extent_tuple_index<0, 0, ext, 5,   9  >::value), 0);
     BOOST_TEST_EQ((dynamic_extent_tuple_index<1, 0, ext, 5,   9  >::value), 1);

@@ -9,11 +9,9 @@ endif
 CXXFLAGS+=-std=c++11 
 INCLUDES=
 LIBS=
+SOURCES=$(shell ls -1 test_*.cpp)
 ADDITIONAL_SOURCES=
-PROGRAMS=test_build_extents_tuple \
-		 test_dims \
-		 test_dynamic_extent_tuple_index \
-		 test_pack_is_integral
+PROGRAMS=$(SOURCES:.cpp=)
 DIRECTORIES=build
 
 all: directories $(PROGRAMS)
@@ -29,5 +27,5 @@ $(DIRECTORIES)/:
 	build/$@
 
 clean:
-	rm $(DIRECTORIES)/*
+	rm -f $(DIRECTORIES)/*
 	rmdir $(DIRECTORIES)
