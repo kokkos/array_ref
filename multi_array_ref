@@ -139,23 +139,14 @@ struct dims
 
     // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
 
-    // Constructs from a set of dynamic dimensions..
+    // Default constructor. Default-initializes any dynamic dimensions.
+    constexpr dims() noexcept;
+
+    // Constructs from a set of dynamic dimensions.
     // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDims)
     // EXPECTS: std::is_integral<> is true for all the types in Sizes
     template <typename... DynamicDims>
-    constexpr dims(DynamicDims... ddims) noexcept
-      : dynamic_dims(ddims...)
-    {
-        static_assert(
-            detail::pack_is_integral<DynamicDims...>::value
-          , "Non-integral types passed to dims<> constructor" 
-            );
-        static_assert(
-            detail::count_dynamic_dims<Dims...>::value
-            == sizeof...(DynamicDims)
-          , "Incorrect number of dynamic dimensions passed to dims<>."
-            );
-    }
+    constexpr dims(DynamicDims... ddims) noexcept;
 
     // Copy constructor.
     constexpr dims(dims const&) = default;
@@ -175,24 +166,54 @@ struct dims
     // METADATA ACCESS
 
     // Returns the number of dimensions of the referenced array.
-    static constexpr size_type rank() noexcept
-    {
-        return std::rank<dims>::value;
-    }
+    static constexpr size_type rank() noexcept;
 
     // Returns the number of dimension which are dynamic.
-    static constexpr size_type num_dynamic_dims() noexcept
-    {
-        return detail::count_dynamic_dims<Dims...>::value;
-    }
+    static constexpr size_type num_dynamic_dims() noexcept;
 
   private:
     template <std::size_t I, std::size_t... BDims>
     friend constexpr typename dims<BDims...>::size_type
     detail::get_value_impl(dims<BDims...>, std::true_type) noexcept;
 
-    dynamic_dims_type dynamic_dims;
+    dynamic_dims_type dynamic_dims_;
 };
+
+// FIXME: Confirm that default-initializing an integral type is guranteed to
+// zero it. If it's not, maybe do an inlined memset (don't actually call
+// memset, because lol icpc).
+template <std::size_t... Dims>
+constexpr dims<Dims...>::dims() noexcept : dynamic_dims_() {}
+
+template <std::size_t... Dims>
+template <typename... DynamicDims>
+constexpr dims<Dims...>::dims(DynamicDims... ddims) noexcept
+  : dynamic_dims_(ddims...)
+{
+    static_assert(
+        detail::pack_is_integral<DynamicDims...>::value
+      , "Non-integral types passed to dims<> constructor" 
+    );
+    static_assert(
+        detail::count_dynamic_dims<Dims...>::value
+        == sizeof...(DynamicDims)
+      , "Incorrect number of dynamic dimensions passed to dims<>."
+        );
+}
+
+template <std::size_t... Dims>
+inline constexpr typename dims<Dims...>::size_type
+dims<Dims...>::rank() noexcept
+{
+    return std::rank<dims>::value;
+}
+
+template <std::size_t... Dims>
+inline constexpr typename dims<Dims...>::size_type
+dims<Dims...>::num_dynamic_dims() noexcept
+{
+    return detail::count_dynamic_dims<Dims...>::value;
+}
 
 namespace detail
 {
@@ -200,10 +221,10 @@ namespace detail
 // Dynamic dimension.
 template <std::size_t I, std::size_t... Dims>
 constexpr typename dims<Dims...>::size_type
-get_value_impl(dims<Dims...> ext, std::true_type) noexcept
+get_value_impl(dims<Dims...> d, std::true_type) noexcept
 {
     typedef dynamic_dim_tuple_index<I, 0, Dims...> mapping;
-    return std::get<mapping::type::value>(ext.dynamic_dims);
+    return std::get<mapping::type::value>(d.dynamic_dims_);
 }
 
 // Static dimension.
@@ -251,15 +272,23 @@ struct multi_array_ref_impl
     // ENSURES: this->data() == nullptr && this->size() == 0
     constexpr multi_array_ref_impl() noexcept;
 
-    // Construct from nullptr, results in a zero-length view.
+    // Construct from nullptr, results in a zero-length multi_array_ref.
     constexpr multi_array_ref_impl(std::nullptr_t) noexcept;
 
-    // Constructs from a pointer + list of sizes.
+    // Constructs from a pointer + list of sizes, default constructs traits.
     // EXPECTS: ptr != nullptr 
     // EXPECTS: std::is_integral<> is true for all the types in Sizes
-    // ENSURES: this->data() == ptr
+    // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDim)
+    // ENSURES: this->data() == p
     template <typename... Sizes>
-    constexpr multi_array_ref_impl(pointer ptr, Sizes... sizes) noexcept;
+    constexpr multi_array_ref_impl(pointer p, Sizes... sizes) noexcept;
+
+    // Constructs from a pointer + dims<> + traits.
+    // EXPECTS: ptr != nullptr 
+    // ENSURES: this->data() == p
+    constexpr multi_array_ref_impl(
+        pointer p, Dims const& d, Traits const& t
+        ) noexcept;
 
     // Conversion constructor.
     // TYPE-REQUIREMENTS: BValueType must be assignment-compatible
@@ -270,19 +299,11 @@ struct multi_array_ref_impl
 
     // FIXME: Static array constructor.
 
-    // Copy constructor.
     constexpr multi_array_ref_impl(multi_array_ref_impl const& b) = default;
-
-    // Move constructor.
     constexpr multi_array_ref_impl(multi_array_ref_impl&& b) = default;
-
-    // Copy assignment operator.
     multi_array_ref_impl& operator=(multi_array_ref_impl const& b) = default;
-
-    // Move assignment operator.
     multi_array_ref_impl& operator=(multi_array_ref_impl&& b) = default;
 
-    // Destructor.
     ~multi_array_ref_impl() = default;
 
     // METADATA ACCESS
@@ -300,7 +321,51 @@ struct multi_array_ref_impl
         rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
       , reference
     >::type operator()(Idx... idx) const;
+
+  private:
+    pointer ptr_;
+    Dims dims_;
+    Traits traits_;
 };
+
+template <typename ValueType, typename Dims, typename Traits>
+constexpr
+multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl() noexcept
+  : ptr_(nullptr)
+  , dims_()
+  , traits_()
+{}
+
+template <typename ValueType, typename Dims, typename Traits>
+constexpr
+multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+    std::nullptr_t
+    ) noexcept
+  : ptr_(nullptr)
+  , dims_()
+  , traits_()
+{}
+
+template <typename ValueType, typename Dims, typename Traits>
+template <typename... Sizes>
+constexpr
+multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+    pointer p, Sizes... sizes
+    ) noexcept
+  : ptr_(p)
+  , dims_(sizes...) // dims<> does the relevant static_asserts.
+  , traits_()
+{}
+
+template <typename ValueType, typename Dims, typename Traits>
+constexpr
+multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+    pointer p, Dims const& d, Traits const& t
+    ) noexcept
+  : ptr_(p)
+  , dims_(d)
+  , traits_(t)
+{}
 
 }}} // std::experimental::detail
 
