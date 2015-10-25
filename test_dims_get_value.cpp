@@ -7,18 +7,18 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include "space.hpp"
+#include <multi_array_ref>
 
 int main()
 {
-    using boost::extents;
-    using boost::get_value;
-    constexpr auto ext = boost::dynamic_extent;
+    using std::experimental::dims;
+    using std::experimental::get_value;
+    constexpr auto dyn = std::experimental::dynamic_dim;
 
     {
-        extents<3            > e0;
-        extents<3,   5       > e1;
-        extents<3,   5,   9  > e2;
+        dims<3            > e0;
+        dims<3,   5       > e1;
+        dims<3,   5,   9  > e2;
 
         BOOST_TEST_EQ((get_value<0>(e0)), 3);
 
@@ -31,27 +31,9 @@ int main()
     }
 
     {
-        extents<ext, 5,   9  > e0(3);
-        extents<3,   ext, 9  > e1(5);
-        extents<3,   5,   ext> e2(9);
-
-        BOOST_TEST_EQ((get_value<0>(e0)), 3);
-        BOOST_TEST_EQ((get_value<1>(e0)), 5);
-        BOOST_TEST_EQ((get_value<2>(e0)), 9);
-
-        BOOST_TEST_EQ((get_value<0>(e1)), 3);
-        BOOST_TEST_EQ((get_value<1>(e1)), 5);
-        BOOST_TEST_EQ((get_value<2>(e1)), 9);
-
-        BOOST_TEST_EQ((get_value<0>(e2)), 3);
-        BOOST_TEST_EQ((get_value<1>(e2)), 5);
-        BOOST_TEST_EQ((get_value<2>(e2)), 9);
-    }
-
-    {
-        extents<3,   ext, ext> e0(5, 9);
-        extents<ext, 5,   ext> e1(3, 9);
-        extents<ext, ext, 9  > e2(3, 5);
+        dims<dyn, 5,   9  > e0(3);
+        dims<3,   dyn, 9  > e1(5);
+        dims<3,   5,   dyn> e2(9);
 
         BOOST_TEST_EQ((get_value<0>(e0)), 3);
         BOOST_TEST_EQ((get_value<1>(e0)), 5);
@@ -67,9 +49,27 @@ int main()
     }
 
     {
-        extents<ext>           e0(3);
-        extents<ext, ext>      e1(3, 5);
-        extents<ext, ext, ext> e2(3, 5, 9);
+        dims<3,   dyn, dyn> e0(5, 9);
+        dims<dyn, 5,   dyn> e1(3, 9);
+        dims<dyn, dyn, 9  > e2(3, 5);
+
+        BOOST_TEST_EQ((get_value<0>(e0)), 3);
+        BOOST_TEST_EQ((get_value<1>(e0)), 5);
+        BOOST_TEST_EQ((get_value<2>(e0)), 9);
+
+        BOOST_TEST_EQ((get_value<0>(e1)), 3);
+        BOOST_TEST_EQ((get_value<1>(e1)), 5);
+        BOOST_TEST_EQ((get_value<2>(e1)), 9);
+
+        BOOST_TEST_EQ((get_value<0>(e2)), 3);
+        BOOST_TEST_EQ((get_value<1>(e2)), 5);
+        BOOST_TEST_EQ((get_value<2>(e2)), 9);
+    }
+
+    {
+        dims<dyn>           e0(3);
+        dims<dyn, dyn>      e1(3, 5);
+        dims<dyn, dyn, dyn> e2(3, 5, 9);
 
         BOOST_TEST_EQ((get_value<0>(e0)), 3);
 

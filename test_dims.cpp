@@ -7,56 +7,56 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include "space.hpp"
+#include <multi_array_ref>
 
 int main()
 {
     using std::rank;
     using std::extent;
 
-    using boost::extents;
-    constexpr auto ext = boost::dynamic_extent;
+    using std::experimental::dims;
+    constexpr auto dyn = std::experimental::dynamic_dim;
 
-    BOOST_TEST_EQ((rank<extents<       > >::value), 0);
-    BOOST_TEST_EQ((rank<extents<3      > >::value), 1);
-    BOOST_TEST_EQ((rank<extents<3, 5   > >::value), 2);
-    BOOST_TEST_EQ((rank<extents<3, 5, 9> >::value), 3);
+    BOOST_TEST_EQ((rank<dims<       > >::value), 0);
+    BOOST_TEST_EQ((rank<dims<3      > >::value), 1);
+    BOOST_TEST_EQ((rank<dims<3, 5   > >::value), 2);
+    BOOST_TEST_EQ((rank<dims<3, 5, 9> >::value), 3);
     
-    BOOST_TEST_EQ((extent<extents<>   >::value), 0);
-    BOOST_TEST_EQ((extent<extents<>, 0>::value), 0);
-    BOOST_TEST_EQ((extent<extents<>, 1>::value), 0);
-    BOOST_TEST_EQ((extent<extents<>, 2>::value), 0);
+    BOOST_TEST_EQ((extent<dims<>   >::value), 0);
+    BOOST_TEST_EQ((extent<dims<>, 0>::value), 0);
+    BOOST_TEST_EQ((extent<dims<>, 1>::value), 0);
+    BOOST_TEST_EQ((extent<dims<>, 2>::value), 0);
     
-    BOOST_TEST_EQ((extent<extents<3>   >::value), 3);
-    BOOST_TEST_EQ((extent<extents<3>, 0>::value), 3);
-    BOOST_TEST_EQ((extent<extents<3>, 1>::value), 0);
+    BOOST_TEST_EQ((extent<dims<3>   >::value), 3);
+    BOOST_TEST_EQ((extent<dims<3>, 0>::value), 3);
+    BOOST_TEST_EQ((extent<dims<3>, 1>::value), 0);
     
-    BOOST_TEST_EQ((extent<extents<3, 5>   >::value), 3);
-    BOOST_TEST_EQ((extent<extents<3, 5>, 0>::value), 3);
-    BOOST_TEST_EQ((extent<extents<3, 5>, 1>::value), 5);
-    BOOST_TEST_EQ((extent<extents<3, 5>, 2>::value), 0);
+    BOOST_TEST_EQ((extent<dims<3, 5>   >::value), 3);
+    BOOST_TEST_EQ((extent<dims<3, 5>, 0>::value), 3);
+    BOOST_TEST_EQ((extent<dims<3, 5>, 1>::value), 5);
+    BOOST_TEST_EQ((extent<dims<3, 5>, 2>::value), 0);
 
-    BOOST_TEST_EQ((extent<extents<ext, 5>   >::value), ext);
-    BOOST_TEST_EQ((extent<extents<ext, 5>, 0>::value), ext);
-    BOOST_TEST_EQ((extent<extents<ext, 5>, 1>::value), 5);
-    BOOST_TEST_EQ((extent<extents<ext, 5>, 2>::value), 0);
+    BOOST_TEST_EQ((extent<dims<dyn, 5>   >::value), dyn);
+    BOOST_TEST_EQ((extent<dims<dyn, 5>, 0>::value), dyn);
+    BOOST_TEST_EQ((extent<dims<dyn, 5>, 1>::value), 5);
+    BOOST_TEST_EQ((extent<dims<dyn, 5>, 2>::value), 0);
 
-    BOOST_TEST_EQ((sizeof(extents<       >)), 1);
-    BOOST_TEST_EQ((sizeof(extents<3      >)), 1);
-    BOOST_TEST_EQ((sizeof(extents<3, 5   >)), 1);
-    BOOST_TEST_EQ((sizeof(extents<3, 5, 9>)), 1);
+    BOOST_TEST_EQ((sizeof(dims<       >)), 1);
+    BOOST_TEST_EQ((sizeof(dims<3      >)), 1);
+    BOOST_TEST_EQ((sizeof(dims<3, 5   >)), 1);
+    BOOST_TEST_EQ((sizeof(dims<3, 5, 9>)), 1);
 
-    BOOST_TEST_EQ((sizeof(extents<ext          >)), 1*sizeof(std::size_t));
-    BOOST_TEST_EQ((sizeof(extents<ext, ext     >)), 2*sizeof(std::size_t));
-    BOOST_TEST_EQ((sizeof(extents<ext, ext, ext>)), 3*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<dyn          >)), 1*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<dyn, dyn     >)), 2*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<dyn, dyn, dyn>)), 3*sizeof(std::size_t));
 
-    BOOST_TEST_EQ((sizeof(extents<ext, 5,   9  >)), 1*sizeof(std::size_t));
-    BOOST_TEST_EQ((sizeof(extents<3,   ext, 9  >)), 1*sizeof(std::size_t));
-    BOOST_TEST_EQ((sizeof(extents<3,   5,   ext>)), 1*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<dyn, 5,   9  >)), 1*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<3,   dyn, 9  >)), 1*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<3,   5,   dyn>)), 1*sizeof(std::size_t));
 
-    BOOST_TEST_EQ((sizeof(extents<3,   ext, ext>)), 2*sizeof(std::size_t));
-    BOOST_TEST_EQ((sizeof(extents<ext, 5,   ext>)), 2*sizeof(std::size_t));
-    BOOST_TEST_EQ((sizeof(extents<ext, ext, 9  >)), 2*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<3,   dyn, dyn>)), 2*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<dyn, 5,   dyn>)), 2*sizeof(std::size_t));
+    BOOST_TEST_EQ((sizeof(dims<dyn, dyn, 9  >)), 2*sizeof(std::size_t));
 
     return boost::report_errors();
 }

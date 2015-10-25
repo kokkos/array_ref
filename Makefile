@@ -7,7 +7,7 @@ else
 endif
 
 CXXFLAGS+=-std=c++11 
-INCLUDES=
+INCLUDES=-I.
 LIBS=
 SOURCES=$(shell ls -1 test_*.cpp)
 ADDITIONAL_SOURCES=

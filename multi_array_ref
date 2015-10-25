@@ -1,0 +1,307 @@
+////////////////////////////////////////////////////////////////////////////////
+//  Copyright (c) 2015 Bryce Adelstein Lelbach aka wash
+//
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
+//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+////////////////////////////////////////////////////////////////////////////////
+
+#if !defined(STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0)
+#define STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+
+#include <cstdint>
+
+#include <tuple>
+#include <type_traits>
+
+#include "conjunction.hpp"
+
+namespace std { namespace experimental
+{
+
+constexpr std::size_t dynamic_dim = std::size_t(-1);
+
+template <std::size_t... Dims>
+struct dims;
+
+} // experimental 
+
+template <std::size_t... Dims>
+struct rank<experimental::dims<Dims...> >
+  : std::integral_constant<std::size_t, sizeof...(Dims)> {};
+
+template <std::size_t Head, std::size_t... Tail>
+struct extent<experimental::dims<Head, Tail...>, 0>
+  : std::integral_constant<std::size_t, Head> {};
+
+template <std::size_t Head, std::size_t... Tail, unsigned ND>
+struct extent<experimental::dims<Head, Tail...>, ND>
+  : std::integral_constant<
+        std::size_t
+      , std::extent<experimental::dims<Tail...>, ND - 1>::value
+    > {};
+
+namespace experimental { namespace detail
+{
+
+// Builds a std::tuple with one entry for each dynamic dimension.
+template <typename Tuple, std::size_t... Dims>
+struct build_dims_tuple;
+
+// Base case.
+template <typename... T>
+struct build_dims_tuple<std::tuple<T...> >
+{
+    using type = std::tuple<T...>;
+};
+
+template <typename... T, std::size_t Head, std::size_t... Tail>
+struct build_dims_tuple<std::tuple<T...>, Head, Tail...>
+  : build_dims_tuple<
+        typename std::conditional<
+            Head == dynamic_dim
+          , std::tuple<std::size_t, T...> 
+          , std::tuple<T...> 
+        >::type
+      , Tail...
+    > {};
+
+// Maps an actual dynamic dimension index (Idx) to an index in the dynamic
+// dimension tuple. E.g. if you have dims<3, dynamic_dim, 4, dynamic_dim>, this
+// metafunction would map 1 to 0 (the first dynamic dimension) and 3 to 1 (the
+// second one). Pass the input index as Idx, 0 for MappedIdx and the list of
+// dims as Dims when calling. 
+template <std::size_t Idx, std::size_t MappedIdx, std::size_t... Dims>
+struct dynamic_dim_tuple_index;
+
+// Base case.
+template <std::size_t Idx, std::size_t MappedIdx>
+struct dynamic_dim_tuple_index<Idx, MappedIdx>
+  : std::integral_constant<std::size_t, MappedIdx> {};
+
+template <std::size_t Idx, std::size_t MappedIdx
+        , std::size_t Head, std::size_t... Tail>
+struct dynamic_dim_tuple_index<Idx, MappedIdx, Head, Tail...>
+  : dynamic_dim_tuple_index<
+        (Idx != 0 ? Idx - 1 : Idx)
+      , std::conditional<
+            Head == dynamic_dim && Idx != 0 
+          , std::integral_constant<std::size_t, MappedIdx + 1> 
+          , std::integral_constant<std::size_t, MappedIdx> 
+        >::type::value
+      , Tail...
+    > {};
+
+// Counts the number of dynamic dimensions.
+template <std::size_t... Dims>
+struct count_dynamic_dims;
+
+// Base case.
+template <>
+struct count_dynamic_dims<> : std::integral_constant<std::size_t, 0> {};
+
+template <std::size_t Head, std::size_t... Tail>
+struct count_dynamic_dims<Head, Tail...>
+  : std::integral_constant<std::size_t,
+        ( Head == dynamic_dim
+        ? count_dynamic_dims<Tail...>::value + 1
+        : count_dynamic_dims<Tail...>::value) 
+    >{};
+
+// Metafunction which returns true if std::is_integral<> is true for all of the
+// types in the parameter pack.
+template <typename... T>
+struct pack_is_integral;
+
+// Base case.
+template <>
+struct pack_is_integral<> : std::true_type {};
+
+template <typename Head, typename... Tail>
+struct pack_is_integral<Head, Tail...>
+  : __conjunction<std::is_integral<Head>, pack_is_integral<Tail...> > {};
+
+template <std::size_t I, std::size_t... Dims>
+constexpr typename dims<Dims...>::size_type
+get_value_impl(dims<Dims...>, std::true_type) noexcept;
+
+} // detail
+
+template <std::size_t... Dims>
+struct dims
+{
+    // TYPES
+
+    using size_type = std::size_t;
+
+    // NOTE: Not defined in the spec, public for unit tests. 
+    using dynamic_dims_type =
+        typename detail::build_dims_tuple<std::tuple<>, Dims...>::type;
+
+    // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
+
+    // Constructs from a set of dynamic dimensions..
+    // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDims)
+    // EXPECTS: std::is_integral<> is true for all the types in Sizes
+    template <typename... DynamicDims>
+    constexpr dims(DynamicDims... ddims) noexcept
+      : dynamic_dims(ddims...)
+    {
+        static_assert(
+            detail::pack_is_integral<DynamicDims...>::value
+          , "Non-integral types passed to dims<> constructor" 
+            );
+        static_assert(
+            detail::count_dynamic_dims<Dims...>::value
+            == sizeof...(DynamicDims)
+          , "Incorrect number of dynamic dimensions passed to dims<>."
+            );
+    }
+
+    // Copy constructor.
+    constexpr dims(dims const&) = default;
+
+    // Move constructor.
+    constexpr dims(dims&&) = default;
+
+    // Copy assignment operator.
+    dims& operator=(dims const&) = default;
+
+    // Move assignment operator.
+    dims& operator=(dims&&) = default;
+
+    // Destructor.
+    ~dims() = default;
+
+    // METADATA ACCESS
+
+    // Returns the number of dimensions of the referenced array.
+    static constexpr size_type rank() noexcept
+    {
+        return std::rank<dims>::value;
+    }
+
+    // Returns the number of dimension which are dynamic.
+    static constexpr size_type num_dynamic_dims() noexcept
+    {
+        return detail::count_dynamic_dims<Dims...>::value;
+    }
+
+  private:
+    template <std::size_t I, std::size_t... BDims>
+    friend constexpr typename dims<BDims...>::size_type
+    detail::get_value_impl(dims<BDims...>, std::true_type) noexcept;
+
+    dynamic_dims_type dynamic_dims;
+};
+
+namespace detail
+{
+
+// Dynamic dimension.
+template <std::size_t I, std::size_t... Dims>
+constexpr typename dims<Dims...>::size_type
+get_value_impl(dims<Dims...> ext, std::true_type) noexcept
+{
+    typedef dynamic_dim_tuple_index<I, 0, Dims...> mapping;
+    return std::get<mapping::type::value>(ext.dynamic_dims);
+}
+
+// Static dimension.
+template <std::size_t I, std::size_t... Dims>
+constexpr typename dims<Dims...>::size_type
+get_value_impl(dims<Dims...> ext, std::false_type) noexcept
+{
+    return std::extent<dims<Dims...>, I>::value;
+}
+
+} // detail
+
+// Returns the number of elements in the Ith direction.
+// EXPECTS: I < dims<Dims...>::rank()
+template <std::size_t I, std::size_t... Dims>
+constexpr typename std::enable_if<
+    I < dims<Dims...>::rank() 
+  , typename dims<Dims...>::size_type
+>::type get_value(dims<Dims...> ext) noexcept
+{
+    typedef std::integral_constant<
+        bool, std::extent<dims<Dims...>, I>::value == dynamic_dim
+    > dispatch;
+    return detail::get_value_impl<I>(ext, dispatch());
+}
+
+namespace detail
+{
+
+template <typename ValueType, typename Dims, typename Traits>
+struct multi_array_ref_impl
+{
+    // TYPES
+
+    using size_type = std::size_t;
+    using index_type = std::ptrdiff_t;
+
+    using value_type = ValueType;
+    using pointer = std::add_pointer<value_type>;
+    using reference = std::add_lvalue_reference<value_type>;
+
+    // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
+
+    // Default constructor, yields the same result as from std::nullptr_t.
+    // ENSURES: this->data() == nullptr && this->size() == 0
+    constexpr multi_array_ref_impl() noexcept;
+
+    // Construct from nullptr, results in a zero-length view.
+    constexpr multi_array_ref_impl(std::nullptr_t) noexcept;
+
+    // Constructs from a pointer + list of sizes.
+    // EXPECTS: ptr != nullptr 
+    // EXPECTS: std::is_integral<> is true for all the types in Sizes
+    // ENSURES: this->data() == ptr
+    template <typename... Sizes>
+    constexpr multi_array_ref_impl(pointer ptr, Sizes... sizes) noexcept;
+
+    // Conversion constructor.
+    // TYPE-REQUIREMENTS: BValueType must be assignment-compatible
+    template <typename OtherValueType>
+    constexpr multi_array_ref_impl(
+        multi_array_ref_impl<OtherValueType, Dims, Traits> const& b
+        ) noexcept; 
+
+    // FIXME: Static array constructor.
+
+    // Copy constructor.
+    constexpr multi_array_ref_impl(multi_array_ref_impl const& b) = default;
+
+    // Move constructor.
+    constexpr multi_array_ref_impl(multi_array_ref_impl&& b) = default;
+
+    // Copy assignment operator.
+    multi_array_ref_impl& operator=(multi_array_ref_impl const& b) = default;
+
+    // Move assignment operator.
+    multi_array_ref_impl& operator=(multi_array_ref_impl&& b) = default;
+
+    // Destructor.
+    ~multi_array_ref_impl() = default;
+
+    // METADATA ACCESS
+
+    // Returns the number of dimensions of the referenced array.
+    static constexpr size_type rank() noexcept;
+
+    // Returns the number of dimension which are dynamic.
+    static constexpr size_type num_dynamic_dims() noexcept;
+
+    // ELEMENT ACCESS
+
+    template <typename... Idx>
+    typename std::enable_if<
+        rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
+      , reference
+    >::type operator()(Idx... idx) const;
+};
+
+}}} // std::experimental::detail
+
+#endif // STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0

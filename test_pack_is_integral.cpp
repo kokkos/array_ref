@@ -7,11 +7,11 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include "space.hpp"
+#include <multi_array_ref>
 
 int main()
 {
-    using boost::detail::pack_is_integral;
+    using std::experimental::detail::pack_is_integral;
 
     BOOST_TEST_EQ((pack_is_integral<int  >::value), true);
     BOOST_TEST_EQ((pack_is_integral<float>::value), false);
