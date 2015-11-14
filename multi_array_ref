@@ -121,7 +121,7 @@ struct pack_is_integral<Head, Tail...>
   : __conjunction<std::is_integral<Head>, pack_is_integral<Tail...> > {};
 
 template <std::size_t I, std::size_t... Dims>
-constexpr typename dims<Dims...>::size_type
+inline constexpr typename dims<Dims...>::size_type
 get_value_impl(dims<Dims...>, std::true_type) noexcept;
 
 } // detail
@@ -197,7 +197,7 @@ constexpr dims<Dims...>::dims(DynamicDims... ddims) noexcept
     static_assert(
         detail::count_dynamic_dims<Dims...>::value
         == sizeof...(DynamicDims)
-      , "Incorrect number of dynamic dimensions passed to dims<>."
+      , "Incorrect number of dynamic dimensions passed to dims<>"
         );
 }
 
@@ -220,7 +220,7 @@ namespace detail
 
 // Dynamic dimension.
 template <std::size_t I, std::size_t... Dims>
-constexpr typename dims<Dims...>::size_type
+inline constexpr typename dims<Dims...>::size_type
 get_value_impl(dims<Dims...> d, std::true_type) noexcept
 {
     typedef dynamic_dim_tuple_index<I, 0, Dims...> mapping;
@@ -229,7 +229,7 @@ get_value_impl(dims<Dims...> d, std::true_type) noexcept
 
 // Static dimension.
 template <std::size_t I, std::size_t... Dims>
-constexpr typename dims<Dims...>::size_type
+inline constexpr typename dims<Dims...>::size_type
 get_value_impl(dims<Dims...> ext, std::false_type) noexcept
 {
     return std::extent<dims<Dims...>, I>::value;
@@ -240,7 +240,7 @@ get_value_impl(dims<Dims...> ext, std::false_type) noexcept
 // Returns the number of elements in the Ith direction.
 // EXPECTS: I < dims<Dims...>::rank()
 template <std::size_t I, std::size_t... Dims>
-constexpr typename std::enable_if<
+inline constexpr typename std::enable_if<
     I < dims<Dims...>::rank() 
   , typename dims<Dims...>::size_type
 >::type get_value(dims<Dims...> ext) noexcept
@@ -251,6 +251,179 @@ constexpr typename std::enable_if<
     return detail::get_value_impl<I>(ext, dispatch());
 }
 
+template <typename ValueType, typename PaddingDims>
+struct column_major_layout 
+{
+    // TYPES 
+
+    template <typename OtherValueType>
+    struct rebind
+    {
+        using other = column_major_layout<OtherValueType, PaddingDims>;
+    };
+
+    using size_type = std::size_t;
+    using index_type = std::size_t; // FIXME: Maybe std::ptrdiff_t?
+
+    using value_type = ValueType;
+    using pointer = std::add_pointer<value_type>;
+    using reference = std::add_lvalue_reference<value_type>;
+
+    // CONSTRUCTORS
+
+    constexpr column_major_layout() noexcept;
+
+    constexpr column_major_layout(PaddingDims const& pad) noexcept;
+
+    // INDEXING AND ACCESS
+
+    template <std::size_t... Dims, typename... Idx>
+    index_type index(dims<Dims...> d, Idx... idx) const noexcept; 
+
+    reference access(pointer p, index_type raw_idx) const noexcept;
+
+  private:
+    // Recursive column-major layout implementation.
+    //
+    // Four cases:
+    // * First index, rank() > 1
+    // * First index, rank() == 1
+    // * Nth index
+    // * Final
+
+    // First index, rank() > 1
+    template <std::size_t... Dims
+            , typename IdxHead, typename IdxNextHead, typename... IdxTail>
+    index_type index_impl(
+        dims<Dims...> d
+      , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
+    ) const noexcept;
+
+    // First index, rank() == 1
+    template <std::size_t... Dims
+            , typename IdxHead>
+    index_type index_impl(
+        dims<Dims...> d
+      , IdxHead idx_0
+    ) const noexcept;
+
+    // Nth index
+    template <std::size_t N, std::size_t... Dims
+            , typename IdxHead, typename IdxNextHead, typename... IdxTail>
+    index_type index_impl_n(
+        dims<Dims...> d
+      , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
+    ) const noexcept;
+
+    // Final
+    template <std::size_t N, std::size_t... Dims
+            , typename IdxHead>
+    index_type index_impl_n(
+        dims<Dims...> d
+      , IdxHead idx_n
+    ) const noexcept;
+
+    PaddingDims pad_; 
+};  
+
+template <typename ValueType, typename PaddingDims>
+constexpr
+column_major_layout<ValueType, PaddingDims>::column_major_layout() noexcept
+  : pad_()
+{}
+
+template <typename ValueType, typename PaddingDims>
+constexpr
+column_major_layout<ValueType, PaddingDims>::column_major_layout(
+    PaddingDims const& pad
+    ) noexcept
+  : pad_(pad)
+{}
+
+template <typename ValueType, typename PaddingDims>
+template <std::size_t... Dims, typename... Idx>
+inline typename column_major_layout<ValueType, PaddingDims>::index_type
+column_major_layout<ValueType, PaddingDims>::index(
+    dims<Dims...> d, Idx... idx
+    ) const noexcept
+{
+    static_assert(dims<Dims...>::rank() == PaddingDims::rank()
+                , "dims<> passed into layout has wrong rank");
+    return index_impl(d, idx...);
+}
+    
+template <typename ValueType, typename PaddingDims>
+inline typename column_major_layout<ValueType, PaddingDims>::reference
+column_major_layout<ValueType, PaddingDims>::access(
+    pointer p, index_type raw_idx
+    ) const noexcept
+{
+    return p[raw_idx];
+}
+
+// First index, rank() > 1
+template <typename ValueType, typename PaddingDims>
+template <std::size_t... Dims
+        , typename IdxHead, typename IdxNextHead, typename... IdxTail>
+inline typename column_major_layout<ValueType, PaddingDims>::index_type
+column_major_layout<ValueType, PaddingDims>::index_impl(
+    dims<Dims...> d
+  , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
+    ) const noexcept
+{
+    return idx_0
+         + index_impl_n<1>(d, idx_1, idx_tail...);
+}
+
+// First index, rank() == 1
+template <typename ValueType, typename PaddingDims>
+template <std::size_t... Dims
+        , typename IdxHead>
+inline typename column_major_layout<ValueType, PaddingDims>::index_type
+column_major_layout<ValueType, PaddingDims>::index_impl(
+    dims<Dims...> d
+  , IdxHead idx_0
+    ) const noexcept
+{
+    return idx_0;
+}
+
+// Nth index
+template <typename ValueType, typename PaddingDims>
+template <std::size_t N, std::size_t... Dims
+        , typename IdxHead, typename IdxNextHead, typename... IdxTail>
+inline typename column_major_layout<ValueType, PaddingDims>::index_type
+column_major_layout<ValueType, PaddingDims>::index_impl_n(
+    dims<Dims...> d
+  , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
+    ) const noexcept
+{
+    static_assert(0                     < N
+                , "dimension index is out of bounds in layout");
+    static_assert(dims<Dims...>::rank() > N
+                , "dimension index is out of bounds in layout");
+    return (get_value<N - 1>(d) + 1)
+         * (idx_n + index_impl_n<N + 1>(d, idx_n_plus_1, idx_tail...));
+}
+
+// Final
+template <typename ValueType, typename PaddingDims>
+template <std::size_t N, std::size_t... Dims
+        , typename IdxHead>
+inline typename column_major_layout<ValueType, PaddingDims>::index_type
+column_major_layout<ValueType, PaddingDims>::index_impl_n(
+    dims<Dims...> d
+  , IdxHead idx_n
+    ) const noexcept
+{
+    static_assert(0                     < N
+                , "dimension index is out of bounds in layout");
+    static_assert(dims<Dims...>::rank() > N
+                , "dimension index is out of bounds in layout");
+    return (get_value<N - 1>(d) + 1)
+         * (idx_n);
+}
+
 namespace detail
 {
 
@@ -259,14 +432,16 @@ struct multi_array_ref_impl
 {
     // TYPES
 
-    using size_type = std::size_t;
-    using index_type = std::ptrdiff_t;
+    using traits_type = typename Traits::template rebind<ValueType>::other;
 
-    using value_type = ValueType;
-    using pointer = std::add_pointer<value_type>;
-    using reference = std::add_lvalue_reference<value_type>;
+    using size_type = typename traits_type::size_type;
+    using index_type = typename traits_type::index_type;
 
-    // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
+    using value_type = typename traits_type::value_type;
+    using pointer = typename traits_type::pointer;
+    using reference = typename traits_type::reference;
+
+    // CONSTRUCTORS, DESTRUCTORS AND ASSIGNMENT OPERATORS
 
     // Default constructor, yields the same result as from std::nullptr_t.
     // ENSURES: this->data() == nullptr && this->size() == 0
@@ -320,7 +495,7 @@ struct multi_array_ref_impl
     typename std::enable_if<
         rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
       , reference
-    >::type operator()(Idx... idx) const;
+    >::type operator()(Idx... idx) const noexcept;
 
   private:
     pointer ptr_;
