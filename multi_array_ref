@@ -428,7 +428,7 @@ column_major_padded_layout<ValueType, PaddingDims>::index_impl_n(
                 , "dimension index is out of bounds in layout");
     static_assert(dims<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
-    return (get_value<N - 1>(d) + 1)
+    return (get_value<N - 1>(d))
          * (idx_n + index_impl_n<N + 1>(d, idx_n_plus_1, idx_tail...));
 }
 
@@ -446,7 +446,7 @@ column_major_padded_layout<ValueType, PaddingDims>::index_impl_n(
                 , "dimension index is out of bounds in layout");
     static_assert(dims<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
-    return (get_value<N - 1>(d) + 1)
+    return (get_value<N - 1>(d))
          * (idx_n);
 }
 
