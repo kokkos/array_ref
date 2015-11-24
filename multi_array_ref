@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //  Copyright (c) 2015 Bryce Adelstein Lelbach aka wash
 //
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -516,8 +516,8 @@ struct multi_array_ref_impl
     // TYPE-REQUIREMENTS: BValueType must be assignment-compatible
     template <typename OtherValueType>
     constexpr multi_array_ref_impl(
-        multi_array_ref_impl<OtherValueType, Dims, Traits> const& b
-        ) noexcept; 
+        multi_array_ref_impl<OtherValueType, Dims, Traits> const& other
+        ) noexcept;
 
     // FIXME: Static array constructor.
 
@@ -540,7 +540,7 @@ struct multi_array_ref_impl
 
     template <typename... Idx>
     typename std::enable_if<
-        rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
+        Dims::rank() == sizeof...(Idx) && pack_is_integral<Idx...>::value
       , reference
     >::type operator()(Idx... idx) const noexcept;
 
@@ -588,6 +588,47 @@ multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
   , dims_(d)
   , traits_(t)
 {}
+
+template <typename ValueType, typename Dims, typename Traits>
+template <typename OtherValueType> 
+constexpr
+multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+    multi_array_ref_impl<OtherValueType, Dims, Traits> const& other
+    ) noexcept
+  : ptr_(other.ptr_)
+  , dims_(other.dims_)
+  , traits_(other.traits_)
+{}
+
+template <typename ValueType, typename Dims, typename Traits>
+inline static constexpr typename
+    multi_array_ref_impl<ValueType, Dims, Traits>::size_type
+rank() noexcept
+{
+    return Dims::rank();
+}
+
+template <typename ValueType, typename Dims, typename Traits>
+inline static constexpr typename
+    multi_array_ref_impl<ValueType, Dims, Traits>::size_type
+num_dynamic_dims() noexcept
+{
+    return Dims::num_dynamic_dims();
+}
+
+template <typename ValueType, typename Dims, typename Traits>
+template <typename... Idx>
+inline typename std::enable_if<
+    Dims::rank() == sizeof...(Idx)
+    && pack_is_integral<Idx...>::value
+  , typename multi_array_ref_impl<ValueType, Dims, Traits>::reference
+>::type multi_array_ref_impl<ValueType, Dims, Traits>::operator()(
+    Idx... idx
+    ) const noexcept
+{
+    index_type const raw_idx = traits_.index(dims_, idx...);
+    return traits_.access(ptr_, raw_idx);
+}
 
 }}} // std::experimental::detail
 
