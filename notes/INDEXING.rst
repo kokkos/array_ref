@@ -17,18 +17,18 @@ p := padding
 s := striding
 i := index
 
-index(0) = s[0]*i[0] + p[0] + index(1)
-index(n) = (d[n-1]*s[n-1]+p[n-1]) * (s[n]*i[n]+p[n]+index(n+1))
+index(0) = s[0]*i[0] + index(1)
+index(n) = (d[n-1]*s[n-1]+p[n-1]) * (s[n]*i[n]+index(n+1))
 
-index(0) = s[0]*i[0] + p[0] + index(1)
+index(0) = s[0]*i[0] + index(1)
 index(n) = (d[n-1]*s[n-1]+p[n-1])*s[n]*i[n]
-         + (d[n-1]*s[n-1]+p[n-1])*p[n]
          + (d[n-1]*s[n-1]+p[n-1])*index(n+1)
 
-index() =                (s[0]*i[0]+p[0])
-        +           d[0]*(s[1]*i[1]+p[1])
-        +      d[0]*d[1]*(s[2]*i[2]+p[2])
-        + d[0]*d[1]*d[2]*(s[3]*i[3]+p[3])
+index()
+    =                                                          (s[0]*i[0])
+    +                                       (d[0]*s[0]+p[0]) * (s[1]*i[1])
+    +                    (d[0]*s[0]+p[0]) * (d[1]*s[1]+p[1]) * (s[2]*i[2])
+    + (d[0]*s[0]+p[0]) * (d[1]*s[1]+p[1]) * (d[2]*s[2]+p[2]) * (s[3]*i[3])
 
 
 (i  , j  ) - s[0] - (i+1, j  ) - s[0] - (n  , j  ) - p[0]
@@ -52,26 +52,6 @@ index() =                (s[0]*i[0]+p[0])
     |                   |                   |
 
   p[1]                p[1]                p[1]
-
-d := <10>
-s := <2>
-
-index[0] = 2*0 = 0 
-index[1] = 2*1 = 2 
-index[2] = 2*2 = 4 
-index[3] = 2*3 = 6 
-index[4] = 2*4 = 8 
-
-0 X
-1
-2 X
-3
-4 X
-5
-6 X
-7
-8 X
-9 
 
 // Incremental Indexer:
 // * Method to build partial indices

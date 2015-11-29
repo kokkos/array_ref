@@ -417,7 +417,6 @@ column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
     ) const noexcept
 {
     return get_value<0>(stride_)*idx_0
-         + get_value<0>(pad_)
          + index_impl_n<1>(d, idx_1, idx_tail...);
 }
 
@@ -432,8 +431,7 @@ column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
   , IdxHead idx_0
     ) const noexcept
 {
-    return get_value<0>(stride_)*idx_0
-         + get_value<0>(pad_);
+    return get_value<0>(stride_)*idx_0;
 }
 
 // 0 == rank() 
@@ -463,8 +461,9 @@ column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
                 , "dimension index is out of bounds in layout");
     static_assert(dims<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
-    return (get_value<N-1>(d) * get_value<N-1>(stride_) + get_value<N-1>(pad_))
-         * (idx_n + index_impl_n<N+1>(d, idx_n_plus_1, idx_tail...));
+    return (get_value<N-1>(d)*get_value<N-1>(stride_) + get_value<N-1>(pad_))
+         * ( get_value<N>(stride_)*idx_n
+           + index_impl_n<N+1>(d, idx_n_plus_1, idx_tail...));
 }
 
 // Final index
@@ -482,8 +481,8 @@ column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
                 , "dimension index is out of bounds in layout");
     static_assert(dims<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
-    return (get_value<N-1>(d) * get_value<N-1>(stride_) + get_value<N-1>(pad_))
-         * (idx_n);
+    return (get_value<N-1>(d)*get_value<N-1>(stride_) + get_value<N-1>(pad_))
+         * (get_value<N>(stride_)*idx_n);
 }
 
 namespace detail
