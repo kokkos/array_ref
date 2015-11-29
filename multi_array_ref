@@ -13,8 +13,6 @@
 #include <tuple>
 #include <type_traits>
 
-#include "conjunction.hpp"
-
 namespace std { namespace experimental
 {
 
@@ -42,6 +40,23 @@ struct extent<experimental::dims<Head, Tail...>, ND>
 
 namespace experimental { namespace detail
 {
+
+template<typename...>
+struct __conjunction;
+
+template<>
+struct __conjunction<> : std::true_type {};
+
+template <typename T>
+struct __conjunction<T> : T {};
+
+template <typename T1, typename T2>
+struct __conjunction<T1, T2> : std::conditional<T1::value, T2, T1>::type {};
+
+template<typename T1, typename T2, typename T3, typename... TN>
+struct __conjunction<T1, T2, T3, TN...>
+  : std::conditional<T1::value, __conjunction<T2, T3, TN...>, T1>::type
+{};
 
 // Builds a std::tuple with one entry for each dynamic dimension.
 template <typename Tuple, std::size_t... Dims>
@@ -519,8 +534,6 @@ struct multi_array_ref_impl
         multi_array_ref_impl<OtherValueType, Dims, Traits> const& other
         ) noexcept;
 
-    // FIXME: Static array constructor.
-
     constexpr multi_array_ref_impl(multi_array_ref_impl const& b) = default;
     constexpr multi_array_ref_impl(multi_array_ref_impl&& b) = default;
     multi_array_ref_impl& operator=(multi_array_ref_impl const& b) = default;
@@ -538,11 +551,19 @@ struct multi_array_ref_impl
 
     // ELEMENT ACCESS
 
+    // Access the element at the specified multi-dimensional index.
     template <typename... Idx>
     typename std::enable_if<
         Dims::rank() == sizeof...(Idx) && pack_is_integral<Idx...>::value
       , reference
     >::type operator()(Idx... idx) const noexcept;
+
+    // Access the element at the specified raw index.
+    template <typename Idx>
+    typename std::enable_if<
+        std::is_integral<Idx>::value
+      , reference
+    >::type operator[](Idx idx) const noexcept;
 
   private:
     pointer ptr_;
@@ -628,6 +649,18 @@ inline typename std::enable_if<
 {
     index_type const raw_idx = traits_.index(dims_, idx...);
     return traits_.access(ptr_, raw_idx);
+}
+
+template <typename ValueType, typename Dims, typename Traits>
+template <typename Idx>
+inline typename std::enable_if<
+    std::is_integral<Idx>::value
+  , typename multi_array_ref_impl<ValueType, Dims, Traits>::reference
+>::type multi_array_ref_impl<ValueType, Dims, Traits>::operator[](
+    Idx idx
+    ) const noexcept
+{
+    return traits_.access(ptr_, idx);
 }
 
 }}} // std::experimental::detail
