@@ -57,7 +57,7 @@ void test_1d_dynamic()
 
         BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), i); 
 
-        // Bound-checked.
+        // Bound-checking.
         BOOST_TEST_EQ((data.at(l.index(d, i))), i); 
     }
 } // }}}
@@ -117,7 +117,7 @@ void test_2d_dynamic()
         BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), j); 
 
-        // Bound-checked.
+        // Bound-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j)))), j); 
     }
@@ -153,7 +153,7 @@ void test_2d_mixed()
         BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), j); 
 
-        // Bound-checked.
+        // Bound-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j)))), j); 
     }
@@ -228,7 +228,7 @@ void test_3d_dynamic()
         BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j, k)))), j); 
         BOOST_TEST_EQ((std::get<2>(l.access(dptr, l.index(d, i, j, k)))), k); 
 
-        // Bound-checked.
+        // Bound-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j, k)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j, k)))), j); 
         BOOST_TEST_EQ((std::get<2>(data.at(l.index(d, i, j, k)))), k); 
