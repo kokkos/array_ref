@@ -206,8 +206,9 @@ A traditional multidimensional array with explicit dimensions
 Multidimensional Array with Multiple Implicit Dimensions
 ********************************************************************************
 
-The current array declaration specification in **8.3.4.p3** restricts
-array declarations such that only the leading dimension may be implicit.
+The current multidimensional array type declaration in **n4567 8.3.4.p3**
+restricts array declarations such that only the leading dimension
+may be implicit.
 Multidimensional arrays with multiple implicit dimensions as well as
 explicit dimensions are supported with the **dimension** property.
 The dimension property uses the "magic value" zero to denote an
@@ -236,15 +237,25 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
 
 ..
 
-Note that the following concise and intuitive syntax would require
-`relaxation of the current array declaration specification`_
-in **8.3.4.p3**.
+
+Preferred Syntax
+------------------------------------------------------------------------------
+
+We prefer the following concise and intuitive syntax for arrays
+with multiple implict dimensions.
 
 .. code-block:: c++
 
   array_ref< int[][][3] > y ; // concise intuitive syntax
 
 ..
+
+However, this syntax requires a
+`relaxation of the current multidimensional array type declaration`_
+in **n4567 8.3.4.p3**.
+Furthermore, this concise and intuitive syntax eliminates the need
+for ``array_property::dimension<...>`` and the associated "magic value"
+of zero to denote an implicit dimension.
 
 ******************************************************************
 Array Reference Properties: Layout Polymorphism
@@ -460,7 +471,7 @@ memory architecture, and user access pattern hints.
   |    static constexpr unsigned rank() const ;
   |
   |    template< typename IntegralType >
-  |    constexpr size_t extent( const IntegralType & ) const ;
+  |    constexpr size_t extent( IntegralType ) const ;
   |
   |    // Cardinality of index space; i.e., product of extents
   |    constexpr size_t size() const ;
@@ -474,7 +485,7 @@ memory architecture, and user access pattern hints.
   |    // If the layout mapping is regular then return the
   |    // distance between members when index \# is increased by one.
   |    template< typename IntegralType >
-  |    constexpr size_t stride( const IntegralType & ) const ;
+  |    constexpr size_t stride( IntegralType ) const ;
   |
   |    // Span covering the members
   |    constexpr size_t span() const ;
@@ -495,17 +506,17 @@ memory architecture, and user access pattern hints.
   |    reference operator()( IntegralArgs ... indices ) const noexcept ;
   |
   |    template< typename IntegralType >
-  |    reference operator[]( IntegralType i ) const noexcept ;
+  |    reference operator[]( IntegralType ) const noexcept ;
   |
   |    //--------------------
-  |    // Construct/copy/destroy:
+  |    // Construct/move/copy/destroy:
   |
   |    ~array_ref();
   |    constexpr array_ref();
-  |    constexpr array_ref( const array_ref & );
   |    constexpr array_ref( array_ref && );
-  |    array_ref & operator = ( const array_ref & );
+  |    constexpr array_ref( const array_ref & );
   |    array_ref & operator = ( array_ref && );
+  |    array_ref & operator = ( const array_ref & );
   |
   |    template< class ... IntegralArgs >
   |    constexpr array_ref( pointer , IntegralArgs ... implicit_dimensions );
@@ -523,13 +534,56 @@ memory architecture, and user access pattern hints.
   |  namespace experimental {
   |  namespace array_property {
   |
-  |  constexpr unsigned maximum_rank = /\* implementation defined \*/ ;
+  |  struct layout_right ;
+  |  struct layout_left ;
+  |  struct layout_stride ;
+  |  template< unsigned ... > layout_order ;
+  |
+  |  template< class T >
+  |  struct is_layout ;
+  |
+  |  template< class T >
+  |  constexpr bool is_layout_v = is_layout<T>::value ;
+  |
+  |  constexpr unsigned maximum_rank = /\* >= 10 \*/ ;
   |
   |  // Specify mix of explicit and implict dimensions
   |  template< size_t ... >
   |  struct dimension ;
   |
   |  }}}
+
+**Properties**
+
+An array_ref is given properties
+(such as ``layout_left``, ``layout_right``, and ``layout_stride``)
+through the ``Properties`` template parameter pack.
+
+  Effects: A ``void`` member in a ``Properties`` pack is ignored.
+
+
+**Layout Properties**
+
+  Requires:  At most one member of the ``Properties`` pack
+  is a layout property.
+
+  Requires:  is_layout_v< layout_right > == true,
+  is_layout_v< layout_left > == true,
+  is_layout_v< layout_stride > == true, and
+  is_layout_v< layout_order<...> > == true.
+
+  Effects: A layout property specifies the mapping from a
+  multi-index given to the member access operator
+  to a member reference.
+
+  Effects: Given ``layout_right`` the stride between
+  members increased from right-to-left indices.
+
+  Effects: Given ``layout_left`` the stride between
+  members increased from left-to-right indices.
+
+  Effects: Given ``layout_stride`` the stride between
+  members is arbitrary.
 
 
 **Dimension Specification**
@@ -548,12 +602,13 @@ following declarations.
 
 ..
 
-When a dimension specification is part of the ``DataType``
-the specification is limited by the valid array object declaration
-syntax; even though an array object is not being declared.
-If a `relaxation of the current array declaration specification`_
-were made the ``array_property::dimension`` would be unecessary and
-removed from this proposal.
+  Remark: When a dimension specification is part of the ``DataType``
+  the specification is limited by the valid
+  *multidimensional array type* declaration syntax (n4567 8.3.4.p3).
+  If a
+  `relaxation of the current multidimensional array type declaration`_
+  were made the ``array_property::dimension<...>`` is unecessary and
+  eliminated from this proposal.
 
   Requires: If ``std::extent<DataType>::value == 0`` then at most
   one ``Properties`` template argument may be
@@ -1000,41 +1055,9 @@ and the member access operator aborts as it is **nothrow**.
 Preferred Syntax for Multidimensional Array with Multiple Implicit Dimensions
 ******************************************************************************
 
-..  _`relaxation of the current array declaration specification`:
+..  _`relaxation of the current multidimensional array type declaration`:
 
-**Requires slight language specification change and (typically) trivial compiler change for correction and relaxation of array declaration.**
-
-Multidimensional arrays are used with multiple implicit dimensions;
-i.e., more dimensions than the leading dimension are declared at runtime.
-Such arrays are implemented within applications and libraries with
-numerous design idioms.
-
-A minimalist design that preserves the appearance of conventional
-multidimensional array syntax follows an *array of pointers to array of pointers to ...* idiom.
-While dereferencing operations are syntactically compatible with
-an array of explicitly declared dimensions this idiom provides
-no locality guarantees for members of the array,
-consumes significant memory for the arrays of pointers,
-and is problematic when passing such arrays to functions.
-
-.. code-block:: c++
-
-  double *** x ;
-  x = new double **[N0];
-  for ( size_t i0 = 0 ; i0 < N0 ; ++i0 ) {
-    x[i0] = new double *[N1];
-    for ( size_t i1 = 0 ; i1 < N1 ; ++i1 ) {
-      x[i0][i1] = new double[N2] ;
-    }
-  }
-
-  x[i0][i1][i2] // member access
-
-  foo( double *const *const * const array , size_t N0 , size_t N1 , size_t N2 );
-
-..
-
-A major goal of the **array_ref** interface is to preserve compatibility
+One goal of the array_ref interface is to preserve syntax
 between array_ref and arrays with explicit and implicitly declared dimensions.
 In the following example foo1 and foo2 accept rank 3 arrays of integers
 with prescribed explicit / implicit dimensions and fooT accepts a rank 3
@@ -1049,7 +1072,7 @@ array of integers with unprescribed dimensions.
   // and dimensions are explicit or implicit.
   template< class T , class ... P >
   typename std::enable_if< array_ref<T,P...>::rank() == 3 >::type
-  foo( array_ref<T,P...> array );
+  foo( array_ref<T,P...> array ) { ... }
 
   void bar()
   {
@@ -1070,62 +1093,61 @@ array of integers with unprescribed dimensions.
 ..
 
 
-Relaxed array type declarator
+A relaxed multidimensional array type declaration
 ------------------------------------------------------------------------------
 
-The current array type declarator constraints are defined in in **8.3.4 Arrays paragraph 3** as follows.
+The current array type declarator constraints are defined in in **n4567 8.3.4.p3** as follows.
 
   *When several “array of” specifications are adjacent,
-  a multidimensional array is created;
-  only the first of the constant expressions
-  that specify the bounds of the arrays may be omitted.*
+  a multidimensional array type is created;
+  only the first of the constant expressions that
+  specify the bounds of the arrays may be omitted.
+  In addition to declarations in which an incomplete
+  object type is allowed, an array bound may be omitted
+  in some cases in the declaration of a function parameter (8.3.5).
+  An array bound may also be omitted when the declarator is
+  followed by an initializer (8.5).
+  In this case the bound is calculated from the
+  number of initial elements (say, N) supplied (8.5.1),
+  and the type of the identifier of D is “array of N T”.
+  Furthermore, if there is a preceding declaration
+  of the entity in the same scope in which the bound was specified,
+  an omitted array bound is taken to be the same as in that
+  earlier declaration, and similarly for the definition
+  of a static data member of a class.*
 
-Note that this existing specification is in error when
-array syntax is used in a type definition -
-a type definition does not create a multidimensional array.
+Note the ambiguity in the current specification when an array declarator
+with several "array of" specifications are adjacent;
+which array bound may be ommitted?
 
-.. code-block:: c++
+The preferred syntax requires a relaxation of
+array type declarator constraints defined in **n4567 8.3.4.p3**
+for an incomplete object type.
+The following wording change is recommended.
 
-  typedef int X[][3][3] ; // does not create a multidimensional array
-  using Y = int[][3][3] ; // does not create a multidimensional array
+  *When several “array of” specifications are adjacent,
+  a multidimensional array type is created.
+  In declarations in which an incomplete object type is allowed
+  any of the bounds constant expressions may be omitted.
+  In some cases in the declaration of a function parameter (8.3.5)
+  the first array bound constant expression may be omitted.
+  The first array bound constant expression
+  may also be omitted when the declarator is
+  followed by an initializer (8.5).
+  In this case the bound is calculated from the
+  number of initial elements (say, N) supplied (8.5.1),
+  and the type of the identifier of D is “array of N T”.
+  Furthermore, if there is a preceding declaration
+  of the entity in the same scope in which the bound was specified,
+  the omitted first array bound constant expression is
+  taken to be the same as in that
+  earlier declaration, and similarly for the definition
+  of a static data member of a class.*
 
-..
+**This minor language specification change has been implemented with
+a trivial (one line) patch to Clang and was permissible in gcc prior to
+version 5.**
 
-This syntax requires a relaxation of array type declarator constraints defined in **8.3.4 Arrays paragraph 3**.
 
-Relaxing the **8.3.4.p3** constraint as follows will
-
-  - clarify the difference between array type and array object declarations,
-  - preserve correctness for conventional array object declarations,
-  - allow the proposed syntax for an array_ref with multiple implicit dimensions, and
-  - have zero impact on a compiler's processing of executable statements.
-
-  *When several “array of” specifications are adjacent
-  to form a multidimensional array type specification
-  and that type is used in the explicit declaration of a
-  multidimensional array then only the first of the
-  sequence of array bound constant expressions may be omitted;
-  otherwise any or all of the array bound constant expressions may be omitted.*
-
-There exists at least two precedents for types that can be defined but not used to declare objects:
-(1) an array with an omitted leading bound and (2) **void**.
-
-Relaxing this constraint is a simple one-line change in Clang that merely disables the error message and
-allows omission of second and subsequent dimensions.
-
-In gcc 4.7, 4.8, and 4.9 this relaxation was implicitly supported as
-demonstrated by the following error-free and warning-free meta function.
-
-.. code-block:: c++
-
-    template< typename T , unsigned R >
-    struct implicit_array_type { using type = typename implicit_array_type<T,R-1>::type[] ; };
-
-    template< typename T >
-    struct implicit_array_type<T,0> { using type = T ; };
-
-    using array_rank_3 = typename implicit_array_type<int,3>::type ;
-
-..
-
+A major goal of the **array_ref** interface is to preserve compatibility
 
