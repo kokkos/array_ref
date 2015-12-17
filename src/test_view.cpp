@@ -40,14 +40,14 @@ int main()
 
   // Verify extent can be evaluated at compilation
   // for 'constexpr' constructed view.
-  static_assert( view<int[][10]>().extent(0) == 0 , "" );
-  static_assert( view<int[][10]>().extent(1) == 10 , "" );
-  static_assert( view<int[][10]>().extent(2) == 1 , "" );
+  static_assert( view<int, layout_offset_void<dimension<0,4> > >().extent(0) == 0 , "" );
+  static_assert( view<int, layout_offset_left<dimension<3,10> > >().extent(1) == 10 , "" );
+  static_assert( view<int, layout_offset_right<dimension<3,0,1> > >().extent(2) == 1 , "" );
 
   // Verify view construction
   {
     int x_data[100];
-    view< int[][10] > x(x_data,9);
+    view< int, layout_offset_right<dimension<0,10> > > x(x_data,9);
     static_assert( x.rank() == 2 , "" );
     assert( x.extent(0) == 9 );
     static_assert( x.extent(1) == 10 , "" );
