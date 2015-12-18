@@ -275,7 +275,7 @@ struct view
   
 private:
 
-  using offset = typename properties::layout::template offset_type<typename properties::nsion>;
+  using offset = typename properties::layout::template offset_type<typename properties::dimension>;
 
   pointer m_ptr ;
   offset  m_offset ;
