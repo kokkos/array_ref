@@ -4,6 +4,7 @@
 
 #include <limits>
 #include <ostream>
+#include <layouts.hpp>
 
 namespace std {
 namespace experimental {
@@ -153,128 +154,6 @@ public:
 
 //----------------------------------------------------------------------------
 
-struct layout_left {};
-struct layout_right {};
-struct layout_stride {};
-
-template< typename Dimension , typename Layout >
-struct offset ;
-
-template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
-        , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9 >
-struct offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , layout_left >
-{
-  dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
-
-  using is_regular = std::true_type ;
-
-  template< typename t0 >
-  constexpr size_t operator()( const t0 & i0 ) const
-    { return i0 ; }
-
-  template< typename t0 , typename t1 >
-  constexpr size_t operator()( const t0 & i0 , const t1 & i1 ) const
-    { return i0 + dim.n0 * i1 ; }
-
-  template< typename t0 , typename t1 , typename t2 >
-  constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
-    { return i0 + dim.n0 * ( i1 + dim.n1 * i2 ); }
-
-  constexpr size_t stride_0() const { return 1 ; }
-  constexpr size_t stride_1() const { return dim.n0 ; }
-  constexpr size_t stride_2() const { return dim.n0 * dim.n1 ; }
-
-  constexpr size_t span() const
-    { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-
-  offset() = default ;
-  offset( const offset & ) = default ;
-  offset( offset && ) = default ;
-  offset & operator = ( const offset & ) = default ;
-  offset & operator = ( offset && ) = default ;
-
-  constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
-                       , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
-    : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
-};
-
-template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
-        , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9 >
-struct offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , void >
-{
-  dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
-
-  using is_regular = std::true_type ;
-
-  template< typename t0 >
-  constexpr size_t operator()( const t0 & i0 ) const
-    { return i0 ; }
-
-  template< typename t0 , typename t1 >
-  constexpr size_t operator()( const t0 & i0 , const t1 & i1 ) const
-    { return i0 * dim.n1 + i1 ; }
-
-  template< typename t0 , typename t1 , typename t2 >
-  constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
-    { return ( i0 * dim.n1 + i1 ) * dim.n2 + i2 ; }
-
-  constexpr size_t stride_0() const { return dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-  constexpr size_t stride_1() const { return dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-  constexpr size_t stride_2() const { return dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-  constexpr size_t stride_3() const { return dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-
-  constexpr size_t span() const
-    { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-
-  offset() = default ;
-  offset( const offset & ) = default ;
-  offset( offset && ) = default ;
-  offset & operator = ( const offset & ) = default ;
-  offset & operator = ( offset && ) = default ;
-
-  constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
-                       , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
-    : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
-};
-
-template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
-        , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9 >
-struct offset< dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , layout_right >
-{
-  dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> dim ;
-
-  using is_regular = std::true_type ;
-
-  template< typename t0 >
-  constexpr size_t operator()( const t0 & i0 ) const
-    { return i0 ; }
-
-  template< typename t0 , typename t1 >
-  constexpr size_t operator()( const t0 & i0 , const t1 & i1 ) const
-    { return i0 * dim.n1 + i1 ; }
-
-  template< typename t0 , typename t1 , typename t2 >
-  constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
-    { return ( i0 * dim.n1 + i1 ) * dim.n2 + i2 ; }
-
-  constexpr size_t stride_0() const { return dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-  constexpr size_t stride_1() const { return dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-  constexpr size_t stride_2() const { return dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-  constexpr size_t stride_3() const { return dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-
-  constexpr size_t span() const
-    { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
-
-  offset() = default ;
-  offset( const offset & ) = default ;
-  offset( offset && ) = default ;
-  offset & operator = ( const offset & ) = default ;
-  offset & operator = ( offset && ) = default ;
-
-  constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
-                       , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
-    : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
-};
 
 
 template< size_t ExN0
@@ -316,7 +195,7 @@ template<>
 struct unpack<>
 {
   using dimension = void ;
-  using layout    = void ;
+  using layout    = layout_void ;
 };
 
 template< class ... Properties >
@@ -396,9 +275,7 @@ struct view
   
 private:
 
-  typedef view_property::offset< typename properties::dimension
-                               , typename properties::layout
-                               > offset ;
+  using offset = typename properties::layout::template offset_type<typename properties::nsion>;
 
   pointer m_ptr ;
   offset  m_offset ;
