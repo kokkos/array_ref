@@ -125,17 +125,17 @@ struct offset_right
 
 struct layout_void {
     template< typename Dimension >
-    using offset_type = offset_void<Dimension>;
+    using offset = offset_void<Dimension>;
 };
 
 struct layout_left {
     template< typename Dimension >
-    using offset_type = offset_left<Dimension>;
+    using offset = offset_left<Dimension>;
 };
 
 struct layout_right{
     template< typename Dimension >
-    using offset_type = offset_right<Dimension>;
+    using offset = offset_right<Dimension>;
 };
 
 struct layout_stride {

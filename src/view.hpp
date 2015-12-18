@@ -188,30 +188,44 @@ std::ostream & operator << ( std::ostream & s , const dimension<ExN0,ExN1,ExN2,E
 
 //----------------------------------------------------------------------------
 
-template< class ... Properties >
-struct unpack ;
-
-template<>
-struct unpack<>
-{
-  using dimension = void ;
-  using layout    = layout_void ;
+template <typename T>
+struct is_dimension {
+    static constexpr bool value = false;
 };
 
-template< class ... Properties >
-struct unpack< void , Properties... >
-{
-  using dimension = typename unpack< Properties... >::dimension ;
-  using layout    = typename unpack< Properties... >::layout ;
+template< size_t ExN0
+        , size_t ExN1
+        , size_t ExN2
+        , size_t ExN3
+        , size_t ExN4
+        , size_t ExN5
+        , size_t ExN6
+        , size_t ExN7
+        , size_t ExN8
+        , size_t ExN9
+        >
+struct is_dimension<dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9>> {
+    static constexpr bool value = true;
 };
 
-template< class DataType , class ... Properties >
-struct unpack< DataType , Properties... >
+template <typename T, typename Enable = void>
+struct is_layout : std::false_type {};
+
+template <template <typename> class U>
+struct has_offset : std::true_type {};
+
+template <typename T>
+struct is_layout<T, typename std::enable_if<has_offset<T::template offset>::value, void>::type >
+    : std::true_type {};
+
+
+template< class DataType >
+struct dimension_from
 {
   static constexpr size_t max = std::numeric_limits<size_t>::max();
 
   // Assume an unknown property is the DataType
-  using dimension = std::experimental::view_property::dimension
+  using type = std::experimental::view_property::dimension
     < ( 0 < std::rank<DataType>::value ? std::extent<DataType,0>::value : max )
     , ( 1 < std::rank<DataType>::value ? std::extent<DataType,1>::value : max )
     , ( 2 < std::rank<DataType>::value ? std::extent<DataType,2>::value : max )
@@ -224,37 +238,30 @@ struct unpack< DataType , Properties... >
     , ( 9 < std::rank<DataType>::value ? std::extent<DataType,9>::value : max )
     > ;
 
-  using layout    = typename unpack< Properties... >::layout ;
-};
-
-template< size_t ExN0 , size_t ExN1 , size_t ExN2 , size_t ExN3 , size_t ExN4
-        , size_t ExN5 , size_t ExN6 , size_t ExN7 , size_t ExN8 , size_t ExN9
-        , class ... Properties >
-struct unpack< std::experimental::view_property::dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> , Properties... >
-{
-  using dimension = std::experimental::view_property::dimension<ExN0,ExN1,ExN2,ExN3,ExN4,ExN5,ExN6,ExN7,ExN8,ExN9> ;
-  using layout    = typename unpack< Properties ... >::layout ;
 };
 
 template< class ... Properties >
-struct unpack< layout_left , Properties ... >
-{
-  using dimension = typename unpack< Properties... >::dimension ;
-  using layout    = layout_left ;
+struct unpack ;
+
+template <typename First, typename ...Rest>
+struct unpack<First, Rest...> {
+    using layout_type = typename std::conditional<
+        is_layout<First>::value,
+        First,
+        typename unpack<Rest...>::layout_type
+        >::type;
+
+    using dimension_type = typename std::conditional<
+        is_dimension<First>::value,
+        First,
+        typename unpack<Rest...>::dimension_type
+        >::type;
 };
 
-template< class ... Properties >
-struct unpack< layout_right , Properties ... >
-{
-  using dimension = typename unpack< Properties... >::dimension ;
-  using layout    = layout_right ;
-};
-
-template< class ... Properties >
-struct unpack< layout_stride , Properties ... >
-{
-  using dimension = typename unpack< Properties... >::dimension ;
-  using layout    = layout_stride ;
+template <>
+struct unpack<> {
+    using layout_type = layout_void;
+    using dimension_type = dimension<7,7,7,7,7>;//_from<int>::type;
 };
 
 }}} // namespace std::experimental::view_property
@@ -267,22 +274,29 @@ namespace experimental {
 template< typename DataType , class ... Properties >
 struct view 
 {
-  typedef view_property::unpack< DataType , Properties ... > properties ;
 
   using value_type = typename std::remove_all_extents< DataType >::type ;
+
+    using properties = typename std::conditional<
+        std::is_same<value_type, DataType>::value,
+        typename view_property::unpack<Properties ... >,
+        typename view_property::unpack<
+            typename view_property::dimension_from<DataType>::type, Properties...>
+        >::type;
+
   using pointer    = value_type * ;
   using reference  = value_type & ;
   
 private:
 
-  using offset = typename properties::layout::template offset_type<typename properties::dimension>;
+    using offset = typename properties::layout_type::template offset<typename properties::dimension_type>;
 
   pointer m_ptr ;
   offset  m_offset ;
 
 public:
 
-  static constexpr unsigned rank() { return properties::dimension::rank ; }
+  static constexpr unsigned rank() { return properties::dimension_type::rank ; }
 
   template< typename iType >
   constexpr size_t extent( const iType & i ) const
@@ -353,13 +367,13 @@ public:
       error_tag_invalid_access_to_non_rank_zero_view( reference ) {}
     };
 
-  typename std::conditional< properties::dimension::rank == 0
+  typename std::conditional< properties::dimension_type::rank == 0
                            , reference
                            , error_tag_invalid_access_to_non_rank_zero_view
                            >::type
   operator()() const
     {
-      typename std::conditional< properties::dimension::rank == 0
+      typename std::conditional< properties::dimension_type::rank == 0
                                , reference
                                , error_tag_invalid_access_to_non_rank_zero_view
                                >::type return_type ;
@@ -367,21 +381,21 @@ public:
     }
 
   template< typename t0 >
-  typename std::enable_if<( properties::dimension::rank == 1 &&
+  typename std::enable_if<( properties::dimension_type::rank == 1 &&
                             std::is_integral<t0>::value
                          ), reference >::type
   operator[]( const t0 & i0 ) const
     { return m_ptr[ m_offset(i0) ]; }
 
   template< typename t0 >
-  typename std::enable_if<( properties::dimension::rank == 1 &&
+  typename std::enable_if<( properties::dimension_type::rank == 1 &&
                             std::is_integral<t0>::value
                          ), reference >::type
   operator()( const t0 & i0 ) const
     { return m_ptr[ m_offset(i0) ]; }
 
   template< typename t0 , typename t1 >
-  typename std::enable_if<( properties::dimension::rank == 2 &&
+  typename std::enable_if<( properties::dimension_type::rank == 2 &&
                             std::is_integral<t0>::value &&
                             std::is_integral<t1>::value
                          ), reference >::type
@@ -389,7 +403,7 @@ public:
     { return m_ptr[ m_offset(i0,i1) ]; }
 
   template< typename t0 , typename t1 , typename t2 >
-  typename std::enable_if<( properties::dimension::rank == 3 &&
+  typename std::enable_if<( properties::dimension_type::rank == 3 &&
                             std::is_integral<t0>::value &&
                             std::is_integral<t1>::value &&
                             std::is_integral<t2>::value
@@ -401,7 +415,7 @@ public:
   // Improper deference operators for rank 1..3
 
   template< typename t0 >
-  typename std::enable_if<( properties::dimension::rank == 0 &&
+  typename std::enable_if<( properties::dimension_type::rank == 0 &&
                             std::is_integral<t0>::value
                          ), reference >::type
   operator()( const t0 &
@@ -418,7 +432,7 @@ public:
     { return m_ptr[0]; }
 
   template< typename t0 >
-  typename std::enable_if<( properties::dimension::rank == 1 &&
+  typename std::enable_if<( properties::dimension_type::rank == 1 &&
                             std::is_integral<t0>::value
                          ), reference >::type
   operator()( const t0 & i0 
@@ -435,7 +449,7 @@ public:
     { return m_ptr[ m_offset(i0) ]; }
 
   template< typename t0 , typename t1 >
-  typename std::enable_if<( properties::dimension::rank == 2 &&
+  typename std::enable_if<( properties::dimension_type::rank == 2 &&
                             std::is_integral<t0>::value &&
                             std::is_integral<t1>::value
                          ), reference >::type
@@ -452,7 +466,7 @@ public:
     { return m_ptr[ m_offset(i0,i1) ]; }
 
   template< typename t0 , typename t1 , typename t2 >
-  typename std::enable_if<( properties::dimension::rank == 3 &&
+  typename std::enable_if<( properties::dimension_type::rank == 3 &&
                             std::is_integral<t0>::value &&
                             std::is_integral<t1>::value &&
                             std::is_integral<t2>::value

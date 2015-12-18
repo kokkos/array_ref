@@ -8,6 +8,8 @@
 enum class layout_custom_param {switch0, switch1};
 
 
+/** Customized offset class for the customized layout defined below
+ */
 template<layout_custom_param Switch, typename Dimension >
 struct my_offset_type
 {
@@ -46,11 +48,55 @@ struct my_offset_type
     : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
 };
 
+/** The custom layout is "forwarding" to some appropriate offset class
+ */
 template <layout_custom_param P>
 struct my_layout {
     template <typename Dimension>
     using offset = my_offset_type<P, Dimension>;
 };
+
+struct my_other_way_of_saying_right {
+    template< typename Dimension >
+    struct offset
+    {
+        using dim_type = Dimension;
+        dim_type dim;
+
+        using is_regular = std::true_type ;
+
+        template< typename t0 >
+        constexpr size_t operator()( const t0 & i0 ) const
+        { return i0 ; }
+
+        template< typename t0 , typename t1 >
+        constexpr size_t operator()( const t0 & i0 , const t1 & i1 ) const
+        { return i0 * dim.n1 + i1 ; }
+
+        template< typename t0 , typename t1 , typename t2 >
+        constexpr size_t operator()( const t0 & i0 , const t1 & i1 , const t2 & i2 ) const
+        { return ( i0 * dim.n1 + i1 ) * dim.n2 + i2 ; }
+
+        constexpr size_t stride_0() const { return dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+        constexpr size_t stride_1() const { return dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+        constexpr size_t stride_2() const { return dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+        constexpr size_t stride_3() const { return dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+
+        constexpr size_t span() const
+        { return dim.n0 * dim.n1 * dim.n2 * dim.n3 * dim.n4 * dim.n5 * dim.n6 * dim.n7 * dim.n8 * dim.n9 ; }
+
+        offset() = default ;
+        offset( const offset & ) = default ;
+        offset( offset && ) = default ;
+        offset & operator = ( const offset & ) = default ;
+        offset & operator = ( offset && ) = default ;
+
+        constexpr offset( size_t a0     , size_t a1 = 0 , size_t a2 = 0 , size_t a3 = 0 , size_t a4 = 0
+                                , size_t a5 = 0 , size_t a6 = 0 , size_t a7 = 0 , size_t a8 = 0 , size_t a9 = 0 )
+            : dim(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9) {}
+    };
+};
+
 
 
 int main()
@@ -77,6 +123,18 @@ int main()
   std::cout << dimension<0,2,3,4,0,6,7,8,9,10>(11,15) << std::endl ;
   std::cout << dimension<0,2,3,4,0>(11,15) << std::endl ;
 
+  //testing is_dimension and is_layout
+  static_assert(is_dimension<dimension<1,2,3,4,5,6,7,8,9,10>>::value, "");
+  static_assert(!is_dimension<int>::value, "");
+
+
+  static_assert(is_layout<layout_left>::value, "");
+  static_assert(is_layout<my_layout<layout_custom_param::switch1>>::value, "");
+  static_assert(!is_layout<int>::value, "");
+
+  std::cout << dimension_from<int[][4][6]>::type() << std::endl;
+  std::cout << dimension_from<int>::type() << std::endl;
+
   // Can construct 'int[][][]' type:
   typedef implicit_array_type<int,0>::type t0 ;
   typedef implicit_array_type<int,1>::type t1 ;
@@ -86,8 +144,11 @@ int main()
   std::cout << typeid(t1).name() << std::endl ;
   std::cout << typeid(t2).name() << std::endl ;
 
+  static_assert( view<int, dimension<6,6,6>>().extent(0) == 6 , "" );
+
   // Verify extent can be evaluated at compilation
   // for 'constexpr' constructed view.
+
   static_assert( view<int[][10]>().extent(0) == 0 , "" );
   static_assert( view<int[][10]>().extent(1) == 10 , "" );
   static_assert( view<int[][10]>().extent(2) == 1 , "" );
@@ -95,6 +156,10 @@ int main()
   static_assert( view<int[][10], my_layout<layout_custom_param::switch0> >().extent(0) == 0 , "" );
   static_assert( view<int[][10], my_layout<layout_custom_param::switch0> >().extent(1) == 10 , "" );
   static_assert( view<int[][10], my_layout<layout_custom_param::switch0> >().extent(2) == 1 , "" );
+
+  static_assert( view<int[][10], my_other_way_of_saying_right >().extent(0) == 0 , "" );
+  static_assert( view<int[][10], my_other_way_of_saying_right >().extent(1) == 10 , "" );
+  static_assert( view<int[][10], my_other_way_of_saying_right >().extent(2) == 1 , "" );
 
   // Verify view construction
   {
