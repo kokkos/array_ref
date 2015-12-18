@@ -261,7 +261,7 @@ struct unpack<First, Rest...> {
 template <>
 struct unpack<> {
     using layout_type = layout_void;
-    using dimension_type = dimension<7,7,7,7,7>;//_from<int>::type;
+    using dimension_type = dimension_from<int>::type;
 };
 
 }}} // namespace std::experimental::view_property
