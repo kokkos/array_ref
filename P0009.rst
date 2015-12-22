@@ -35,7 +35,8 @@ Multidimensional arrays are a foundational data structure
 for science and engineering codes, as demonstrated by their
 extensive use in FORTRAN for five decades.
 A *multidimensional array reference* is a reference to a memory extent
-through a **layout** mapping from a multi-index space (domain) to that extent (range).
+through a **layout** mapping from a multi-index space (domain) to
+that extent (range).
 A array layout mapping may be bijective as in the case of a traditional
 multidimensional array, injective as in the case of a subarray, or
 surjective to express symmetry.
@@ -51,7 +52,8 @@ to adapt and optimize code for varying computer architectures; for example,
 to change a code from *array of structures* to *structure of arrays*.
 Furthermore, multiple versions of code must be maintained for each required layout.
 
-A multidimensional array reference abstraction with polymorphic layout is required
+A multidimensional array reference abstraction
+with polymorphic layout is required
 to enable changing array layout without extensive code refactoring and
 maintenance of functionally redundant code.
 Layout polymorphism is a critical capability; however, it is not the only
@@ -145,20 +147,20 @@ For example, a one-dimensional array is passed to a function as follows.
 
 .. code-block:: c++
 
-  void foo( int array[] , size_t N ); // Traditional API
-  void foo( const int array[] , size_t N ); // Traditional API
+  void foo( int A[] , size_t N ); // Traditional API
+  void foo( const int A[] , size_t N ); // Traditional API
 
-  void foo( array_ref< int[] > array ); // Reference API
-  void foo( array_ref< const int[] > array ); // Reference API
+  void foo( array_ref< int[] > A ); // Reference API
+  void foo( array_ref< const int[] > A ); // Reference API
 
   void bar()
   {
     enum { L = ... };
     int buffer[ L ];
-    array_ref<int[]> array( buffer , L );
+    array_ref<int[]> A( buffer , L );
 
-    assert( L == array.size() );
-    assert( & array[0] == buffer );
+    assert( L == A.size() );
+    assert( & A[0] == buffer );
 
     foo( array );
   }
@@ -181,23 +183,23 @@ A traditional multidimensional array with explicit dimensions
 
 .. code-block:: c++
 
-  void foo( double array[][3][3] , size_t N0 ); // Traditional API
-  void foo( array_ref< double[][3][3] > array ); // Reference API
+  void foo( double A[][3][3] , size_t N0 ); // Traditional API
+  void foo( array_ref< double[][3][3] > A ); // Reference API
 
   void bar()
   {
     enum { L = ... };
     int buffer[ L * 3 * 3 ];
-    array_ref< double[][3][3] > array( buffer , L );
+    array_ref< double[][3][3] > A( buffer , L );
 
-    assert( 3 == array.rank() );
-    assert( L == array.extent(0) );
-    assert( 3 == array.extent(1) );
-    assert( 3 == array.extent(2) );
-    assert( array.size() == array.extent(0) * array.extent(1) * array.extent(2) );
-    assert( & array(0,0,0) == buffer );
+    assert( 3 == A.rank() );
+    assert( L == A.extent(0) );
+    assert( 3 == A.extent(1) );
+    assert( 3 == A.extent(2) );
+    assert( A.size() == A.extent(0) * A.extent(1) * A.extent(2) );
+    assert( & A(0,0,0) == buffer );
 
-    foo( array );
+    foo( A );
   }
 
 ..
@@ -303,13 +305,15 @@ monotonically from the right most to the left most dimension.
 ..
 
 An initial set of layout properties are
-**layout_right**, **layout_left**, and **layout_stride**.
+**layout_right**, **layout_left**, **layout_order**,
+and **layout_stride**,
 
   |  namespace std {
   |  namespace experimental {
   |  namespace array_property {
   |    struct layout_right ;
   |    struct layout_left ;
+  |    template< unsigned ... > struct layout_order ;
   |    struct layout_stride ;
   |  }}}
 
@@ -340,7 +344,9 @@ A **layout_right** mapping is regular and injective (may have padding) with
 strides increasing from right most to left most dimension.
 A **layout_left** mapping is regular and injective (may have padding) with
 strides increasing from left most to right most dimension.
-A **layout_stride** mapping is regular; however, it may
+A **layout_order** mapping is regular and injective (may have padding)
+with stride ordering defined by the template parameter pack.
+A **layout_stride** mapping is regular; however, it might
 not be injective or surjective.
 
 .. code-block:: c++
@@ -387,9 +393,20 @@ A user supplied customized layout mapping will be required to conform
 to a specified interface; *a.k.a.*, a C++ Concept.
 Details of this extension point will be included in a subsequent
 proposal.
+Our current extensibility strategy is for
+a user supplied layout property to contain an offset mapping
+as illustrated below.
+
+.. code-block:: c++
+
+  struct layout_tile_left {
+    template< typename Dimension > struct offset ;
+  };
+
+..
 
 
-An important customized layout mapping is hierarchical tiling.
+*Motivation:* An important customized layout mapping is hierarchical tiling.
 This kind of layout mapping is used in dense linear algebra matrices and
 computations on Cartesian grids to improve the spatial locality
 of array entries.
@@ -493,8 +510,7 @@ memory architecture, and user access pattern hints.
   |    // Span of an array with regular layout if it
   |    // is constructed with the given implicit dimensions.
   |    template< class ... IntegralArgs >
-  |    static constexpr
-  |      size_t span( IntegralArgs ... implicit_dimensions );
+  |    static constexpr size_t span( IntegralArgs ... implicit_dimensions );
   |
   |    // Pointer to member memory
   |    constexpr pointer data() const ;
@@ -539,11 +555,11 @@ memory architecture, and user access pattern hints.
   |  struct layout_stride ;
   |  template< unsigned ... > layout_order ;
   |
-  |  template< class T >
-  |  struct is_layout ;
+  |  template< class T > struct is_layout ;
+  |  template< class T > constexpr bool is_layout_v = is_layout<T>::value ;
   |
-  |  template< class T >
-  |  constexpr bool is_layout_v = is_layout<T>::value ;
+  |  template< class T > struct is_regular ;
+  |  template< class T > constexpr bool is_regular_v = is_regular<T>::value ;
   |
   |  constexpr unsigned maximum_rank = /\* >= 10 \*/ ;
   |
@@ -553,7 +569,7 @@ memory architecture, and user access pattern hints.
   |
   |  }}}
 
-**Properties**
+**Properties template parameter pack**
 
 An array_ref is given properties
 (such as ``layout_left``, ``layout_right``, and ``layout_stride``)
@@ -564,26 +580,92 @@ through the ``Properties`` template parameter pack.
 
 **Layout Properties**
 
-  Requires:  At most one member of the ``Properties`` pack
-  is a layout property.
+If a layout property does not appear in the ``Properties`` pack
+the layout is ``void``.
 
-  Requires:  is_layout_v< layout_right > == true,
+  Requires:  is_layout_v< void > == true,
+  is_layout_v< layout_right > == true,
   is_layout_v< layout_left > == true,
   is_layout_v< layout_stride > == true, and
   is_layout_v< layout_order<...> > == true.
 
-  Effects: A layout property specifies the mapping from a
-  multi-index given to the member access operator
-  to a member reference.
+  Requires:  is_regular_v< void > == true,
+  is_regular_v< layout_right > == true,
+  is_regular_v< layout_left > == true,
+  is_regular_v< layout_stride > == true, and
+  is_regular_v< layout_order<...> > == true.
 
-  Effects: Given ``layout_right`` the stride between
-  members increased from right-to-left indices.
+  Requires:  At most one member of the ``Properties`` pack
+  is a layout property.
 
-  Effects: Given ``layout_left`` the stride between
-  members increased from left-to-right indices.
+  Effects:  ``array_ref::layout`` is the layout property
+  given in the ``Properties`` pack or ``void`` if no
+  layout property is given.
 
-  Effects: Given ``layout_stride`` the stride between
-  members is arbitrary.
+  Effects:  Given a one of these regular layouts an
+  array_ref strides and layout mapping conform to the following.
+
+.. code-block: c++
+
+  using a_type = array_ref<DataType,Properties...> ;
+
+  a_type a( ptr , dims... );
+
+  if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular && 0 <= i && i <= a_type::rank() && 0 <= ji && ji < a.extent(i) - 1 ) {
+    assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...) == a.stride(i) );
+  }
+
+  if ( std::is_same_v< a_type::layout , void > ) {
+    assert( a_type::is_regular );
+    if ( i + 1 == a_type::rank() )
+      assert( a.stride(i) == 1 );
+    else if ( 0 < i )
+      assert( a.stride(i) == a.stride(i+1) * a.dimension(i+1) );
+  }
+  else if ( std::is_same_v< a_type::layout , layout_right > ) {
+    assert( a_type::is_regular )
+    if ( i + 1 == a_type::rank() )
+      assert( a.stride(i) == 1 );
+    else if ( 0 < i )
+      assert( a.stride(i) >= a.stride(i+1) * a.dimension(i+1) );
+  }
+  else if ( std::is_same_v< a_type::layout , layout_left > ) {
+    assert( a_type::is_regular )
+    if ( i == 0 && 0 < a.rank() )
+      assert( a.stride(i) == 1 );
+    else if ( i < a_type::rank() )
+      assert( a.stride(i) >= a.stride(i-1) * a.dimension(i-1) );
+  }
+
+..
+
+**array_property::layout_order< unsigned ... order >**
+
+  Requires: The members of ``order`` are [ 0 .. ``sizeof...(order)`` ).
+
+  Requires: When an ``array_ref`` has a ``layout_order`` property
+  then ``rank() == sizeof...(order)``.
+
+  Effects: The ``order`` pack specifies the ordering relationship of
+  dimensions in the mapping.
+
+.. code-block: c++
+
+  constexpr unsigned i0 = /* [0..3) */ ;
+  constexpr unsigned i1 = /* [0..3)  and  != i1 */ ;
+  constexpr unsigned i2 = /* [0..3)  and  != i1  and  != i2 */ ;
+
+  using a_type = array_ref<int[][3][4],view_property::layout_order<i0,i1,i2> > ;
+
+  assert( a_type::is_regular );
+
+  a_type A( ptr , dims... );
+
+  assert( a.stride(i0) == 1 );
+  assert( a.stride(i1) >= a.stride(i0) * a.extent(i0) );
+  assert( a.stride(i2) >= a.stride(i1) * a.extent(i1) );
+
+..
 
 
 **Dimension Specification**
@@ -607,7 +689,7 @@ following declarations.
   *multidimensional array type* declaration syntax (n4567 8.3.4.p3).
   If a
   `relaxation of the current multidimensional array type declaration`_
-  were made the ``array_property::dimension<...>`` is unecessary and
+  were made the ``array_property::dimension<...>`` would be unecessary and
   eliminated from this proposal.
 
   Requires: If ``std::extent<DataType>::value == 0`` then at most
@@ -1116,19 +1198,16 @@ The current array type declarator constraints are defined in in **n4567 8.3.4.p3
   earlier declaration, and similarly for the definition
   of a static data member of a class.*
 
-Note the ambiguity in the current specification when an array declarator
-with several "array of" specifications are adjacent;
-which array bound may be ommitted?
-
 The preferred syntax requires a relaxation of
 array type declarator constraints defined in **n4567 8.3.4.p3**
-for an incomplete object type.
+exclusively for an incomplete object type.
 The following wording change is recommended.
 
   *When several “array of” specifications are adjacent,
   a multidimensional array type is created.
   In declarations in which an incomplete object type is allowed
-  any of the bounds constant expressions may be omitted.
+  any of the constant expressions that specify bounds
+  of the arrays may be omitted.
   In some cases in the declaration of a function parameter (8.3.5)
   the first array bound constant expression may be omitted.
   The first array bound constant expression
@@ -1148,6 +1227,4 @@ The following wording change is recommended.
 a trivial (one line) patch to Clang and was permissible in gcc prior to
 version 5.**
 
-
-A major goal of the **array_ref** interface is to preserve compatibility
 
