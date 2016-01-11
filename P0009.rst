@@ -329,8 +329,10 @@ and **layout_stride**,
                          , array_property::layout_left >  array_left ;
 
   assert( std::is_same< typename array_native::layout , void >::value );
-  assert( std::is_same< typename array_right ::layout , array_property::layout_right >::value );
-  assert( std::is_same< typename array_left  ::layout , array_property::layout_left >::value );
+  assert( std::is_same< typename array_right ::layout ,
+                        array_property::layout_right >::value );
+  assert( std::is_same< typename array_left  ::layout ,
+                        array_property::layout_left >::value );
 
   assert( array_native::is_regular::value );
   assert( array_right ::is_regular::value );
@@ -447,9 +449,11 @@ by conditionally setting it to **void**.  For example:
 
 .. code-block:: c++
 
-  typedef typename std::conditional< AllowPadding , array_property::layout_right , void >::type  layout ;
+  using layout = std::conditional<
+      ALLOW_PADDING , array_property::layout_right , void
+  >::type ;
 
-  // If AllowPadding then use layout_right else use native layout
+  // If ALLOW_PADDING then use layout_right else use native layout
   typedef array< int , array_property::dimension<0,0,3> , layout > MyType ;
 
 ..
@@ -611,8 +615,10 @@ the layout is ``void``.
 
   a_type a( ptr , dims... );
 
-  if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular && 0 <= i && i <= a_type::rank() && 0 <= ji && ji < a.extent(i) - 1 ) {
-    assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...) == a.stride(i) );
+  if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular
+     && 0 <= i && i <= a_type::rank() && 0 <= ji && ji < a.extent(i) - 1 ) {
+    assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...)
+            == a.stride(i) );
   }
 
   if ( std::is_same_v< a_type::layout , void > ) {
@@ -848,7 +854,8 @@ following declarations.
 .. code-block:: c++
 
   template< typename IntegralType >
-  typename std::enable_if< std::is_integral<IntegralType>::value && 1 == rank() , reference >::type
+  typename std::enable_if<
+      std::is_integral<IntegralType>::value && 1 == rank() , reference >::type
   operator[]( const IntegralType & i ) const nothrow ;
 
 ..
@@ -908,8 +915,12 @@ following declarations.
 .. code-block:: c++
 
   array_ref< int[][3] >      x(ptr,N0);
-  array_ref< const int , array_properties::dimension<0,0> > y( x ); // OK: compatible const from non-const and implicit from explicit dimension
-  array_ref< int , array_properties::dimension<0,0> >       z( y ); // Error: cannot assign non-const from const
+
+  // OK: compatible const from non-const and implicit from explicit dimension
+  array_ref< const int , array_properties::dimension<0,0> > y( x );
+
+  // Error: cannot assign non-const from const
+  array_ref< int , array_properties::dimension<0,0> >       z( y );
 
 ..
 
@@ -930,7 +941,9 @@ For example:
 .. code-block:: c++
 
   array_ref< int[][3] > x( ptr , N0 );
-  array_ref< const int , array_property::dimension<0,0> > y( x ); // valid assignment
+
+  // valid assignment
+  array_ref< const int , array_property::dimension<0,0> > y( x ); 
 
 ..
 
@@ -945,9 +958,11 @@ implement the array_ref assignability rules regarding value type, dimensions, an
                       , array_ref< Vtype , Vprop ... > >
     : public integral_const< bool ,
         is_assignable< typename array_ref< Utype , Uprop ... >::pointer
-                     , typename array_ref< Vtype , Vprop ... >::pointer >::value
+                     , typename array_ref< Vtype , Vprop ... >::pointer
+                     >::value
         &&
-        ( array_ref< Utype , Uprop ... >::rank() == array_ref< Vtype , Vprop ... >::rank() )
+        ( array_ref< Utype , Uprop ... >::rank() ==
+          array_ref< Vtype , Vprop ... >::rank() )
         &&
         (
           // Extent is either equal or impplicit.
@@ -982,7 +997,8 @@ Non-trivial subarrays of regular arrays will often have **layout_stride**.
   U x(buffer,N0,N1,N2);
 
   // Using std::pair<int,int> for an integral range
-  auto y = subarray( x , std::pair<int,int>(1,N0-1) , std::pair<int,int>(1,N1-1) , 1 );
+  auto y = subarray( x , std::pair<int,int>(1,N0-1) , 
+                         std::pair<int,int>(1,N1-1) , 1 );
 
   assert( y.rank() == 2 );
   assert( y.extent(0) == N0 - 2 );
@@ -1086,7 +1102,9 @@ of any rank a pointer (iterator) range for view member data can be queried.
   template< typename T , class ... P >
   void foo( array_ref<T,P...> a )
   {
-    if ( std::is_reference< typename array_ref<T,P...>::reference >::value && a.size() == a.span() ) {
+    if ( std::is_reference< typename array_ref<T,P...>::reference >::value
+         && a.size() == a.span() )
+    {
       // Iteration via pointer type is valid and performant
       typename array_ref<T,P...>::pointer
         begin = a.data() ,
@@ -1121,9 +1139,12 @@ the need for special compiler support.
 
   // User enables array bounds checking for selected array_ref.
 
-  using x_property = typename std::conditional< ENABLE_ARRAY_BOUNDS_CHECKING , array_property::bounds_checking , void >::type ;
+  using x_property = typename std::conditional<
+      ENABLE_ARRAY_BOUNDS_CHECKING , array_property::bounds_checking , void
+  >::type ;
 
-  array_ref< int , array_property::dimension<0,0,3>] , x_property > x(ptr,N0,N1);
+  array_ref< int , array_property::dimension<0,0,3> , x_property >
+      x(ptr,N0,N1);
 
 ..
 
@@ -1147,27 +1168,27 @@ array of integers with unprescribed dimensions.
 
 .. code-block:: c++
 
-  void foo1( array_ref< int[ ][3][3] > array ); // Two explicit dimensions
-  void foo2( array_ref< int[ ][ ][ ] > array ); // All implicit dimensions
+  void foo1( array_ref< int[ ][3][3] > a ); // Two explicit dimensions
+  void foo2( array_ref< int[ ][ ][ ] > a ); // All implicit dimensions
 
   // Accept a array_ref of a rank three array with value type int
   // and dimensions are explicit or implicit.
   template< class T , class ... P >
   typename std::enable_if< array_ref<T,P...>::rank() == 3 >::type
-  foo( array_ref<T,P...> array ) { ... }
+  foo( array_ref<T,P...> a ) { ... }
 
   void bar()
   {
     enum { L = ... };
     int buffer[ L * 3 * 3 ];
-    array_ref< int[][][] > array( buffer , L , 3 , 3 );
+    array_ref< int[][][] > a( buffer , L , 3 , 3 );
 
-    assert( 3 == array.rank() );
-    assert( L == array.extent(0) );
-    assert( 3 == array.extent(1) );
-    assert( 3 == array.extent(2) );
-    assert( array.size() == array.extent(0) * array.extent(1) * array.extent(2) );
-    assert( & array(0,0,0) == buffer );
+    assert( 3 == a.rank() );
+    assert( L == a.extent(0) );
+    assert( 3 == a.extent(1) );
+    assert( 3 == a.extent(2) );
+    assert( a.size() == a.extent(0) * a.extent(1) * a.extent(2) );
+    assert( & a(0,0,0) == buffer );
 
     foo( array );
   }
