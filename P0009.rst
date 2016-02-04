@@ -1,9 +1,9 @@
 ===================================================================
-P0009r2 : Polymorphic Multidimensional Array Reference
+P0009r1 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0009r2
+:Number: P0009r1
 :Date: 2016-02-04
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
