@@ -1,9 +1,15 @@
 ===================================================================
-P0009r1 : Polymorphic Multidimensional Array Reference
+P0009r2 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
+:Project: ISO JTC1/SC22/WG21: Programming Language C++
+:Number: P0009r2
+:Date: 2016-02-04
+:Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
+:Author: Bryce Lelbach 
+:Contact: balelbach@lbl.gov
 :Author: Christian Trott
 :Contact: crtrott@sandia.gov
 :Author: Juan Alday
@@ -16,14 +22,9 @@ P0009r1 : Polymorphic Multidimensional Array Reference
 :Contact: Robin.Maffeo@amd.com
 :Author: Ben Sander
 :Contact: ben.sander@amd.com
-:Author: Bryce Lelbach 
-:Contact: balelbach@lbl.gov
-:Number: P0009
-:Version: 01
-:Date: 2015-09-23
+:Audience: Library Evolution Working Group (LEWG)
+:Audience: Evolution Working Group (EWG) for concise array declaration
 :URL: https://github.com/kokkos/PolyView/blob/master/P0009.rst
-:WG21: Library Evolution Working Group (LEWG)
-:WG21: Evolution Working Group (EWG) for array declaration
 
 .. sectnum::
 
