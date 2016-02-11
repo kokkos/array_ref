@@ -561,10 +561,10 @@ memory architecture, and user access pattern hints.
   |    constexpr array_ref( pointer , IntegralArgs ... implicit_dims ) noexcept ;
   |
   |    template< typename UType , typename ... UProperties >
-  |    constexpr array_ref( const array_ref< UType , UProperties ... > & ) noexcept ;
+  |    constexpr array_ref( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
   |
   |    template< typename UType , typename ... UProperties >
-  |    array_ref & operator = ( const array_ref< UType , UProperties ... > & ) noexcept ;
+  |    array_ref & operator = ( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
   |  };
   |
   |  }}
@@ -729,7 +729,7 @@ following declarations.
   for ``i < rank()`` and default constructed array_ref.
 
   Effects: When the dimension specification is given via
-  ``view_property::dimension< N0, N1 , ... >`` then
+  ``array_property::dimension< N0, N1 , ... >`` then
   ``0 <= Nj`` for all j,
   an explicit dimensions is specified by ``0 < Nj``
   an implicit dimensions is specified by ``0 == Nj``
@@ -783,7 +783,7 @@ following declarations.
   Requires: std::is_integral< IntegralType >::value
 
   Returns: When ``r < rank()`` the exent of dimension, otherwise 1.
-  A default constructed view will have ``extent(r) == 0``
+  A default constructed array_ref will have ``extent(r) == 0``
   for all implicit dimensions.
   The return value of an explicit dimension queried with a
   literal input value must be "constexpr" observable.
@@ -812,9 +812,9 @@ following declarations.
 
 **constexpr size_type span() const noexcept**
 
-  Returns:  A distance that is at least
-  maximum distance between any two members of the array plus one.
-  All member of the array reside in the span ``[ data() , data() + span() )``.
+  Returns:  A distance that is at least maximum distance between any two
+  members of the array plus one. All member of the array reside in the span
+  ``[ data() , data() + span() )``.
 
   Remark: For a one-to-one layout mapping the span will equal the size.
 
@@ -822,28 +822,31 @@ following declarations.
 
 **static constexpr size_type span( IntegralArgs ... implicit_dims ) noexcept**
 
-  Requires: All arguments are integral types and non-negative values.
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``
+
+  Requires: All ``implicit_dims`` parameters are non-negative. 
 
   Returns: The span of the array reference if it were constructed with the implicit dimensions.
 
 
 **constexpr pointer data() const noexcept**
 
-  Returns: Pointer to the member with the minimum location.
-
   Requires: All members are in the range ``[ data() , data() + span() )``.
+
+  Returns: Pointer to the member with the minimum location.
 
 **template< typename ... IntegralArgs >**
 
 **reference operator()( IntegralArgs ... indices ) const noexcept**
 
-  Requires: All arguments are integral types and non-negative values.
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``
 
-  Requires: ``rank() <= sizeof...(IntegralArgs)``
+  Requires: All ``indices`` parameters are non-negative. 
+
+  Requires: ``rank() == sizeof...(IntegralArgs)``
 
   Requires: The ith argument *indices[i]** is in bounds;
   *indices[i]* ``< extent(i)``.
-  [Note: Index arguments in excess of ``rank()`` must be zero. -end note]
 
   Returns: A reference to the member referenced by the indices argument.
 
@@ -852,20 +855,29 @@ following declarations.
 
 .. code-block:: c++
 
-  template< class ... IntegralArgs >
-  typename std::enable_if<( 0 <= sizeof...(IntegralArgs) && 0 == rank() )
-                         , reference >::type
-  operator()( IntegralArgs ... indices ) const noexcept ;
+  template< typename ArrayRefType, typename I0 >
+  typename std::enable_if< ArrayRefType::rank() == 1
+                         , typename ArrayRefType::reference >::type
+  array_ref_index( I0 i0 ) noexcept ;
 
-  template< typename iType0 , class ... IntegralArgs >
-  typename std::enable_if<( 0 <= sizeof...(IntegralArgs) && 1 == rank() )
-                         , reference >::type
-  operator()( iType0 i0 , IntegralArgs ... indices ) const noexcept ;
+  template< typename ArrayRefType, typename I0 , typename I1 >
+  typename std::enable_if< ArrayRefType::rank() == 2
+                         , typename ArrayRefType::reference >::type
+  array_ref_index( I0 i0 , I1 i1 ) noexcept ;
 
-  template< typename iType0 , typename iType1 , class ... IntegralArgs >
-  typename std::enable_if<( 0 <= sizeof...(IntegralArgs) && 2 == rank() )
-                         , reference >::type
-  operator()( iType0 i0 , iType1 i1 , IntegralArgs ... indices ) const noexcept ;
+  template< typename ArrayRefType, typename I0, typename I1, typename I2
+          , typename ... IntegralArgs >
+  typename std::enable_if< ArrayRefType::rank() == (sizeof...(IntegralArgs) + 3) 
+                         , typename ArrayRefType::reference >::type
+  array_ref_index( I0 i0, I1 i1, I2 i2, IntegralArgs ... indices ) noexcept ;
+
+  template< typename DataType , typename ... Properties >
+  struct array_ref {
+     template< typename ... IntegralArgs >
+     reference operator()( IntegralArgs ... indices ) const noexcept {
+       return array_ref_index<array_ref>(indices...);
+     }
+  };
 
 ..
 
@@ -1035,7 +1047,7 @@ Non-trivial subarrays of regular arrays will often have **layout_stride**.
 
 .. code-block:: c++
 
-  using U = array_ref< int , view_properties::dimension<0,0,0> > ;
+  using U = array_ref< int , array_properties::dimension<0,0,0> > ;
 
   U x(buffer,N0,N1,N2);
 
@@ -1054,20 +1066,19 @@ Non-trivial subarrays of regular arrays will often have **layout_stride**.
   assert( z.rank() == 1 );
   assert( & z(0) == & x(1,1,1) );
 
-  // Conveniently extracting subview for all of a extent
+  // Conveniently extracting subarray for all of a extent
   // without having to explicitly extract the dimensions.
-  auto x = subarray( x , view_property::all , 1 , 1 );
+  auto x = subarray( x , array_property::all , 1 , 1 );
 
 ..
 
-Subview types are generated with a meta-function.
+``subarray()`` returns an unspecified instantation of ``array_ref<>``. There is
+precedence in the standard for library functions with unspecified return types
+(e.g. ``bind()``).
 
   | namespace std {
   | namespace experimental {
   | namespace array_property {
-  |
-  | template< typename ArrayRefType , class ... Indices_And_Ranges >
-  | struct subarray_type ;
   |
   | struct all_type {};
   | constexpr all_type all = all_type();
@@ -1077,32 +1088,53 @@ Subview types are generated with a meta-function.
   | namespace std {
   | namespace experimental {
   |
-  | template< typename ArrayRefType , class ... Indices_And_Ranges >
-  | using subarray_t = typename array_property::subarray_type< ArrayRefType , Indices_And_Ranges >::type ;
-  |
-  | template< typename DataType , class ... Parameters , class ... Indices_And_Ranges >
-  | subarray_t< array_ref< DataType, Parameters ... > , Indices_And_Ranges ... >
-  | subarray( const array_ref< DataType, Parameters ... > & , Indices_And_Ranges ... ) noexcept;
-  |
-  | template< typename T >
-  | struct is_integral_range ;
+  | template< typename DataType , typename ...Properties , typename ... SliceSpecifiers >
+  | /*unspecified*/ 
+  | subarray( const array_ref< DataType, Properties ... > & ar , SliceSpecifiers ... specs) noexcept;
   |
   | }}
 
-**template< typename T > struct is_integral_range : public integral_constant<bool,**\ *F*\ **>**
+**/*unspecified*/**
+**subarray( const array_ref< DataType, Properties ... > & ar , SliceSpecifiers ... specs) noexcept**
 
-  Returns: Meta function indicating whether T is an integral range.
-  
+  Requires: ``sizeof...(Properties) == sizeof...(SliceSpecifiers)``
 
-**template< typename ArrayRefType , class ... Indices_And_Ranges > struct subarray_type ;**
+  Requires: Each SliceSpecifier parameter must either be an integral type T, a
+  pair<T, T>, a tuple<T, T>, an initializer_list<T> with a size of 2, or an
+  array<T, 2>.
 
-  | Requires:  ArrayRefType::rank() == sizeof...(Indices_And_Ranges)
-  | Requires:  Each parameter in Indices_And_Ranges is either is_integral<T> or is_integral_range<T>.
+  Requires: A SliceSpecifier parameter for dimension ``i`` which expresses
+  an interval (e.g. is not an integral type) must be a subset of the range
+  ``[ 0 , ar.extent(i) )``.
 
-  Returns: The array_ref type of the subarray from the input array_ref and parameter pack of indices and integral ranges.
-  The rank of the subarray is equal to the number of integral ranges in the parameter pack.
-  When a dimension of the source **ArrayRefType** is explicit and the corresponding range argument is **all** then the dimension of the resulting array_ref type is explicit and equal to the source dimension
+  Returns: An array_ref<> referring to the same memory extent as the array_ref<>
+  ``ar`` with dimensions and layout specified by the SlicerSpecifier
+  parameters. The SliceSpecifiers are either integral arguments ("fixing" a
+  particular index of the subarray to a certain value) or an interval which is
+  a subset of the extent of ``ar`` in the given dimension.
 
+  Remarks: For each SliceSpecifier parameter which is integral, the rank of the
+  produced array_ref<> is one less than the rank of ``ar``.
+
+.. code-block:: c++
+  assert(subarray(ar, x, array_property::all)(y) == ar(x, y));
+  assert(subarray(ar, array_property::all, y)(x) == ar(x, y));
+
+  assert(subarray(ar, array_property::all, y, array_property::all)(x, z) == ar(x, y, z));
+..
+
+  Remarks: For each SliceSpecifier parameter which expresses an interval
+  ``[ a , b )``, the  produced array_ref<> will have extent ``[ 0 , b - a )``
+  in the corresponding dimension.
+
+.. code-block:: c++
+  // Ok
+  assert(subarray(ar, {10, 20})(0)  == ar(10));
+  assert(subarray(ar, {10, 20})(10) == ar(20));
+
+  // Undefined behavior: subarray is out of bounds.
+  assert(subarray(ar, {10, 20})(20) == ar(20));
+..
 
 ******************************************************************
 Limited iterator interface
@@ -1112,33 +1144,39 @@ A **array_ref** may have a non-isomorphic mapping between its
 multi-index space (domain) and span of member memory (range).
 For example, a subarray or dimension padded array will be
 non-isomorphic.
-An iterator for the members of a non-isomorphic view must be
+An iterator for the members of a non-isomorphic array_ref must be
 non-trivial in order to skip over non-member spans of memory.
 Thus a general iterator implementation would necessarily
 be non-trivial both in state and algorithm.
 As such we provide a very limited iterator interface
 conforming to **24.6.5 range access** for a rank-one array with
-isomorphic layout (*e.g.*, default, **layout_left**, **layout_right**)
-and no incompatible access intent properties
+isomorphic layout (*e.g.*, default, **layout_left**, **layout_right**) and no
+incompatible access intent properties
 (*e.g.*, the **reference** type is truly a reference and not a proxy).
 For example, a simple **array_ref<T[]>** will have **begin** and **end** overloads.
 
   | namespace std {
   |
   | template< class T , class ...P >
-  | typename std::enable_if< *(rank one and isomorphic layout and no incompatible access intent properties)* , typename array_ref<T,P...>::pointer >::type
-  | begin( const std::experimental::view<T,P...> & v )
+  | // Enabled if rank one and isomorphic layout and no incompatible access
+  | // intent properties.
+  | typename std::enable_if< /*unspecified*/
+  |                        , typename array_ref<T,P...>::pointer >::type
+  | begin( const std::experimental::array_ref<T,P...> & v )
   | { return v.data(); }
   |
   | template< class T , class ...P >
-  | typename std::enable_if< *(rank one and isomorphic layout and no incompatible access intent properties)* , typename array_ref<T,P...>::pointer >::type
+  | // Enabled if rank one and isomorphic layout and no incompatible access
+  | // intent properties.
+  | typename std::enable_if< /*unspecified*/
+  |                       , typename array_ref<T,P...>::pointer >::type
   | end( const std::experimental::array_ref<T,P...> & v )
   | { return v.data() + v.size(); }
   |
   | }
 
 Note that in the more general case of an isomorphic array_ref
-of any rank a pointer (iterator) range for view member data can be queried.
+of any rank a pointer (iterator) range for array_ref member data can be queried.
 
 .. code-block:: c++
 
