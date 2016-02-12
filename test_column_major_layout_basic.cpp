@@ -9,7 +9,7 @@
 
 #include <vector>
 
-#include <multi_array_ref>
+#include <array_ref>
 
 using std::experimental::dims;
 using std::experimental::get_value;

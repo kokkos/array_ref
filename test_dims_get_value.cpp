@@ -7,7 +7,7 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include <multi_array_ref>
+#include <array_ref>
 
 int main()
 {

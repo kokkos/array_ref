@@ -16,7 +16,7 @@
 namespace std { namespace experimental
 {
 
-constexpr std::size_t dynamic_dim = std::size_t(-1);
+constexpr std::size_t dynamic_dim = 0;
 
 template <std::size_t... Dims>
 struct dims;
@@ -485,11 +485,8 @@ column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
          * (get_value<N>(stride_)*idx_n);
 }
 
-namespace detail
-{
-
 template <typename ValueType, typename Dims, typename Traits>
-struct multi_array_ref_impl
+struct array_ref
 {
     // TYPES
 
@@ -506,10 +503,10 @@ struct multi_array_ref_impl
 
     // Default constructor, yields the same result as from std::nullptr_t.
     // ENSURES: this->data() == nullptr && this->size() == 0
-    constexpr multi_array_ref_impl() noexcept;
+    constexpr array_ref() noexcept;
 
     // Construct from nullptr, results in a zero-length multi_array_ref.
-    constexpr multi_array_ref_impl(std::nullptr_t) noexcept;
+    constexpr array_ref(std::nullptr_t) noexcept;
 
     // Constructs from a pointer + list of sizes, default constructs traits.
     // EXPECTS: ptr != nullptr 
@@ -517,28 +514,32 @@ struct multi_array_ref_impl
     // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDim)
     // ENSURES: this->data() == p
     template <typename... Sizes>
-    constexpr multi_array_ref_impl(pointer p, Sizes... sizes) noexcept;
+    constexpr array_ref(pointer p, Sizes... sizes) noexcept;
 
     // Constructs from a pointer + dims<> + traits.
     // EXPECTS: ptr != nullptr 
     // ENSURES: this->data() == p
-    constexpr multi_array_ref_impl(
+    constexpr array_ref(
         pointer p, Dims const& d, Traits const& t
         ) noexcept;
 
     // Conversion constructor.
     // TYPE-REQUIREMENTS: BValueType must be assignment-compatible
     template <typename OtherValueType>
-    constexpr multi_array_ref_impl(
-        multi_array_ref_impl<OtherValueType, Dims, Traits> const& other
+    constexpr array_ref(
+        array_ref<OtherValueType, Dims, Traits> const& other
         ) noexcept;
 
-    constexpr multi_array_ref_impl(multi_array_ref_impl const& b) = default;
-    constexpr multi_array_ref_impl(multi_array_ref_impl&& b) = default;
-    multi_array_ref_impl& operator=(multi_array_ref_impl const& b) = default;
-    multi_array_ref_impl& operator=(multi_array_ref_impl&& b) = default;
+    constexpr array_ref(array_ref const& b) noexcept
+        = default;
+    constexpr array_ref(array_ref&& b) noexcept
+        = default;
+    array_ref& operator=(array_ref const& b) noexcept
+        = default;
+    array_ref& operator=(array_ref&& b) noexcept
+        = default;
 
-    ~multi_array_ref_impl() = default;
+    ~array_ref() = default;
 
     // METADATA ACCESS
 
@@ -553,7 +554,8 @@ struct multi_array_ref_impl
     // Access the element at the specified multi-dimensional index.
     template <typename... Idx>
     typename std::enable_if<
-        Dims::rank() == sizeof...(Idx) && pack_is_integral<Idx...>::value
+        Dims::rank() == sizeof...(Idx)
+        && detail::pack_is_integral<Idx...>::value
       , reference
     >::type operator()(Idx... idx) const noexcept;
 
@@ -572,7 +574,7 @@ struct multi_array_ref_impl
 
 template <typename ValueType, typename Dims, typename Traits>
 constexpr
-multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl() noexcept
+array_ref<ValueType, Dims, Traits>::array_ref() noexcept
   : ptr_(nullptr)
   , dims_()
   , traits_()
@@ -580,7 +582,7 @@ multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl() noexcept
 
 template <typename ValueType, typename Dims, typename Traits>
 constexpr
-multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+array_ref<ValueType, Dims, Traits>::array_ref(
     std::nullptr_t
     ) noexcept
   : ptr_(nullptr)
@@ -591,7 +593,7 @@ multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
 template <typename ValueType, typename Dims, typename Traits>
 template <typename... Sizes>
 constexpr
-multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+array_ref<ValueType, Dims, Traits>::array_ref(
     pointer p, Sizes... sizes
     ) noexcept
   : ptr_(p)
@@ -601,7 +603,7 @@ multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
 
 template <typename ValueType, typename Dims, typename Traits>
 constexpr
-multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
+array_ref<ValueType, Dims, Traits>::array_ref(
     pointer p, Dims const& d, Traits const& t
     ) noexcept
   : ptr_(p)
@@ -612,8 +614,8 @@ multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
 template <typename ValueType, typename Dims, typename Traits>
 template <typename OtherValueType> 
 constexpr
-multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
-    multi_array_ref_impl<OtherValueType, Dims, Traits> const& other
+array_ref<ValueType, Dims, Traits>::array_ref(
+    array_ref<OtherValueType, Dims, Traits> const& other
     ) noexcept
   : ptr_(other.ptr_)
   , dims_(other.dims_)
@@ -622,7 +624,7 @@ multi_array_ref_impl<ValueType, Dims, Traits>::multi_array_ref_impl(
 
 template <typename ValueType, typename Dims, typename Traits>
 inline static constexpr typename
-    multi_array_ref_impl<ValueType, Dims, Traits>::size_type
+    array_ref<ValueType, Dims, Traits>::size_type
 rank() noexcept
 {
     return Dims::rank();
@@ -630,7 +632,7 @@ rank() noexcept
 
 template <typename ValueType, typename Dims, typename Traits>
 inline static constexpr typename
-    multi_array_ref_impl<ValueType, Dims, Traits>::size_type
+    array_ref<ValueType, Dims, Traits>::size_type
 num_dynamic_dims() noexcept
 {
     return Dims::num_dynamic_dims();
@@ -639,10 +641,9 @@ num_dynamic_dims() noexcept
 template <typename ValueType, typename Dims, typename Traits>
 template <typename... Idx>
 inline typename std::enable_if<
-    Dims::rank() == sizeof...(Idx)
-    && pack_is_integral<Idx...>::value
-  , typename multi_array_ref_impl<ValueType, Dims, Traits>::reference
->::type multi_array_ref_impl<ValueType, Dims, Traits>::operator()(
+    Dims::rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
+  , typename array_ref<ValueType, Dims, Traits>::reference
+>::type array_ref<ValueType, Dims, Traits>::operator()(
     Idx... idx
     ) const noexcept
 {
@@ -654,14 +655,15 @@ template <typename ValueType, typename Dims, typename Traits>
 template <typename Idx>
 inline typename std::enable_if<
     std::is_integral<Idx>::value
-  , typename multi_array_ref_impl<ValueType, Dims, Traits>::reference
->::type multi_array_ref_impl<ValueType, Dims, Traits>::operator[](
+  , typename array_ref<ValueType, Dims, Traits>::reference
+>::type array_ref<ValueType, Dims, Traits>::operator[](
     Idx idx
     ) const noexcept
 {
     return traits_.access(ptr_, idx);
 }
 
-}}} // std::experimental::detail
+}} // std::experimental
 
 #endif // STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+

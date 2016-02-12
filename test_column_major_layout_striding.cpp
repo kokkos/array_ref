@@ -9,7 +9,7 @@
 
 #include <vector>
 
-#include <multi_array_ref>
+#include <array_ref>
 
 using std::extent;
 using std::experimental::dims;
@@ -260,6 +260,8 @@ void test_2d_dynamic()
 
 int main()
 {
+    // TODO: Test stride == 0.
+
     // 1D Static
     test_1d_static<1, 1>();
     test_1d_static<1, 30>();
