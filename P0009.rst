@@ -485,112 +485,141 @@ Possible additional properties include array bounds checking,
 atomic access to members, memory space within a heterogeneous
 memory architecture, and user access pattern hints.
 
-  |  namespace std {
-  |  namespace experimental {
-  |
-  |  template< typename DataType , typename ... Properties >
-  |  struct array_ref {
-  |    //--------------------
-  |    // Types:
-  |
-  |    // Types are implementation and Properties dependent.
-  |    // The following type implementation are normative 
-  |    // with respect to empty Properties.
-  |
-  |    using value_type = typename std::remove_all_extents< DataType >::type ;
-  |    using reference  = value_type & ; // Typical type, but implementation defined
-  |    using pointer    = value_type * ; // Typical type, but implementation defined
-  |    using size_type  = size_t ; // Typical type, but implementation defined
-  |
-  |    using layout = *array layout type* ;
-  |
-  |    //--------------------
-  |    // Domain index space properties:
-  |
-  |    static constexpr size_type rank() noexcept ;
-  |
-  |    template< typename IntegralType >
-  |    constexpr size_type extent( IntegralType index ) const noexcept ;
-  |
-  |    // Cardinality of index space; i.e., product of extents
-  |    constexpr size_type size() const noexcept ;
-  |
-  |    //--------------------
-  |    // Layout mapping properties:
-  |
-  |    static constexpr bool is_regular() noexcept ;
-  |
-  |    // If the layout mapping is regular then return the
-  |    // distance between members when index \# is increased by one.
-  |    template< typename IntegralType >
-  |    constexpr size_type stride( IntegralType index ) const noexcept ;
-  |
-  |    // Span covering the members
-  |    constexpr size_type span() const noexcept ;
-  |
-  |    // Span of an array with regular layout if it
-  |    // is constructed with the given implicit dimensions.
-  |    template< typename ... IntegralArgs >
-  |    static constexpr size_type span( IntegralArgs ... implicit_dims ) noexcept;
-  |
-  |    // Pointer to member memory
-  |    constexpr pointer data() const noexcept ;
-  |
-  |    //--------------------
-  |    // Member access
-  |
-  |    template< typename ... IntegralArgs >
-  |    reference operator()( IntegralArgs ... indices ) const noexcept ;
-  |
-  |    template< typename IntegralType >
-  |    reference operator[]( IntegralType index ) const noexcept ;
-  |
-  |    //--------------------
-  |    // Construct/move/copy/destroy:
-  |
-  |    ~array_ref() ;
-  |
-  |    constexpr array_ref() noexcept ;
-  |
-  |    constexpr array_ref( array_ref && rhs ) noexcept = default ;
-  |    constexpr array_ref( const array_ref & rhs ) noexcept = default ;
-  |    array_ref & operator = ( array_ref && rhs ) noexcept = default ;
-  |    array_ref & operator = ( const array_ref & rhs ) noexcept = default ;
-  |
-  |    template< typename ... IntegralArgs >
-  |    constexpr array_ref( pointer , IntegralArgs ... implicit_dims ) noexcept ;
-  |
-  |    template< typename UType , typename ... UProperties >
-  |    constexpr array_ref( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
-  |
-  |    template< typename UType , typename ... UProperties >
-  |    array_ref & operator = ( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
-  |  };
-  |
-  |  }}
-  |
-  |  namespace std {
-  |  namespace experimental {
-  |  namespace array_property {
-  |
-  |  struct layout_right ;
-  |  struct layout_left ;
-  |  template< unsigned ... > layout_order ;
-  |  struct layout_stride ;
-  |
-  |  template< class T > struct is_layout ;
-  |  template< class T > constexpr bool is_layout_v = is_layout<T>::value ;
-  |
-  |  template< class T > struct is_regular ;
-  |  template< class T > constexpr bool is_regular_v = is_regular<T>::value ;
-  |
-  |  constexpr unsigned maximum_rank = /\* >= 10 \*/ ;
-  |
-  |  // Specify mix of explicit and implict dimensions
-  |  template< size_t ... >
-  |  struct dimension ;
-  |
-  |  }}}
+.. code-block:: c++
+
+  namespace std {
+  namespace experimental {
+  
+  template< typename DataType , typename ... Properties >
+  struct array_ref {
+    //--------------------
+    // Types:
+  
+    // Types are implementation and Properties dependent.
+    // The following type implementation are normative 
+    // with respect to empty Properties.
+  
+    using value_type = typename std::remove_all_extents< DataType >::type ;
+    using reference  = value_type & ; // Typical type, but implementation defined
+    using pointer    = value_type * ; // Typical type, but implementation defined
+    using size_type  = size_t ; // Typical type, but implementation defined
+  
+    using layout = *array layout type* ;
+  
+    //--------------------
+    // Domain index space properties:
+  
+    static constexpr size_type rank() noexcept ;
+  
+    template< typename IntegralType >
+    constexpr size_type extent( IntegralType index ) const noexcept ;
+  
+    // Cardinality of index space; i.e., product of extents
+    constexpr size_type size() const noexcept ;
+  
+    //--------------------
+    // Layout mapping properties:
+  
+    static constexpr bool is_regular() noexcept ;
+  
+    // If the layout mapping is regular then return the
+    // distance between members when index \# is increased by one.
+    template< typename IntegralType >
+    constexpr size_type stride( IntegralType index ) const noexcept ;
+  
+    // Span covering the members
+    constexpr size_type span() const noexcept ;
+  
+    // Span of an array with regular layout if it
+    // is constructed with the given implicit dimensions.
+    template< typename ... IntegralArgs >
+    static constexpr size_type span( IntegralArgs ... implicit_dims ) noexcept;
+  
+    // Pointer to member memory
+    constexpr pointer data() const noexcept ;
+  
+    //--------------------
+    // Member access
+  
+    template< typename ... IntegralArgs >
+    reference operator()( IntegralArgs ... indices ) const noexcept ;
+  
+    template< typename IntegralType >
+    reference operator[]( IntegralType index ) const noexcept ;
+  
+    //--------------------
+    // Construct/move/copy/destroy:
+  
+    ~array_ref() ;
+  
+    constexpr array_ref() noexcept ;
+  
+    constexpr array_ref( array_ref && rhs ) noexcept = default ;
+    constexpr array_ref( const array_ref & rhs ) noexcept = default ;
+    array_ref & operator = ( array_ref && rhs ) noexcept = default ;
+    array_ref & operator = ( const array_ref & rhs ) noexcept = default ;
+  
+    template< typename ... IntegralArgs >
+    constexpr array_ref( pointer , IntegralArgs ... implicit_dims ) noexcept ;
+  
+    template< typename UType , typename ... UProperties >
+    constexpr array_ref( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
+  
+    template< typename UType , typename ... UProperties >
+    array_ref & operator = ( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
+  };
+  
+  }}
+  
+  namespace std {
+  namespace experimental {
+  namespace array_property {
+  
+  struct layout_right ;
+  struct layout_left ;
+  template< unsigned ... > layout_order ;
+  struct layout_stride ;
+  
+  template< class T > struct is_layout ;
+  template< class T > constexpr bool is_layout_v = is_layout<T>::value ;
+  
+  template< class T > struct is_regular ;
+  template< class T > constexpr bool is_regular_v = is_regular<T>::value ;
+  
+  constexpr size_t maximum_rank = /\* >= 10 \*/ ;
+  
+  // Specify mix of explicit and implict dimensions
+  template< size_t ... >
+  struct dimension {
+    //--------------------
+    // Types:
+  
+    using value_type = size_t ; // Typical type, but implementation defined
+  
+    //--------------------
+    // Construct/move/copy/destroy:
+  
+    ~dimension() = default ;
+  
+    constexpr dimension() noexcept ;
+  
+    constexpr dimension( dimension && rhs ) noexcept = default ;
+    constexpr dimension( const dimension & rhs ) noexcept = default ;
+    dimension & operator = ( dimension && rhs ) noexcept = default ;
+    dimension & operator = ( const dimension & rhs ) noexcept = default ;
+  
+    static constexpr size_type rank() noexcept ;
+  
+    //--------------------
+    // Member access
+  
+    template< typename IntegralType >
+    constexpr value_type operator[]( IntegralType dim ) const noexcept ;
+  };
+  
+  }}}
+
+..
 
 **Properties template parameter pack**
 
@@ -1038,7 +1067,7 @@ For example,
 
 
 ******************************************************************
-Subarray Reference
+Subarray Interface
 ******************************************************************
 
 The capability to **easily** extract subarrays of an array,
@@ -1072,30 +1101,48 @@ Non-trivial subarrays of regular arrays will often have **layout_stride**.
 
 ..
 
-``subarray()`` returns an unspecified instantation of ``array_ref<>``. There is
+``subarray()`` returns an unspecified instantiation of ``array_ref<>``. There is
 precedence in the standard for library functions with unspecified return types
 (e.g. ``bind()``).
 
-  | namespace std {
-  | namespace experimental {
-  | namespace array_property {
-  |
-  | struct all_type {};
-  | constexpr all_type all = all_type();
-  |
-  | }}}
-  |
-  | namespace std {
-  | namespace experimental {
-  |
-  | template< typename DataType , typename ...Properties , typename ... SliceSpecifiers >
-  | /*unspecified*/ 
-  | subarray( const array_ref< DataType, Properties ... > & ar , SliceSpecifiers ... specs) noexcept;
-  |
-  | }}
+.. code-block:: c++
 
-**/*unspecified*/**
-**subarray( const array_ref< DataType, Properties ... > & ar , SliceSpecifiers ... specs) noexcept**
+  namespace std {
+  namespace experimental {
+  namespace array_property {
+  
+  struct all_type {};
+  constexpr all_type all = all_type();
+  
+  }
+  
+  template< typename DataType , typename ... Properties ,
+            typename ... SliceSpecifiers >
+  /*unspecified array_ref<>*/ 
+  subarray( const array_ref< DataType, Properties ... > & ar ,
+            SliceSpecifiers ... specs) noexcept;
+  
+  template< typename DataType , typename ... Properties ,
+            typename ... SliceSpecifiers >
+  /*unspecified array_property::dimension<>*/ 
+  subdimensions( const array_ref< DataType, Properties ... > & ar ,
+                 SliceSpecifiers ... specs) noexcept;
+  
+  template< typename DataType , typename ... Properties ,
+            typename ... StrideSpecifiers >
+  /*unspecified array_ref<>*/ 
+  stridearray( const array_ref< DataType, Properties ... > & ar ,
+               StrideSpecifiers ... specs) noexcept;
+  
+  }}
+
+..
+
+**template< typename T , typename ... Properties , typename ... SliceSpecifiers >**
+
+**/\*unspecified array_ref<>\*/**
+
+**subarray( const array_ref< T, Properties ... > & ar , SliceSpecifiers ... specs) noexcept**
 
   Requires: ``sizeof...(Properties) == sizeof...(SliceSpecifiers)``
 
@@ -1104,28 +1151,30 @@ precedence in the standard for library functions with unspecified return types
   array<T, 2>.
 
   Requires: A SliceSpecifier parameter for dimension ``i`` which expresses
-  an interval (e.g. is not an integral type) must be a subset of the range
-  ``[ 0 , ar.extent(i) )``.
+  a fixed index indices must be within the range ``[ 0 , ar.extent(i) )``.
+
+  Requires: A SliceSpecifier parameter for dimension ``i`` which expresses
+  an interval of indices must be a subset of the range ``[ 0 , ar.extent(i) )``.
 
   Returns: An array_ref<> referring to the same memory extent as the array_ref<>
-  ``ar`` with dimensions and layout specified by the SlicerSpecifier
-  parameters. The SliceSpecifiers are either integral arguments ("fixing" a
-  particular index of the subarray to a certain value) or an interval which is
-  a subset of the extent of ``ar`` in the given dimension.
+  ``ar``, with dimensions and layout specified by the SlicerSpecifier
+  parameters.
 
-  Remarks: For each SliceSpecifier parameter which is integral, the rank of the
-  produced array_ref<> is one less than the rank of ``ar``.
+  Remarks: For each SliceSpecifier parameter which is an integer value, the
+  produced array_ref<> will omit the corresponding dimension. E.g. the produced
+  array_ref<>'s rank will be is one less than the rank of ``ar``. 
 
 .. code-block:: c++
   assert(subarray(ar, x, array_property::all)(y) == ar(x, y));
   assert(subarray(ar, array_property::all, y)(x) == ar(x, y));
 
-  assert(subarray(ar, array_property::all, y, array_property::all)(x, z) == ar(x, y, z));
+  assert(subarray(ar, array_property::all, y, array_property::all)(x, z)
+      == ar(x, y, z));
 ..
 
-  Remarks: For each SliceSpecifier parameter which expresses an interval
-  ``[ a , b )``, the  produced array_ref<> will have extent ``[ 0 , b - a )``
-  in the corresponding dimension.
+  Remarks: For each SliceSpecifier parameter which expresses an interval of
+  indices ``[ a , b )``, the produced array_ref<> will have extent
+  ``[ 0 , b - a )`` in the corresponding dimension.
 
 .. code-block:: c++
   // Ok
@@ -1136,8 +1185,38 @@ precedence in the standard for library functions with unspecified return types
   assert(subarray(ar, {10, 20})(20) == ar(20));
 ..
 
+**template< typename T , typename ... Properties , typename ... SliceSpecifiers >**
+
+**/*unspecified array_property::dimension<>*/**
+
+**subdimensions( const array_ref< T, Properties ... > & ar , SliceSpecifiers ... specs) noexcept**
+
+  Returns: An array_property::dimension<> object referring to the dimensions
+  of the array_ref<> that would be constructed by calling subarray() on ``ar``
+  with SliceSpecifiers ``specs``.  
+
+**template< typename T , typename ... Properties , typename ... StrideSpecifiers >**
+
+**/*unspecified array_ref<>*/**
+
+**stridearray( const array_ref< T , Properties ... > & ar , StrideSpecifiers ... specs ) noexcept**
+ 
+  Requires: ``sizeof...(Properties) == sizeof...(StrideSpecifiers)``
+
+  Requires: ``conjunction<is_integral<StrideSpecifiers>::type...>::value``
+
+  Requires: A StrideSpecifier parameter for dimension ``i`` must be within
+  the range ``[ 1 , ar.extent(i) )``.
+
+  Returns: An array_ref<> referring to the same memory extent as the array_ref<>
+  ``ar`` with the same rank as ``ar``, and dimensions and layout specified by
+  the StrideSpecifier parameters. 
+
+  Remarks: The stride of the produced array_ref<> for a given dimension will be
+  the corresponding StrideSpecifier parameter.
+
 ******************************************************************
-Limited iterator interface
+Limited Iterator Interface
 ******************************************************************
 
 A **array_ref** may have a non-isomorphic mapping between its
@@ -1155,25 +1234,29 @@ incompatible access intent properties
 (*e.g.*, the **reference** type is truly a reference and not a proxy).
 For example, a simple **array_ref<T[]>** will have **begin** and **end** overloads.
 
-  | namespace std {
-  |
-  | template< class T , class ...P >
-  | // Enabled if rank one and isomorphic layout and no incompatible access
-  | // intent properties.
-  | typename std::enable_if< /*unspecified*/
-  |                        , typename array_ref<T,P...>::pointer >::type
-  | begin( const std::experimental::array_ref<T,P...> & v )
-  | { return v.data(); }
-  |
-  | template< class T , class ...P >
-  | // Enabled if rank one and isomorphic layout and no incompatible access
-  | // intent properties.
-  | typename std::enable_if< /*unspecified*/
-  |                       , typename array_ref<T,P...>::pointer >::type
-  | end( const std::experimental::array_ref<T,P...> & v )
-  | { return v.data() + v.size(); }
-  |
-  | }
+.. code-block:: c++
+
+  namespace std {
+  
+  template< class T , class ...P >
+  // Enabled if rank one and isomorphic layout and no incompatible access
+  // intent properties.
+  typename std::enable_if< /*unspecified*/
+                         , typename array_ref<T,P...>::pointer >::type
+  begin( const std::experimental::array_ref<T,P...> & v )
+  { return v.data(); }
+  
+  template< class T , class ...P >
+  // Enabled if rank one and isomorphic layout and no incompatible access
+  // intent properties.
+  typename std::enable_if< /*unspecified*/
+                        , typename array_ref<T,P...>::pointer >::type
+  end( const std::experimental::array_ref<T,P...> & v )
+  { return v.data() + v.size(); }
+  
+  }
+
+..
 
 Note that in the more general case of an isomorphic array_ref
 of any rank a pointer (iterator) range for array_ref member data can be queried.
@@ -1195,17 +1278,136 @@ of any rank a pointer (iterator) range for array_ref member data can be queried.
 
 ..
 
+******************************************************************
+Example Usage in an 8th Order Finite Difference Stencil
+******************************************************************
+
+The subarray interface provides a powerful mechanism for accessing
+3-dimensional data in numerical kernels in a fashion which utilizes performant
+memory access patterns and is amenable to compiler-assisted vectorization.
+
+The following code is an example of a typical finite difference stencil which
+might be used in a computational fluid dynamics application. This code utilizes
+operator splitting to avoid vector register pressure and moves through memory
+in unit stride to facilitate optimal memory access patterns. With the addition
+of compiler alignment hints (as well as padding and aligned allocations to make
+those assumptions true) and compiler directives or attributes to indicate that
+the input pointers do not alias each other, this code would vectorize well on a
+traditional x86 platform.
+
+.. code-block:: c++
+
+  void eighth_order_stencil(
+    const double* V, double* U,
+    ptrdiff_t dx, ptrdiff_t dy, ptrdiff_t dz,
+    array<double, 5> c)
+  {
+    // Iterate over interior points, skipping the 4 cell wide ghost
+    // zone region.
+    for (int iz = 4; iz < dz - 4; ++iz)
+      for (int iy = 4; iy < dy - 4; ++iy) {
+        // Pre-compute shared iy and iz indexing to ensure redundant
+        // calculations are avoided.
+        double const* v = &V[iy*dx + iz*dx*dy]; 
+        double*       u = &U[iy*dx + iz*dx*dy];
+    
+        // X-direction (unit stride) split.
+        for (int ix = 4; ix < dx - 4; ++ix)
+          u[ix] =  c[0] * v[ix]
+                +  c[1] * (v[ix+1] + v[ix-1])
+                +  c[2] * (v[ix+2] + v[ix-2])
+                +  c[3] * (v[ix+3] + v[ix-3])
+                +  c[4] * (v[ix+4] + v[ix-4]);
+    
+        // Y-direction (dx stride) split.
+        for (int ix = 4; ix < dx - 4; ++ix)
+          u[ix] += c[1] * (v[ix+dx]   + v[ix-dx])
+                +  c[2] * (v[ix+2*dx] + v[ix-2*dx])
+                +  c[3] * (v[ix+3*dx] + v[ix-3*dx])
+                +  c[4] * (v[ix+4*dx] + v[ix-4*dx]);
+    
+        // Z-direction (dx*dy stride) split.
+        for (int ix = 4; ix < dx - 4; ++ix) 
+          u[ix] += c1 * (v[ix+dx*dy]   + v[ix-dx*dy])
+                +  c2 * (v[ix+2*dx*dy] + v[ix-2*dx*dy])
+                +  c3 * (v[ix+3*dx*dy] + v[ix-3*dx*dy])
+                +  c4 * (v[ix+4*dx*dy] + v[ix-4*dx*dy]);
+      }
+  }
+
+..
+
+The corresponding code can be rewritten using array_ref<> and the associated
+subarray() interfaces.
+
+.. code-block:: c++
+
+  void eighth_order_stencil(
+    array_ref<const double, array_property::dimension<0, 0, 0>, /*...*/> V,
+    array_ref<double, array_property::dimension<0, 0, 0, /*...*/> U, 
+    array<double, 5> c)
+  {
+    // Compute the dimensions of the interior region. 
+    auto interior = subdimensions(V, {4, V.extent(0)-4},
+                                     {4, V.extent(1)-4},
+                                     {4, V.extent(2)-4});
+
+    for (int iz = 0; iz < interior[2]; ++iz)
+      for (int iy = 0; iy < interior[1]; ++iy) {
+        // Pre-compute shared iy and iz indexing to ensure redundant
+        // calculations are avoided.
+        auto v = subarray(V, {4, V.extent(0)-4}, iy, iz);
+        auto u = subarray(U, {4, V.extent(0)-4}, iy, iz);
+   
+        // X-direction (unit stride) split.
+        for (int ix = 0; ix < interior[0]; ++ix)
+          u[ix] =  c[0] * v[ix]
+                +  c[1] * (v[ix+1] + v[ix-1])
+                +  c[2] * (v[ix+2] + v[ix-2])
+                +  c[3] * (v[ix+3] + v[ix-3])
+                +  c[4] * (v[ix+4] + v[ix-4]);
+
+        // Y-direction (dx stride) split.
+        v = stridearray(v, V.stride(1));
+        u = stridearray(u, U.stride(1));
+        for (int ix = 0; ix < interior[0]; ++ix)
+          u[ix] += c[1] * (v[ix]   + v[ix])
+                +  c[2] * (v[ix+2] + v[ix-2])
+                +  c[3] * (v[ix+3] + v[ix-3])
+                +  c[4] * (v[ix+4] + v[ix-4]);
+    
+        // Z-direction (dx*dy stride) split.
+        v = stridearray(v, V.stride(2));
+        u = stridearray(u, U.stride(2));
+        for (int ix = 0; ix < interior[0]; ++ix)
+          u[ix] += c[1] * (v[ix]   + v[ix])
+                +  c[2] * (v[ix+2] + v[ix-2])
+                +  c[3] * (v[ix+3] + v[ix-3])
+                +  c[4] * (v[ix+4] + v[ix-4]);
+      }
+  }
+
+..
+
+Slicing down to a 1-dimensional array_ref<> in the inner-most unit-stride loops
+also facilitates the use of the 1-dimensional iterator interface, enabling
+interoperability with iterator-based algorithms.
 
 ******************************************************************
 Array Reference Property : Member Access Array Bounds Checking
 ******************************************************************
 
-  |  namespace std {
-  |  namespace experimental {
-  |  namespace array_property {
-  |  struct bounds_checking ;
-  |  }}}
+.. code-block:: c++
 
+  namespace std {
+  namespace experimental {
+  namespace array_property {
+
+  struct bounds_checking ;
+
+  }}}
+
+..
 
 Array bounds checking is an invaluable tool for debugging user code.
 This functionality traditionally requires global injection through
