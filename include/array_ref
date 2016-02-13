@@ -16,7 +16,7 @@
 namespace std { namespace experimental
 {
 
-constexpr std::size_t dynamic_dim = 0;
+constexpr std::size_t dynamic_dim = -1;
 
 template <std::size_t... Dims>
 struct dims;
