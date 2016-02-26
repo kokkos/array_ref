@@ -14,62 +14,101 @@ int main()
     using std::is_same;
     using std::tuple;
 
-    using std::experimental::dims;
-    constexpr auto dyn = std::experimental::dynamic_dim;
+    using std::experimental::dimensions;
+    constexpr auto dyn = std::experimental::dynamic_dimension;
 
     BOOST_TEST((is_same<
-        dims<       >::dynamic_dims_type
+        dimensions<       >::dynamic_dims_type
       , tuple<>
     >::value));
     BOOST_TEST((is_same<
-        dims<3      >::dynamic_dims_type
+        dimensions<3      >::dynamic_dims_type
       , tuple<>
     >::value));
     BOOST_TEST((is_same<
-        dims<3, 5   >::dynamic_dims_type
+        dimensions<3, 5   >::dynamic_dims_type
       , tuple<>
     >::value));
     BOOST_TEST((is_same<
-        dims<3, 5, 9>::dynamic_dims_type
+        dimensions<3, 5, 9>::dynamic_dims_type
       , tuple<>
     >::value));
 
     BOOST_TEST((is_same<
-        dims<dyn          >::dynamic_dims_type
+        dimensions<dyn          >::dynamic_dims_type
       , tuple<std::size_t>
     >::value));
     BOOST_TEST((is_same<
-        dims<dyn, dyn     >::dynamic_dims_type
+        dimensions<dyn, dyn     >::dynamic_dims_type
       , tuple<std::size_t, std::size_t>
     >::value));
     BOOST_TEST((is_same<
-        dims<dyn, dyn, dyn>::dynamic_dims_type
+        dimensions<dyn, dyn, dyn>::dynamic_dims_type
       , tuple<std::size_t, std::size_t, std::size_t>
     >::value));
 
     BOOST_TEST((is_same<
-        dims<dyn, 5,   9  >::dynamic_dims_type
+        dimensions<0            >::dynamic_dims_type
       , tuple<std::size_t>
     >::value));
     BOOST_TEST((is_same<
-        dims<3,   dyn, 9  >::dynamic_dims_type
+        dimensions<0,   0       >::dynamic_dims_type
+      , tuple<std::size_t, std::size_t>
+    >::value));
+    BOOST_TEST((is_same<
+        dimensions<0,   0,   0  >::dynamic_dims_type
+      , tuple<std::size_t, std::size_t, std::size_t>
+    >::value));
+
+    BOOST_TEST((is_same<
+        dimensions<dyn, 5,   9  >::dynamic_dims_type
       , tuple<std::size_t>
     >::value));
     BOOST_TEST((is_same<
-        dims<3,   5,   dyn>::dynamic_dims_type
+        dimensions<3,   dyn, 9  >::dynamic_dims_type
+      , tuple<std::size_t>
+    >::value));
+    BOOST_TEST((is_same<
+        dimensions<3,   5,   dyn>::dynamic_dims_type
       , tuple<std::size_t>
     >::value));
 
     BOOST_TEST((is_same<
-        dims<3,   dyn, dyn>::dynamic_dims_type
+        dimensions<0,   5,   9  >::dynamic_dims_type
+      , tuple<std::size_t>
+    >::value));
+    BOOST_TEST((is_same<
+        dimensions<3,   0,   9  >::dynamic_dims_type
+      , tuple<std::size_t>
+    >::value));
+    BOOST_TEST((is_same<
+        dimensions<3,   5,   0  >::dynamic_dims_type
+      , tuple<std::size_t>
+    >::value));
+
+    BOOST_TEST((is_same<
+        dimensions<3,   dyn, dyn>::dynamic_dims_type
       , tuple<std::size_t, std::size_t>
     >::value));
     BOOST_TEST((is_same<
-        dims<dyn, 5,   dyn>::dynamic_dims_type
+        dimensions<dyn, 5,   dyn>::dynamic_dims_type
       , tuple<std::size_t, std::size_t>
     >::value));
     BOOST_TEST((is_same<
-        dims<dyn, dyn, 9  >::dynamic_dims_type
+        dimensions<dyn, dyn, 9  >::dynamic_dims_type
+      , tuple<std::size_t, std::size_t>
+    >::value));
+
+    BOOST_TEST((is_same<
+        dimensions<3,   0,   0  >::dynamic_dims_type
+      , tuple<std::size_t, std::size_t>
+    >::value));
+    BOOST_TEST((is_same<
+        dimensions<0,   5,   0  >::dynamic_dims_type
+      , tuple<std::size_t, std::size_t>
+    >::value));
+    BOOST_TEST((is_same<
+        dimensions<0,   0,   9  >::dynamic_dims_type
       , tuple<std::size_t, std::size_t>
     >::value));
 

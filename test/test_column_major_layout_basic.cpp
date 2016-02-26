@@ -11,16 +11,16 @@
 
 #include <array_ref>
 
-using std::experimental::dims;
+using std::experimental::dimensions;
 using std::experimental::get_value;
 using std::experimental::column_major_layout;
-constexpr auto dyn = std::experimental::dynamic_dim;
+constexpr auto dyn = std::experimental::dynamic_dimension;
 
 template <std::size_t X>
 void test_1d_static()
 { // {{{
-    dims<X> d;
-    column_major_layout<int, dims<1>, dims<0> > l;
+    dimensions<X> d;
+    column_major_layout<int, dimensions<1>, dimensions<0> > l;
 
     int dptr[X];
 
@@ -39,8 +39,8 @@ void test_1d_static()
 template <std::size_t X>
 void test_1d_dynamic()
 { // {{{
-    dims<dyn> d(X);
-    column_major_layout<int, dims<1>, dims<0> > l;
+    dimensions<dyn> d(X);
+    column_major_layout<int, dimensions<1>, dimensions<0> > l;
 
     std::vector<int> data(get_value<0>(d), 42);
     int* dptr = data.data();
@@ -65,8 +65,10 @@ void test_1d_dynamic()
 template <std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
-    dims<X, Y> d;
-    column_major_layout<std::tuple<int, int>, dims<1, 1>, dims<0, 0> > l;
+    dimensions<X, Y> d;
+    column_major_layout<
+        std::tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
+    > l;
 
     std::tuple<int, int> dptr[X*Y];
 
@@ -90,8 +92,10 @@ void test_2d_static()
 template <std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
-    dims<dyn, dyn> d(X, Y);
-    column_major_layout<std::tuple<int, int>, dims<1, 1>, dims<0, 0> > l;
+    dimensions<dyn, dyn> d(X, Y);
+    column_major_layout<
+        std::tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
+    > l;
 
     std::vector<std::tuple<int, int> > data(
         get_value<0>(d)*get_value<1>(d), std::tuple<int, int>(17, 42)
@@ -126,8 +130,10 @@ void test_2d_dynamic()
 template <std::size_t X, std::size_t Y>
 void test_2d_mixed()
 { // {{{
-    dims<dyn, Y> d(X);
-    column_major_layout<std::tuple<int, int>, dims<1, 1>, dims<0, 0> > l;
+    dimensions<dyn, Y> d(X);
+    column_major_layout<
+        std::tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
+    > l;
 
     std::vector<std::tuple<int, int> > data(
         get_value<0>(d)*get_value<1>(d), std::tuple<int, int>(17, 42)
@@ -162,9 +168,9 @@ void test_2d_mixed()
 template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_static()
 { // {{{
-    dims<X, Y, Z> d;
+    dimensions<X, Y, Z> d;
     column_major_layout<
-        std::tuple<int, int, int>, dims<1, 1, 1>, dims<0, 0, 0>
+        std::tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
     > l;
 
     std::tuple<int, int, int> dptr[X*Y*Z];
@@ -193,9 +199,9 @@ void test_3d_static()
 template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_dynamic()
 { // {{{
-    dims<dyn, dyn, dyn> d(X, Y, Z);
+    dimensions<dyn, dyn, dyn> d(X, Y, Z);
     column_major_layout<
-        std::tuple<int, int, int>, dims<1, 1, 1>, dims<0, 0, 0>
+        std::tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
     > l;
 
     std::vector<std::tuple<int, int, int> > data(
@@ -238,8 +244,8 @@ void test_3d_dynamic()
 int main()
 {
     {
-        dims<> d;
-        column_major_layout<int, dims<>, dims<> > l;
+        dimensions<> d;
+        column_major_layout<int, dimensions<>, dimensions<> > l;
 
         int data = 42;
         int* dptr = &data;

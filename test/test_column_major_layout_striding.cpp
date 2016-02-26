@@ -12,25 +12,25 @@
 #include <array_ref>
 
 using std::extent;
-using std::experimental::dims;
+using std::experimental::dimensions;
 using std::experimental::get_value;
 using std::experimental::column_major_layout;
-constexpr auto dyn = std::experimental::dynamic_dim;
+constexpr auto dyn = std::experimental::dynamic_dimension;
 
 template <std::size_t N, std::size_t X>
 void test_1d_static()
 { // {{{
     static_assert(0 == (X % N), "X must be divisable by N");
 
-    dims<X> d;
-    dims<1>  s;
+    dimensions<X> d;
+    dimensions<1>  s;
 
-    dims<X/N> sub_d; 
-    dims<N> sub_s;
+    dimensions<X/N> sub_d; 
+    dimensions<N> sub_s;
 
-    column_major_layout<int, decltype(s), dims<0> > l;
+    column_major_layout<int, decltype(s), dimensions<0> > l;
 
-    column_major_layout<int, decltype(sub_s), dims<0> > sub_l;
+    column_major_layout<int, decltype(sub_s), dimensions<0> > sub_l;
 
     int dptr[X];
 
@@ -76,17 +76,17 @@ void test_1d_dynamic()
 { // {{{
     static_assert(0 == (X % N), "X must be divisable by N");
 
-    dims<dyn> d(X);
-    dims<dyn> s(1);
+    dimensions<dyn> d(X);
+    dimensions<dyn> s(1);
 
-    dims<dyn> sub_d(X/N); 
-    dims<dyn> sub_s(N);
+    dimensions<dyn> sub_d(X/N); 
+    dimensions<dyn> sub_s(N);
 
-    column_major_layout<int, decltype(s), dims<0> >
-        l(s, dims<0>());
+    column_major_layout<int, decltype(s), dimensions<0> >
+        l(s, dimensions<0>());
 
-    column_major_layout<int, decltype(sub_s), dims<0> >
-        sub_l(sub_s, dims<0>());
+    column_major_layout<int, decltype(sub_s), dimensions<0> >
+        sub_l(sub_s, dimensions<0>());
 
     // Initialize all elements as 42.
     std::vector<int> data(get_value<0>(d), 42);
@@ -136,15 +136,15 @@ void test_2d_static()
     static_assert(0 == (X % N), "X must be divisable by N");
     static_assert(0 == (Y % M), "Y must be divisable by M");
 
-    dims<X, Y> d;
-    dims<1, 1>  s;
+    dimensions<X, Y> d;
+    dimensions<1, 1>  s;
 
-    dims<X/N, Y/M> sub_d; 
-    dims<N,   M  > sub_s;
+    dimensions<X/N, Y/M> sub_d; 
+    dimensions<N,   M  > sub_s;
 
-    column_major_layout<int, decltype(s), dims<0, 0> > l;
+    column_major_layout<int, decltype(s), dimensions<0, 0> > l;
 
-    column_major_layout<int, decltype(sub_s), dims<0, 0> > sub_l;
+    column_major_layout<int, decltype(sub_s), dimensions<0, 0> > sub_l;
 
     int dptr[X*Y];
 
@@ -199,17 +199,17 @@ void test_2d_dynamic()
     static_assert(0 == (X % N), "X must be divisable by N");
     static_assert(0 == (Y % M), "Y must be divisable by M");
 
-    dims<dyn, dyn> d(X, Y);
-    dims<dyn, dyn> s(1, 1);
+    dimensions<dyn, dyn> d(X, Y);
+    dimensions<dyn, dyn> s(1, 1);
 
-    dims<dyn, dyn> sub_d(X/N, Y/M); 
-    dims<dyn, dyn> sub_s(N,   M  );;
+    dimensions<dyn, dyn> sub_d(X/N, Y/M); 
+    dimensions<dyn, dyn> sub_s(N,   M  );;
 
-    column_major_layout<int, decltype(s), dims<0, 0> >
-        l(s, dims<0, 0>());
+    column_major_layout<int, decltype(s), dimensions<0, 0> >
+        l(s, dimensions<0, 0>());
 
-    column_major_layout<int, decltype(sub_s), dims<0, 0> >
-        sub_l(sub_s, dims<0, 0>());
+    column_major_layout<int, decltype(sub_s), dimensions<0, 0> >
+        sub_l(sub_s, dimensions<0, 0>());
 
     // Initialize all elements as 42.
     std::vector<int> data(get_value<0>(d)*get_value<1>(d), 42);

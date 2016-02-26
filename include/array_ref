@@ -18,26 +18,52 @@
 namespace std { namespace experimental
 {
 
-constexpr std::size_t dynamic_dim = -1;
+constexpr std::size_t dynamic_dimension = -1;
+
+namespace detail
+{
 
 template <std::size_t... Dims>
-struct dims;
+struct dimensions_impl;
+
+// Metafunction which maps 0 to dynamic_dimension, and returns the identity
+// otherwise. This is used to allow 0 to be used to specify dynamic dimensions,
+// without the extent-related complications of actually making dynamic_dimension
+// 0.
+template <std::size_t Dim>
+struct map_0_to_dynamic_dimension;
+
+template <>
+struct map_0_to_dynamic_dimension<0>
+  : std::integral_constant<std::size_t, dynamic_dimension> {};
+
+template <std::size_t Dim>
+struct map_0_to_dynamic_dimension
+  : std::integral_constant<std::size_t, Dim> {}; 
+
+} // detail
+
+template <std::size_t... Dims>
+using dimensions =
+    detail::dimensions_impl<detail::map_0_to_dynamic_dimension<Dims>::value...>;
 
 } // experimental 
 
 template <std::size_t... Dims>
-struct rank<experimental::dims<Dims...> >
+struct rank<experimental::detail::dimensions_impl<Dims...> >
   : std::integral_constant<std::size_t, sizeof...(Dims)> {};
 
 template <std::size_t Head, std::size_t... Tail>
-struct extent<experimental::dims<Head, Tail...>, 0>
+struct extent<experimental::detail::dimensions_impl<Head, Tail...>, 0>
   : std::integral_constant<std::size_t, Head> {};
 
 template <std::size_t Head, std::size_t... Tail, unsigned ND>
-struct extent<experimental::dims<Head, Tail...>, ND>
+struct extent<experimental::detail::dimensions_impl<Head, Tail...>, ND>
   : std::integral_constant<
         std::size_t
-      , std::extent<experimental::dims<Tail...>, ND - 1>::value
+      , std::extent<
+            experimental::detail::dimensions_impl<Tail...>, ND - 1
+        >::value
     > {};
 
 namespace experimental { namespace detail
@@ -58,7 +84,7 @@ template <typename... T, std::size_t Head, std::size_t... Tail>
 struct build_dims_tuple<std::tuple<T...>, Head, Tail...>
   : build_dims_tuple<
         typename std::conditional<
-            Head == dynamic_dim
+            Head == dynamic_dimension
           , std::tuple<std::size_t, T...> 
           , std::tuple<T...> 
         >::type
@@ -66,10 +92,10 @@ struct build_dims_tuple<std::tuple<T...>, Head, Tail...>
     > {};
 
 // Maps an actual dynamic dimension index (Idx) to an index in the dynamic
-// dimension tuple. E.g. if you have dims<3, dynamic_dim, 4, dynamic_dim>, this
-// metafunction would map 1 to 0 (the first dynamic dimension) and 3 to 1 (the
-// second one). Pass the input index as Idx, 0 for MappedIdx and the list of
-// dims as Dims when calling. 
+// dimension tuple. E.g. if you have dimensions<3, 0, 4, 0>, this metafunction
+// would map 1 to 0 (the first dynamic dimension) and 3 to 1 (the second one).
+// Pass the input index as Idx, 0 for MappedIdx and the list of dimensions as
+// Dims when calling. 
 template <std::size_t Idx, std::size_t MappedIdx, std::size_t... Dims>
 struct dynamic_dim_tuple_index;
 
@@ -84,7 +110,7 @@ struct dynamic_dim_tuple_index<Idx, MappedIdx, Head, Tail...>
   : dynamic_dim_tuple_index<
         (Idx != 0 ? Idx - 1 : Idx)
       , std::conditional<
-            Head == dynamic_dim && Idx != 0 
+            Head == dynamic_dimension && Idx != 0 
           , std::integral_constant<std::size_t, MappedIdx + 1> 
           , std::integral_constant<std::size_t, MappedIdx> 
         >::type::value
@@ -102,7 +128,7 @@ struct count_dynamic_dims<> : std::integral_constant<std::size_t, 0> {};
 template <std::size_t Head, std::size_t... Tail>
 struct count_dynamic_dims<Head, Tail...>
   : std::integral_constant<std::size_t,
-        ( Head == dynamic_dim
+        ( Head == dynamic_dimension
         ? count_dynamic_dims<Tail...>::value + 1
         : count_dynamic_dims<Tail...>::value) 
     >{};
@@ -121,13 +147,11 @@ struct pack_is_integral<Head, Tail...>
   : conjunction<std::is_integral<Head>, pack_is_integral<Tail...> > {};
 
 template <std::size_t I, std::size_t... Dims>
-inline constexpr typename dims<Dims...>::size_type
-get_value_impl(dims<Dims...>, std::true_type) noexcept;
-
-} // detail
+inline constexpr typename dimensions_impl<Dims...>::size_type
+get_value_impl(dimensions_impl<Dims...>, std::true_type) noexcept;
 
 template <std::size_t... Dims>
-struct dims
+struct dimensions_impl
 {
     // TYPES
 
@@ -140,28 +164,28 @@ struct dims
     // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
 
     // Default constructor. Default-initializes any dynamic dimensions.
-    constexpr dims() noexcept;
+    constexpr dimensions_impl() noexcept;
 
     // Constructs from a set of dynamic dimensions.
     // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDims)
     // EXPECTS: std::is_integral<> is true for all the types in Sizes
     template <typename... DynamicDims>
-    constexpr dims(DynamicDims... ddims) noexcept;
+    constexpr dimensions_impl(DynamicDims... ddims) noexcept;
 
     // Copy constructor.
-    constexpr dims(dims const&) = default;
+    constexpr dimensions_impl(dimensions_impl const&) = default;
 
     // Move constructor.
-    constexpr dims(dims&&) = default;
+    constexpr dimensions_impl(dimensions_impl&&) = default;
 
     // Copy assignment operator.
-    dims& operator=(dims const&) = default;
+    dimensions_impl& operator=(dimensions_impl const&) = default;
 
     // Move assignment operator.
-    dims& operator=(dims&&) = default;
+    dimensions_impl& operator=(dimensions_impl&&) = default;
 
     // Destructor.
-    ~dims() = default;
+    ~dimensions_impl() = default;
 
     // METADATA ACCESS
 
@@ -173,8 +197,8 @@ struct dims
 
   private:
     template <std::size_t I, std::size_t... BDims>
-    friend constexpr typename dims<BDims...>::size_type
-    detail::get_value_impl(dims<BDims...>, std::true_type) noexcept;
+    friend constexpr typename dimensions_impl<BDims...>::size_type
+    detail::get_value_impl(dimensions_impl<BDims...>, std::true_type) noexcept;
 
     dynamic_dims_type dynamic_dims_;
 };
@@ -183,45 +207,45 @@ struct dims
 // zero it. If it's not, maybe do an inlined memset (don't actually call
 // memset, because lol icpc).
 template <std::size_t... Dims>
-constexpr dims<Dims...>::dims() noexcept : dynamic_dims_() {}
+constexpr
+dimensions_impl<Dims...>::dimensions_impl() noexcept
+  : dynamic_dims_() {}
 
 template <std::size_t... Dims>
 template <typename... DynamicDims>
-constexpr dims<Dims...>::dims(DynamicDims... ddims) noexcept
+constexpr
+dimensions_impl<Dims...>::dimensions_impl(DynamicDims... ddims) noexcept
   : dynamic_dims_(ddims...)
 {
     static_assert(
         detail::pack_is_integral<DynamicDims...>::value
-      , "Non-integral types passed to dims<> constructor" 
+      , "Non-integral types passed to dimensions<> constructor" 
     );
     static_assert(
         detail::count_dynamic_dims<Dims...>::value
         == sizeof...(DynamicDims)
-      , "Incorrect number of dynamic dimensions passed to dims<>"
+      , "Incorrect number of dynamic dimensions passed to dimensions<>"
         );
 }
 
 template <std::size_t... Dims>
-inline constexpr typename dims<Dims...>::size_type
-dims<Dims...>::rank() noexcept
+inline constexpr typename dimensions_impl<Dims...>::size_type
+dimensions_impl<Dims...>::rank() noexcept
 {
-    return std::rank<dims>::value;
+    return std::rank<dimensions_impl>::value;
 }
 
 template <std::size_t... Dims>
-inline constexpr typename dims<Dims...>::size_type
-dims<Dims...>::num_dynamic_dims() noexcept
+inline constexpr typename dimensions_impl<Dims...>::size_type
+dimensions_impl<Dims...>::num_dynamic_dims() noexcept
 {
     return detail::count_dynamic_dims<Dims...>::value;
 }
 
-namespace detail
-{
-
 // Dynamic dimension.
 template <std::size_t I, std::size_t... Dims>
-inline constexpr typename dims<Dims...>::size_type
-get_value_impl(dims<Dims...> d, std::true_type) noexcept
+inline constexpr typename dimensions_impl<Dims...>::size_type
+get_value_impl(dimensions_impl<Dims...> d, std::true_type) noexcept
 {
     typedef dynamic_dim_tuple_index<I, 0, Dims...> mapping;
     return std::get<mapping::type::value>(d.dynamic_dims_);
@@ -229,24 +253,25 @@ get_value_impl(dims<Dims...> d, std::true_type) noexcept
 
 // Static dimension.
 template <std::size_t I, std::size_t... Dims>
-inline constexpr typename dims<Dims...>::size_type
-get_value_impl(dims<Dims...> ext, std::false_type) noexcept
+inline constexpr typename dimensions_impl<Dims...>::size_type
+get_value_impl(dimensions_impl<Dims...> ext, std::false_type) noexcept
 {
-    return std::extent<dims<Dims...>, I>::value;
+    return std::extent<dimensions_impl<Dims...>, I>::value;
 }
 
 } // detail
 
 // Returns the number of elements in the Ith direction.
-// EXPECTS: I < dims<Dims...>::rank()
+// EXPECTS: I < dimensions<Dims...>::rank()
 template <std::size_t I, std::size_t... Dims>
 inline constexpr typename std::enable_if<
-    I < dims<Dims...>::rank() 
-  , typename dims<Dims...>::size_type
->::type get_value(dims<Dims...> ext) noexcept
+    I < detail::dimensions_impl<Dims...>::rank() 
+  , typename detail::dimensions_impl<Dims...>::size_type
+>::type get_value(detail::dimensions_impl<Dims...> ext) noexcept
 {
     typedef std::integral_constant<
-        bool, std::extent<dims<Dims...>, I>::value == dynamic_dim
+        bool, std::extent<detail::dimensions_impl<Dims...>, I>::value
+              == dynamic_dimension
     > dispatch;
     return detail::get_value_impl<I>(ext, dispatch());
 }
@@ -286,7 +311,8 @@ struct column_major_layout
     // INDEXING AND ACCESS
 
     template <std::size_t... Dims, typename... Idx>
-    index_type index(dims<Dims...> d, Idx... idx) const noexcept; 
+    index_type
+    index(detail::dimensions_impl<Dims...> d, Idx... idx) const noexcept; 
 
     reference access(pointer p, index_type raw_idx) const noexcept;
 
@@ -306,7 +332,7 @@ struct column_major_layout
     template <std::size_t... Dims
             , typename IdxHead, typename IdxNextHead, typename... IdxTail>
     index_type index_impl(
-        dims<Dims...> d
+        detail::dimensions_impl<Dims...> d
       , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
     ) const noexcept;
 
@@ -314,21 +340,21 @@ struct column_major_layout
     template <std::size_t... Dims
             , typename IdxHead>
     index_type index_impl(
-        dims<Dims...> d
+        detail::dimensions_impl<Dims...> d
       , IdxHead idx_0
     ) const noexcept;
 
     // 0 == rank()
     template <std::size_t... Dims>
     index_type index_impl(
-        dims<Dims...> d
+        detail::dimensions_impl<Dims...> d
     ) const noexcept;
 
     // Nth index
     template <std::size_t N, std::size_t... Dims
             , typename IdxHead, typename IdxNextHead, typename... IdxTail>
     index_type index_impl_n(
-        dims<Dims...> d
+        detail::dimensions_impl<Dims...> d
       , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
     ) const noexcept;
 
@@ -336,7 +362,7 @@ struct column_major_layout
     template <std::size_t N, std::size_t... Dims
             , typename IdxHead>
     index_type index_impl_n(
-        dims<Dims...> d
+        detail::dimensions_impl<Dims...> d
       , IdxHead idx_n
     ) const noexcept;
 
@@ -367,16 +393,18 @@ template <std::size_t... Dims, typename... Idx>
 inline typename
     column_major_layout<ValueType, StridingDims, PaddingDims>::index_type
 column_major_layout<ValueType, StridingDims, PaddingDims>::index(
-    dims<Dims...> d, Idx... idx
+    detail::dimensions_impl<Dims...> d, Idx... idx
     ) const noexcept
 {
     // TODO: These static asserts need to actually live in multi_array_ref.
     // The first one is particularly important, otherwise it will silently
     // do the wrong thing.
-    static_assert(dims<Dims...>::rank() == sizeof...(idx) 
-                , "incorrect number of indices passed to layout");
-    static_assert(dims<Dims...>::rank() == StridingDims::rank()
-                , "dims<> passed into layout has wrong rank");
+    static_assert(
+        detail::dimensions_impl<Dims...>::rank() == sizeof...(idx) 
+      , "incorrect number of indices passed to layout");
+    static_assert(
+        detail::dimensions_impl<Dims...>::rank() == StridingDims::rank()
+      , "dimensions<> passed into layout has wrong rank");
     return index_impl(d, idx...);
 }
     
@@ -397,7 +425,7 @@ template <std::size_t... Dims
 inline typename
     column_major_layout<ValueType, StridingDims, PaddingDims>::index_type
 column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
-    dims<Dims...> d
+    detail::dimensions_impl<Dims...> d
   , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
     ) const noexcept
 {
@@ -412,7 +440,7 @@ template <std::size_t... Dims
 inline typename
     column_major_layout<ValueType, StridingDims, PaddingDims>::index_type
 column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
-    dims<Dims...> d
+    detail::dimensions_impl<Dims...> d
   , IdxHead idx_0
     ) const noexcept
 {
@@ -425,7 +453,7 @@ template <std::size_t... Dims>
 inline typename
     column_major_layout<ValueType, StridingDims, PaddingDims>::index_type
 column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
-    dims<Dims...> d
+    detail::dimensions_impl<Dims...> d
     ) const noexcept
 {
     return 0;
@@ -438,13 +466,13 @@ template <std::size_t N, std::size_t... Dims
 inline typename
     column_major_layout<ValueType, StridingDims, PaddingDims>::index_type
 column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
-    dims<Dims...> d
+    detail::dimensions_impl<Dims...> d
   , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
     ) const noexcept
 {
-    static_assert(0                     < N
+    static_assert(0                                        < N
                 , "dimension index is out of bounds in layout");
-    static_assert(dims<Dims...>::rank() > N
+    static_assert(detail::dimensions_impl<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
     return (get_value<N-1>(d)*get_value<N-1>(stride_) + get_value<N-1>(pad_))
          * ( get_value<N>(stride_)*idx_n
@@ -458,13 +486,13 @@ template <std::size_t N, std::size_t... Dims
 inline typename
     column_major_layout<ValueType, StridingDims, PaddingDims>::index_type
 column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
-    dims<Dims...> d
+    detail::dimensions_impl<Dims...> d
   , IdxHead idx_n
     ) const noexcept
 {
-    static_assert(0                     < N
+    static_assert(0                                        < N
                 , "dimension index is out of bounds in layout");
-    static_assert(dims<Dims...>::rank() > N
+    static_assert(detail::dimensions_impl<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
     return (get_value<N-1>(d)*get_value<N-1>(stride_) + get_value<N-1>(pad_))
          * (get_value<N>(stride_)*idx_n);
@@ -501,7 +529,7 @@ struct array_ref
     template <typename... Sizes>
     constexpr array_ref(pointer p, Sizes... sizes) noexcept;
 
-    // Constructs from a pointer + dims<> + traits.
+    // Constructs from a pointer + dimensions<> + traits.
     // EXPECTS: ptr != nullptr 
     // ENSURES: this->data() == p
     constexpr array_ref(
@@ -582,7 +610,7 @@ array_ref<ValueType, Dims, Traits>::array_ref(
     pointer p, Sizes... sizes
     ) noexcept
   : ptr_(p)
-  , dims_(sizes...) // dims<> does the relevant static_asserts.
+  , dims_(sizes...) // dimensions<> does the relevant static_asserts.
   , traits_()
 {}
 

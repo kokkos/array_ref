@@ -11,10 +11,10 @@
 
 #include <array_ref>
 
-using std::experimental::dims;
+using std::experimental::dimensions;
 using std::experimental::column_major_layout;
 using std::experimental::array_ref;
-constexpr auto dyn = std::experimental::dynamic_dim;
+constexpr auto dyn = std::experimental::dynamic_dimension;
 
 int main()
 {
