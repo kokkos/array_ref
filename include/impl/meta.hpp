@@ -8,6 +8,7 @@
 #if !defined(STD_324BD9FF_856B_4DC7_BC6F_2A93F3DF63CD)
 #define STD_324BD9FF_856B_4DC7_BC6F_2A93F3DF63CD
 
+#include <array>
 #include <type_traits>
 
 #include "impl/fwd.hpp"

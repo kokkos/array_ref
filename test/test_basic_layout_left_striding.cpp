@@ -16,7 +16,7 @@ using std::vector;
 using std::tuple;
 using std::extent;
 using std::experimental::dimensions;
-using std::experimental::column_major_layout;
+using std::experimental::basic_layout_left;
 constexpr auto dyn = std::experimental::dynamic_dimension;
 
 template <std::size_t N, std::size_t X>
@@ -30,9 +30,9 @@ void test_1d_static()
     dimensions<X/N> sub_d; 
     dimensions<N> sub_s;
 
-    column_major_layout<int, decltype(s), dimensions<0> > l;
+    basic_layout_left<decltype(s), dimensions<0> > l;
 
-    column_major_layout<int, decltype(sub_s), dimensions<0> > sub_l;
+    basic_layout_left<decltype(sub_s), dimensions<0> > sub_l;
 
     int dptr[X];
 
@@ -41,11 +41,11 @@ void test_1d_static()
     {
         BOOST_TEST_EQ((l.index(d, i)), i);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i))), &(dptr[i]));
+        BOOST_TEST_EQ(&(dptr[l.index(d, i)]), &(dptr[i]));
 
-        l.access(dptr, l.index(d, i)) = 42;
+        dptr[l.index(d, i)] = 42;
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 42);
+        BOOST_TEST_EQ((dptr[l.index(d, i)]), 42);
     }
 
     // Set every Nth element to 17. 
@@ -55,21 +55,20 @@ void test_1d_static()
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i)), true_idx);
 
-        BOOST_TEST_EQ(&(sub_l.access(dptr, sub_l.index(sub_d, i)))
-                    , &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[sub_l.index(sub_d, i)]), &(dptr[true_idx])); 
 
-        sub_l.access(dptr, sub_l.index(sub_d, i)) = 17;
+        dptr[sub_l.index(sub_d, i)] = 17;
 
-        BOOST_TEST_EQ((sub_l.access(dptr, sub_l.index(sub_d, i))), 17);
+        BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i)]), 17);
     }
 
     // Check final structure. 
     for (auto i = 0; i < d[0]; ++i)
     {
         if (0 == (i % sub_s[0]))
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 17);
+            BOOST_TEST_EQ((dptr[l.index(d, i)]), 17);
         else
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 42);
+            BOOST_TEST_EQ((dptr[l.index(d, i)]), 42);
     }
 } // }}}
 
@@ -84,10 +83,10 @@ void test_1d_dynamic()
     dimensions<dyn> sub_d(X/N); 
     dimensions<dyn> sub_s(N);
 
-    column_major_layout<int, decltype(s), dimensions<0> >
+    basic_layout_left<decltype(s), dimensions<0> >
         l(s, dimensions<0>());
 
-    column_major_layout<int, decltype(sub_s), dimensions<0> >
+    basic_layout_left<decltype(sub_s), dimensions<0> >
         sub_l(sub_s, dimensions<0>());
 
     // Initialize all elements as 42.
@@ -101,12 +100,11 @@ void test_1d_dynamic()
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i)), true_idx);
 
-        BOOST_TEST_EQ(&(sub_l.access(dptr, sub_l.index(sub_d, i)))
-                    , &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[sub_l.index(sub_d, i)]), &(dptr[true_idx])); 
 
-        sub_l.access(dptr, sub_l.index(sub_d, i)) = 17;
+        dptr[sub_l.index(sub_d, i)] = 17;
 
-        BOOST_TEST_EQ((sub_l.access(dptr, sub_l.index(sub_d, i))), 17);
+        BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i)]), 17);
 
         // Bounds-checking.
         BOOST_TEST_EQ((data.at(sub_l.index(sub_d, i))), 17);
@@ -117,14 +115,14 @@ void test_1d_dynamic()
     {
         if (0 == (i % sub_s[0]))
         {
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 17);
+            BOOST_TEST_EQ((dptr[l.index(d, i)]), 17);
 
             // Bounds-checking.
             BOOST_TEST_EQ((data.at(l.index(d, i))), 17);
         }
         else
         {
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 42);
+            BOOST_TEST_EQ((dptr[l.index(d, i)]), 42);
 
             // Bounds-checking.
             BOOST_TEST_EQ((data.at(l.index(d, i))), 42);
@@ -144,9 +142,9 @@ void test_2d_static()
     dimensions<X/N, Y/M> sub_d; 
     dimensions<N,   M  > sub_s;
 
-    column_major_layout<int, decltype(s), dimensions<0, 0> > l;
+    basic_layout_left<decltype(s), dimensions<0, 0> > l;
 
-    column_major_layout<int, decltype(sub_s), dimensions<0, 0> > sub_l;
+    basic_layout_left<decltype(sub_s), dimensions<0, 0> > sub_l;
 
     int dptr[X*Y];
 
@@ -158,11 +156,11 @@ void test_2d_static()
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i, j))), &(dptr[true_idx]));
+        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx]));
 
-        l.access(dptr, l.index(d, i, j)) = 42;
+        dptr[l.index(d, i, j)] = 42;
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 42);
+        BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
     }
 
     // Set every (Nth, Mth) element to 17.
@@ -173,12 +171,11 @@ void test_2d_static()
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(sub_l.access(dptr, sub_l.index(sub_d, i, j)))
-                    , &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[sub_l.index(sub_d, i, j)]), &(dptr[true_idx])); 
 
-        sub_l.access(dptr, sub_l.index(sub_d, i, j)) = 17;
+        dptr[sub_l.index(sub_d, i, j)] = 17;
 
-        BOOST_TEST_EQ((sub_l.access(dptr, sub_l.index(sub_d, i, j))), 17);
+        BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i, j)]), 17);
     }
 
     // Check final structure. 
@@ -188,9 +185,9 @@ void test_2d_static()
         if (  (0 == (i % sub_s[0]))
            && (0 == (j % sub_s[1]))
            )
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 17);
+            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
         else
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 42);
+            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
     }
 } // }}}
 
@@ -206,10 +203,10 @@ void test_2d_dynamic()
     dimensions<dyn, dyn> sub_d(X/N, Y/M); 
     dimensions<dyn, dyn> sub_s(N,   M  );;
 
-    column_major_layout<int, decltype(s), dimensions<0, 0> >
+    basic_layout_left<decltype(s), dimensions<0, 0> >
         l(s, dimensions<0, 0>());
 
-    column_major_layout<int, decltype(sub_s), dimensions<0, 0> >
+    basic_layout_left<decltype(sub_s), dimensions<0, 0> >
         sub_l(sub_s, dimensions<0, 0>());
 
     // Initialize all elements as 42.
@@ -224,12 +221,11 @@ void test_2d_dynamic()
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(sub_l.access(dptr, sub_l.index(sub_d, i, j)))
-                    , &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[sub_l.index(sub_d, i, j)]), &(dptr[true_idx])); 
 
-        sub_l.access(dptr, sub_l.index(sub_d, i, j)) = 17;
+        dptr[sub_l.index(sub_d, i, j)] = 17;
 
-        BOOST_TEST_EQ((sub_l.access(dptr, sub_l.index(sub_d, i, j))), 17);
+        BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i, j)]), 17);
 
         // Bounds-checking.
         BOOST_TEST_EQ((data.at(sub_l.index(sub_d, i, j))), 17);
@@ -243,14 +239,14 @@ void test_2d_dynamic()
            && (0 == (j % sub_s[1]))
            )
         {
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 17);
+            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
 
             // Bounds-checking.
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 17);
         }
         else
         {
-            BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 42);
+            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
 
             // Bounds-checking.
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 42);

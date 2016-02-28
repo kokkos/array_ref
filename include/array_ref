@@ -8,404 +8,27 @@
 #if !defined(STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0)
 #define STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
 
-#include <cstdint>
-
-#include <array>
-#include <type_traits>
-
 #include "impl/fwd.hpp"
 #include "impl/meta.hpp"
+#include "impl/dimensions.hpp"
 
-namespace std { namespace experimental { namespace detail
+#include "impl/basic_layout_left.hpp"
+
+namespace std { namespace experimental 
 {
 
-template <std::size_t... Dims>
-struct dimensions_impl
-{
-    // TYPES
-
-    // NOTE: We may need/want the full set of container types.
-
-    using value_type = std::size_t;
-    using size_type = std::size_t;
-
-    // NOTE: Not defined in the spec, public for unit tests. 
-    using dynamic_dims_type = typename detail::build_dims_array<Dims...>::type;
-
-    // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
-
-    ~dimensions_impl() = default;
-
-    // Default constructor. Default-initializes any dynamic dimensions.
-    constexpr dimensions_impl() noexcept;
-
-    // Constructs from a set of dynamic dimensions.
-    // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDims)
-    // EXPECTS: std::is_integral<> is true for all the types in Sizes
-    template <typename... DynamicDims>
-    constexpr dimensions_impl(DynamicDims... ddims) noexcept;
-
-    // Copy constructor.
-    constexpr dimensions_impl(dimensions_impl const&) = default;
-
-    // Move constructor.
-    constexpr dimensions_impl(dimensions_impl&&) = default;
-
-    // Copy assignment operator.
-    dimensions_impl& operator=(dimensions_impl const&) = default;
-
-    // Move assignment operator.
-    dimensions_impl& operator=(dimensions_impl&&) = default;
-
-    // METADATA ACCESS
-
-    // Returns the number of dimensions of the referenced array.
-    static constexpr value_type rank() noexcept;
-
-    // Returns the number of dimension which are dynamic.
-    // NOTE: Not currently in spec.
-    static constexpr value_type num_dynamic_dims() noexcept;
-
-    // Member accessor.
-    // NOTE: Spec needs to clarify the return value of this function if idx
-    // is out of bound. Currently, you get 0.
-    template <typename IntegralType>
-    constexpr value_type operator[](IntegralType idx) const noexcept;
-
-  private:
-    dynamic_dims_type dynamic_dims_;
-};
-
-// FIXME: Confirm that default-initializing an integral type is guranteed to
-// zero it. If it's not, maybe do an inlined memset (don't actually call
-// memset, because lol icpc).
-template <std::size_t... Dims>
-constexpr
-dimensions_impl<Dims...>::dimensions_impl() noexcept
-  : dynamic_dims_{} {}
-
-template <std::size_t... Dims>
-template <typename... DynamicDims>
-constexpr
-dimensions_impl<Dims...>::dimensions_impl(DynamicDims... ddims) noexcept
-  // FIXME: We cast here to avoid a narrowing conversion warning from GCC.
-  // I'm not thrilled about it.
-  : dynamic_dims_{static_cast<value_type>(ddims)...}
-{
-    static_assert(
-        detail::pack_is_integral<DynamicDims...>::value
-      , "Non-integral types passed to dimensions<> constructor" 
-    );
-    static_assert(
-        detail::count_dynamic_dims<Dims...>::value
-        == sizeof...(DynamicDims)
-      , "Incorrect number of dynamic dimensions passed to dimensions<>"
-        );
-}
-
-template <std::size_t... Dims>
-inline constexpr typename dimensions_impl<Dims...>::value_type
-dimensions_impl<Dims...>::rank() noexcept
-{
-    return std::rank<dimensions_impl>::value;
-}
-
-template <std::size_t... Dims>
-inline constexpr typename dimensions_impl<Dims...>::value_type
-dimensions_impl<Dims...>::num_dynamic_dims() noexcept
-{
-    return detail::count_dynamic_dims<Dims...>::value;
-}
-
-template <std::size_t... Dims>
-template <typename IntegralType>
-inline constexpr typename dimensions_impl<Dims...>::value_type
-dimensions_impl<Dims...>::operator[](IntegralType idx) const noexcept
-{
-    return ( dynamic_extent(idx, Dims...) == dynamic_dimension
-           ? dynamic_dims_[index_into_dynamic_dims(idx, Dims...)]
-           : dynamic_extent(idx, Dims...)
-           );
-} 
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Base case.
-template <typename Idx>
-inline constexpr std::size_t dynamic_extent(
-    Idx idx
-    ) noexcept
-{
-    return 0; 
-}
-
-template <typename Idx, typename Head, typename... Tail>
-inline constexpr std::size_t dynamic_extent(
-    Idx idx, Head head, Tail... tail
-    ) noexcept
-{
-    return ( idx == 0
-           ? head
-           : dynamic_extent(idx - 1, tail...)
-           );        
-}
-
-// Base case.
-template <typename Idx>
-inline constexpr std::size_t index_into_dynamic_dims(
-    Idx idx
-    ) noexcept
-{
-    return 0; 
-}
-
-template <typename Idx, typename Head, typename... Tail>
-inline constexpr std::size_t index_into_dynamic_dims(
-    Idx idx, Head head, Tail... tail
-    ) noexcept
-{
-    return
-        ( head == dynamic_dimension && idx != 0
-        ? index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), tail...) + 1
-        : index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), tail...)
-        );
-}
-
-} // detail
-
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-struct column_major_layout
-{
-    static_assert(StridingDims::rank() == PaddingDims::rank() 
-                , "striding and padding have different rank");
-
-    // TYPES 
-
-    template <typename OtherValueType>
-    struct rebind
-    {
-        using other = column_major_layout<
-            OtherValueType, StridingDims, PaddingDims
-        >;
-    };
-
-    using size_type = std::size_t;
-    using value_type = ValueType;
-    using pointer = typename std::add_pointer<value_type>::type;
-    using reference = typename std::add_lvalue_reference<value_type>::type;
-
-    // CONSTRUCTORS
-
-    constexpr column_major_layout() noexcept;
-
-    constexpr column_major_layout(
-        StridingDims const& striding
-      , PaddingDims const& pad
-    ) noexcept;
-
-    // INDEXING AND ACCESS
-
-    template <std::size_t... Dims, typename... Idx>
-    size_type
-    index(detail::dimensions_impl<Dims...> d, Idx... idx) const noexcept; 
-
-    reference access(pointer p, size_type raw_idx) const noexcept;
-
-  private:
-    // Recursive column-major layout implementation.
-    //
-    // Three initial cases:
-    // * First index, 1 < rank()
-    // * First index, 1 == rank()
-    // * 0 == rank()
-    //
-    // The first case (1 < rank()) recurses, with cases: 
-    // * Nth index
-    // * Final index
-
-    // First index, 1 < rank()
-    template <std::size_t... Dims
-            , typename IdxHead, typename IdxNextHead, typename... IdxTail>
-    size_type index_impl(
-        detail::dimensions_impl<Dims...> d
-      , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
-    ) const noexcept;
-
-    // First index, 1 == rank()
-    template <std::size_t... Dims
-            , typename IdxHead>
-    size_type index_impl(
-        detail::dimensions_impl<Dims...> d
-      , IdxHead idx_0
-    ) const noexcept;
-
-    // 0 == rank()
-    template <std::size_t... Dims>
-    size_type index_impl(
-        detail::dimensions_impl<Dims...> d
-    ) const noexcept;
-
-    // Nth index
-    template <std::size_t N, std::size_t... Dims
-            , typename IdxHead, typename IdxNextHead, typename... IdxTail>
-    size_type index_impl_n(
-        detail::dimensions_impl<Dims...> d
-      , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
-    ) const noexcept;
-
-    // Final index
-    template <std::size_t N, std::size_t... Dims
-            , typename IdxHead>
-    size_type index_impl_n(
-        detail::dimensions_impl<Dims...> d
-      , IdxHead idx_n
-    ) const noexcept;
-
-    StridingDims stride_; 
-    PaddingDims pad_; 
-};  
-
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-constexpr
-column_major_layout<ValueType, StridingDims, PaddingDims>::column_major_layout()
-    noexcept
-  : stride_()
-  , pad_()
-{}
-
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-constexpr
-column_major_layout<ValueType, StridingDims, PaddingDims>::column_major_layout(
-    StridingDims const& striding
-  , PaddingDims const& pad
-    ) noexcept
-  : stride_(striding)
-  , pad_(pad)
-{}
-
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-template <std::size_t... Dims, typename... Idx>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::size_type
-column_major_layout<ValueType, StridingDims, PaddingDims>::index(
-    detail::dimensions_impl<Dims...> d, Idx... idx
-    ) const noexcept
-{
-    // TODO: These static asserts need to actually live in multi_array_ref.
-    // The first one is particularly important, otherwise it will silently
-    // do the wrong thing.
-    static_assert(
-        detail::dimensions_impl<Dims...>::rank() == sizeof...(idx) 
-      , "incorrect number of indices passed to layout");
-    static_assert(
-        detail::dimensions_impl<Dims...>::rank() == StridingDims::rank()
-      , "dimensions<> passed into layout has wrong rank");
-    return index_impl(d, idx...);
-}
-    
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::reference
-column_major_layout<ValueType, StridingDims, PaddingDims>::access(
-    pointer p, size_type raw_idx
-    ) const noexcept
-{
-    return p[raw_idx];
-}
-
-// First index, 1 < rank()
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-template <std::size_t... Dims
-        , typename IdxHead, typename IdxNextHead, typename... IdxTail>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::size_type
-column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
-    detail::dimensions_impl<Dims...> d
-  , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
-    ) const noexcept
-{
-    return stride_[0]*idx_0
-         + index_impl_n<1>(d, idx_1, idx_tail...);
-}
-
-// First index, 1 == rank()
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-template <std::size_t... Dims
-        , typename IdxHead>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::size_type
-column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
-    detail::dimensions_impl<Dims...> d
-  , IdxHead idx_0
-    ) const noexcept
-{
-    return stride_[0]*idx_0;
-}
-
-// 0 == rank() 
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-template <std::size_t... Dims>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::size_type
-column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl(
-    detail::dimensions_impl<Dims...> d
-    ) const noexcept
-{
-    return 0;
-}
-
-// Nth index
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-template <std::size_t N, std::size_t... Dims
-        , typename IdxHead, typename IdxNextHead, typename... IdxTail>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::size_type
-column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
-    detail::dimensions_impl<Dims...> d
-  , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
-    ) const noexcept
-{
-    static_assert(0                                        < N
-                , "dimension index is out of bounds in layout");
-    static_assert(detail::dimensions_impl<Dims...>::rank() > N
-                , "dimension index is out of bounds in layout");
-    return (d[N-1]*stride_[N-1] + pad_[N-1])
-         * ( stride_[N]*idx_n
-           + index_impl_n<N+1>(d, idx_n_plus_1, idx_tail...));
-}
-
-// Final index
-template <typename ValueType, typename StridingDims, typename PaddingDims>
-template <std::size_t N, std::size_t... Dims
-        , typename IdxHead>
-inline typename
-    column_major_layout<ValueType, StridingDims, PaddingDims>::size_type
-column_major_layout<ValueType, StridingDims, PaddingDims>::index_impl_n(
-    detail::dimensions_impl<Dims...> d
-  , IdxHead idx_n
-    ) const noexcept
-{
-    static_assert(0                                        < N
-                , "dimension index is out of bounds in layout");
-    static_assert(detail::dimensions_impl<Dims...>::rank() > N
-                , "dimension index is out of bounds in layout");
-    return (d[N-1]*stride_[N-1] + pad_[N-1])
-         * (stride_[N]*idx_n);
-}
-
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 struct array_ref
 {
     // TYPES
 
-    using traits_type = typename Traits::template rebind<ValueType>::other;
+    using layout = Layout;
 
-    using size_type = typename traits_type::size_type;
-    using value_type = typename traits_type::value_type;
-    using pointer = typename traits_type::pointer;
-    using reference = typename traits_type::reference;
+    using size_type = typename layout::size_type;
+    using value_type = ValueType;
+    using pointer = typename add_pointer<value_type>::type;
+    using reference = typename add_lvalue_reference<value_type>::type;
+    using const_reference = typename add_const<reference>::type;
 
     // CONSTRUCTORS, DESTRUCTORS AND ASSIGNMENT OPERATORS
 
@@ -428,24 +51,20 @@ struct array_ref
     // EXPECTS: ptr != nullptr 
     // ENSURES: this->data() == p
     constexpr array_ref(
-        pointer p, Dims const& d, Traits const& t
+        pointer p, Dims const& d, Layout const& t = Layout()
         ) noexcept;
 
     // Conversion constructor.
     // TYPE-REQUIREMENTS: BValueType must be assignment-compatible
     template <typename OtherValueType>
     constexpr array_ref(
-        array_ref<OtherValueType, Dims, Traits> const& other
+        array_ref<OtherValueType, Dims, Layout> const& other
         ) noexcept;
 
-    constexpr array_ref(array_ref const& b) noexcept
-        = default;
-    constexpr array_ref(array_ref&& b) noexcept
-        = default;
-    array_ref& operator=(array_ref const& b) noexcept
-        = default;
-    array_ref& operator=(array_ref&& b) noexcept
-        = default;
+    constexpr array_ref(array_ref const& b) noexcept = default;
+    constexpr array_ref(array_ref&& b) noexcept = default;
+    array_ref& operator=(array_ref const& b) noexcept = default;
+    array_ref& operator=(array_ref&& b) noexcept = default;
 
     ~array_ref() = default;
 
@@ -477,98 +96,100 @@ struct array_ref
   private:
     pointer ptr_;
     Dims dims_;
-    Traits traits_;
+    Layout layout_;
 };
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 constexpr
-array_ref<ValueType, Dims, Traits>::array_ref() noexcept
+array_ref<ValueType, Dims, Layout>::array_ref() noexcept
   : ptr_(nullptr)
   , dims_()
-  , traits_()
+  , layout_()
 {}
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 constexpr
-array_ref<ValueType, Dims, Traits>::array_ref(
+array_ref<ValueType, Dims, Layout>::array_ref(
     std::nullptr_t
     ) noexcept
   : ptr_(nullptr)
   , dims_()
-  , traits_()
+  , layout_()
 {}
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 template <typename... Sizes>
 constexpr
-array_ref<ValueType, Dims, Traits>::array_ref(
+array_ref<ValueType, Dims, Layout>::array_ref(
     pointer p, Sizes... sizes
     ) noexcept
   : ptr_(p)
   , dims_(sizes...) // dimensions<> does the relevant static_asserts.
-  , traits_()
+  , layout_()
 {}
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 constexpr
-array_ref<ValueType, Dims, Traits>::array_ref(
-    pointer p, Dims const& d, Traits const& t
+array_ref<ValueType, Dims, Layout>::array_ref(
+    pointer p, Dims const& d, Layout const& l
     ) noexcept
   : ptr_(p)
   , dims_(d)
-  , traits_(t)
+  , layout_(l)
 {}
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 template <typename OtherValueType> 
 constexpr
-array_ref<ValueType, Dims, Traits>::array_ref(
-    array_ref<OtherValueType, Dims, Traits> const& other
+array_ref<ValueType, Dims, Layout>::array_ref(
+    array_ref<OtherValueType, Dims, Layout> const& other
     ) noexcept
   : ptr_(other.ptr_)
   , dims_(other.dims_)
-  , traits_(other.traits_)
+  , layout_(other.layout_)
 {}
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 inline static constexpr typename
-    array_ref<ValueType, Dims, Traits>::size_type
+    array_ref<ValueType, Dims, Layout>::size_type
 rank() noexcept
 {
     return Dims::rank();
 }
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 inline static constexpr typename
-    array_ref<ValueType, Dims, Traits>::size_type
+    array_ref<ValueType, Dims, Layout>::size_type
 num_dynamic_dims() noexcept
 {
     return Dims::num_dynamic_dims();
 }
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 template <typename... Idx>
 inline typename std::enable_if<
     Dims::rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
-  , typename array_ref<ValueType, Dims, Traits>::reference
->::type array_ref<ValueType, Dims, Traits>::operator()(
+  , typename array_ref<ValueType, Dims, Layout>::reference
+>::type array_ref<ValueType, Dims, Layout>::operator()(
     Idx... idx
     ) const noexcept
 {
-    size_type const raw_idx = traits_.index(dims_, idx...);
-    return traits_.access(ptr_, raw_idx);
+    size_type const raw_idx = layout_.index(dims_, idx...);
+    return ptr_[raw_idx];
+//    return layout_.access(ptr_, raw_idx);
 }
 
-template <typename ValueType, typename Dims, typename Traits>
+template <typename ValueType, typename Dims, typename Layout>
 template <typename Idx>
 inline typename std::enable_if<
     std::is_integral<Idx>::value
-  , typename array_ref<ValueType, Dims, Traits>::reference
->::type array_ref<ValueType, Dims, Traits>::operator[](
+  , typename array_ref<ValueType, Dims, Layout>::reference
+>::type array_ref<ValueType, Dims, Layout>::operator[](
     Idx idx
     ) const noexcept
 {
-    return traits_.access(ptr_, idx);
+    return ptr_[idx];
+//    return layout_.access(ptr_, idx);
 }
 
 }} // std::experimental

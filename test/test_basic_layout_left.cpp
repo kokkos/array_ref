@@ -15,14 +15,14 @@
 using std::vector;
 using std::tuple;
 using std::experimental::dimensions;
-using std::experimental::column_major_layout;
+using std::experimental::basic_layout_left;
 constexpr auto dyn = std::experimental::dynamic_dimension;
 
 template <std::size_t X>
 void test_1d_static()
 { // {{{
     dimensions<X> d;
-    column_major_layout<int, dimensions<1>, dimensions<0> > l;
+    basic_layout_left<dimensions<1>, dimensions<0> > l;
 
     int dptr[X];
 
@@ -30,11 +30,11 @@ void test_1d_static()
     {
         BOOST_TEST_EQ((l.index(d, i)), i);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i))), &(dptr[i])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i)]), &(dptr[i])); 
 
-        l.access(dptr, l.index(d, i)) = i;
+        dptr[l.index(d, i)] = i;
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), i); 
+        BOOST_TEST_EQ((dptr[l.index(d, i)]), i); 
     }
 } // }}}
 
@@ -42,7 +42,7 @@ template <std::size_t X>
 void test_1d_dynamic()
 { // {{{
     dimensions<dyn> d(X);
-    column_major_layout<int, dimensions<1>, dimensions<0> > l;
+    basic_layout_left<dimensions<1>, dimensions<0> > l;
 
     vector<int> data(d[0], 42);
     int* dptr = data.data();
@@ -51,13 +51,13 @@ void test_1d_dynamic()
     {
         BOOST_TEST_EQ((l.index(d, i)), i);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i))), &(dptr[i])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i)]), &(dptr[i])); 
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 42); 
+        BOOST_TEST_EQ((dptr[l.index(d, i)]), 42); 
 
-        l.access(dptr, l.index(d, i)) = i;
+        dptr[l.index(d, i)] = i;
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), i); 
+        BOOST_TEST_EQ((dptr[l.index(d, i)]), i); 
 
         // Bound-checking.
         BOOST_TEST_EQ((data.at(l.index(d, i))), i); 
@@ -68,9 +68,7 @@ template <std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
     dimensions<X, Y> d;
-    column_major_layout<
-        tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
-    > l;
+    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > l;
 
     tuple<int, int> dptr[X*Y];
 
@@ -81,13 +79,13 @@ void test_2d_static()
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i, j))), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
 
-        std::get<0>(l.access(dptr, l.index(d, i, j))) = i;
-        std::get<1>(l.access(dptr, l.index(d, i, j))) = j;
+        std::get<0>(dptr[l.index(d, i, j)]) = i;
+        std::get<1>(dptr[l.index(d, i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), i); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), j); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
     }
 } // }}}
 
@@ -95,9 +93,7 @@ template <std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
     dimensions<dyn, dyn> d(X, Y);
-    column_major_layout<
-        tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
-    > l;
+    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > l;
 
     vector<tuple<int, int> > data(d[0]*d[1], tuple<int, int>(17, 42));
 
@@ -110,16 +106,16 @@ void test_2d_dynamic()
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i, j))), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), 17); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), 42); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), 17); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), 42); 
 
-        std::get<0>(l.access(dptr, l.index(d, i, j))) = i;
-        std::get<1>(l.access(dptr, l.index(d, i, j))) = j;
+        std::get<0>(dptr[l.index(d, i, j)]) = i;
+        std::get<1>(dptr[l.index(d, i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), i); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), j); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
 
         // Bound-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
@@ -131,9 +127,7 @@ template <std::size_t X, std::size_t Y>
 void test_2d_mixed()
 { // {{{
     dimensions<dyn, Y> d(X);
-    column_major_layout<
-        tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
-    > l;
+    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > l;
 
     vector<tuple<int, int> > data(d[0]*d[1], tuple<int, int>(17, 42));
 
@@ -146,16 +140,16 @@ void test_2d_mixed()
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i, j))), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), 17); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), 42); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), 17); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), 42); 
 
-        std::get<0>(l.access(dptr, l.index(d, i, j))) = i;
-        std::get<1>(l.access(dptr, l.index(d, i, j))) = j;
+        std::get<0>(dptr[l.index(d, i, j)]) = i;
+        std::get<1>(dptr[l.index(d, i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j)))), i); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j)))), j); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
 
         // Bound-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
@@ -167,9 +161,7 @@ template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_static()
 { // {{{
     dimensions<X, Y, Z> d;
-    column_major_layout<
-        tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
-    > l;
+    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> > l;
 
     tuple<int, int, int> dptr[X*Y*Z];
 
@@ -181,15 +173,15 @@ void test_3d_static()
 
         BOOST_TEST_EQ((l.index(d, i, j, k)), true_idx);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i, j, k))), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i, j, k)]), &(dptr[true_idx])); 
 
-        std::get<0>(l.access(dptr, l.index(d, i, j, k))) = i;
-        std::get<1>(l.access(dptr, l.index(d, i, j, k))) = j;
-        std::get<2>(l.access(dptr, l.index(d, i, j, k))) = k;
+        std::get<0>(dptr[l.index(d, i, j, k)]) = i;
+        std::get<1>(dptr[l.index(d, i, j, k)]) = j;
+        std::get<2>(dptr[l.index(d, i, j, k)]) = k;
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j, k)))), i); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j, k)))), j); 
-        BOOST_TEST_EQ((std::get<2>(l.access(dptr, l.index(d, i, j, k)))), k); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), j); 
+        BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), k); 
     }
 } // }}}
 
@@ -197,9 +189,7 @@ template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_dynamic()
 { // {{{
     dimensions<dyn, dyn, dyn> d(X, Y, Z);
-    column_major_layout<
-        tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
-    > l;
+    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> > l;
 
     vector<tuple<int, int, int> > data(
         d[0]*d[1]*d[2], tuple<int, int, int>(17, 42, 73)
@@ -215,19 +205,19 @@ void test_3d_dynamic()
 
         BOOST_TEST_EQ((l.index(d, i, j, k)), true_idx);
 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d, i, j, k))), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(d, i, j, k)]), &(dptr[true_idx])); 
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j, k)))), 17); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j, k)))), 42); 
-        BOOST_TEST_EQ((std::get<2>(l.access(dptr, l.index(d, i, j, k)))), 73); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), 17); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), 42); 
+        BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), 73); 
 
-        std::get<0>(l.access(dptr, l.index(d, i, j, k))) = i;
-        std::get<1>(l.access(dptr, l.index(d, i, j, k))) = j;
-        std::get<2>(l.access(dptr, l.index(d, i, j, k))) = k;
+        std::get<0>(dptr[l.index(d, i, j, k)]) = i;
+        std::get<1>(dptr[l.index(d, i, j, k)]) = j;
+        std::get<2>(dptr[l.index(d, i, j, k)]) = k;
 
-        BOOST_TEST_EQ((std::get<0>(l.access(dptr, l.index(d, i, j, k)))), i); 
-        BOOST_TEST_EQ((std::get<1>(l.access(dptr, l.index(d, i, j, k)))), j); 
-        BOOST_TEST_EQ((std::get<2>(l.access(dptr, l.index(d, i, j, k)))), k); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), j); 
+        BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), k); 
 
         // Bound-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j, k)))), i); 
@@ -240,19 +230,19 @@ int main()
 {
     {
         dimensions<> d;
-        column_major_layout<int, dimensions<>, dimensions<> > l;
+        basic_layout_left<dimensions<>, dimensions<> > l;
 
         int data = 42;
         int* dptr = &data;
 
         BOOST_TEST_EQ((l.index(d)), 0);
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d))), 42); 
-        BOOST_TEST_EQ(&(l.access(dptr, l.index(d))), dptr); 
+        BOOST_TEST_EQ((dptr[l.index(d)]), 42); 
+        BOOST_TEST_EQ(&(dptr[l.index(d)]), dptr); 
 
-        l.access(dptr, l.index(d)) = 17;
+        dptr[l.index(d)] = 17;
 
-        BOOST_TEST_EQ((l.access(dptr, l.index(d))), 17); 
+        BOOST_TEST_EQ((dptr[l.index(d)]), 17); 
     }
 
     // 1D Static
