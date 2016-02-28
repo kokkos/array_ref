@@ -22,6 +22,11 @@ int main()
     BOOST_TEST_EQ((rank<dimensions<3, 5   > >::value), 2);
     BOOST_TEST_EQ((rank<dimensions<3, 5, 9> >::value), 3);
     
+    BOOST_TEST_EQ((dimensions<       >::rank()), 0);
+    BOOST_TEST_EQ((dimensions<3      >::rank()), 1);
+    BOOST_TEST_EQ((dimensions<3, 5   >::rank()), 2);
+    BOOST_TEST_EQ((dimensions<3, 5, 9>::rank()), 3);
+    
     BOOST_TEST_EQ((extent<dimensions<>   >::value), 0);
     BOOST_TEST_EQ((extent<dimensions<>, 0>::value), 0);
     BOOST_TEST_EQ((extent<dimensions<>, 1>::value), 0);

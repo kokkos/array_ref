@@ -51,46 +51,6 @@ struct replace_0_with_dynamic_dimension
 ///////////////////////////////////////////////////////////////////////////////
 
 // Base case.
-template <typename... T>
-struct build_dims_tuple<std::tuple<T...> >
-{
-    using type = std::tuple<T...>;
-};
-
-template <typename... T, std::size_t Head, std::size_t... Tail>
-struct build_dims_tuple<std::tuple<T...>, Head, Tail...>
-  : build_dims_tuple<
-        typename std::conditional<
-            Head == dynamic_dimension
-          , std::tuple<std::size_t, T...> 
-          , std::tuple<T...> 
-        >::type
-      , Tail...
-    > {};
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Base case.
-template <std::size_t Idx, std::size_t MappedIdx>
-struct dynamic_dim_tuple_index<Idx, MappedIdx>
-  : std::integral_constant<std::size_t, MappedIdx> {};
-
-template <std::size_t Idx, std::size_t MappedIdx
-        , std::size_t Head, std::size_t... Tail>
-struct dynamic_dim_tuple_index<Idx, MappedIdx, Head, Tail...>
-  : dynamic_dim_tuple_index<
-        (Idx != 0 ? Idx - 1 : Idx)
-      , std::conditional<
-            Head == dynamic_dimension && Idx != 0 
-          , std::integral_constant<std::size_t, MappedIdx + 1> 
-          , std::integral_constant<std::size_t, MappedIdx> 
-        >::type::value
-      , Tail...
-    > {};
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Base case.
 template <>
 struct count_dynamic_dims<> : std::integral_constant<std::size_t, 0> {};
 
@@ -101,6 +61,14 @@ struct count_dynamic_dims<Head, Tail...>
         ? count_dynamic_dims<Tail...>::value + 1
         : count_dynamic_dims<Tail...>::value) 
     >{};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <std::size_t... Dims>
+struct build_dims_array
+{
+    using type = std::array<std::size_t, count_dynamic_dims<Dims...>::value>;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 

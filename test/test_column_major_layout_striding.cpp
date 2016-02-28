@@ -8,12 +8,14 @@
 #include <boost/detail/lightweight_test.hpp>
 
 #include <vector>
+#include <tuple>
 
 #include <array_ref>
 
+using std::vector;
+using std::tuple;
 using std::extent;
 using std::experimental::dimensions;
-using std::experimental::get_value;
 using std::experimental::column_major_layout;
 constexpr auto dyn = std::experimental::dynamic_dimension;
 
@@ -23,7 +25,7 @@ void test_1d_static()
     static_assert(0 == (X % N), "X must be divisable by N");
 
     dimensions<X> d;
-    dimensions<1>  s;
+    dimensions<1> s;
 
     dimensions<X/N> sub_d; 
     dimensions<N> sub_s;
@@ -35,7 +37,7 @@ void test_1d_static()
     int dptr[X];
 
     // Set all elements to 42.
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto i = 0; i < d[0]; ++i)
     {
         BOOST_TEST_EQ((l.index(d, i)), i);
 
@@ -47,9 +49,9 @@ void test_1d_static()
     }
 
     // Set every Nth element to 17. 
-    for (auto i = 0; i < get_value<0>(sub_d); ++i)
+    for (auto i = 0; i < sub_d[0]; ++i)
     {
-        auto const true_idx = i*get_value<0>(sub_s);
+        auto const true_idx = i*sub_s[0];
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i)), true_idx);
 
@@ -62,9 +64,9 @@ void test_1d_static()
     }
 
     // Check final structure. 
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        if (0 == (i % get_value<0>(sub_s)))
+        if (0 == (i % sub_s[0]))
             BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 17);
         else
             BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 42);
@@ -89,13 +91,13 @@ void test_1d_dynamic()
         sub_l(sub_s, dimensions<0>());
 
     // Initialize all elements as 42.
-    std::vector<int> data(get_value<0>(d), 42);
+    std::vector<int> data(d[0], 42);
     int* dptr = data.data();
 
     // Set every Nth element to 17. 
-    for (auto i = 0; i < get_value<0>(sub_d); ++i)
+    for (auto i = 0; i < sub_d[0]; ++i)
     {
-        auto const true_idx = i*get_value<0>(sub_s);
+        auto const true_idx = i*sub_s[0];
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i)), true_idx);
 
@@ -111,9 +113,9 @@ void test_1d_dynamic()
     }
 
     // Check final structure.
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        if (0 == (i % get_value<0>(sub_s)))
+        if (0 == (i % sub_s[0]))
         {
             BOOST_TEST_EQ((l.access(dptr, l.index(d, i))), 17);
 
@@ -149,10 +151,10 @@ void test_2d_static()
     int dptr[X*Y];
 
     // Set all elements to 42.
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        auto const true_idx = i + j*get_value<0>(d);
+        auto const true_idx = i + j*d[0];
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
@@ -164,11 +166,10 @@ void test_2d_static()
     }
 
     // Set every (Nth, Mth) element to 17.
-    for (auto j = 0; j < get_value<1>(sub_d); ++j)
-    for (auto i = 0; i < get_value<0>(sub_d); ++i)
+    for (auto j = 0; j < sub_d[1]; ++j)
+    for (auto i = 0; i < sub_d[0]; ++i)
     {
-        auto const true_idx = (i + j*get_value<1>(sub_s)*get_value<0>(sub_d))
-                            * get_value<0>(sub_s);
+        auto const true_idx = (i + j*sub_s[1]*sub_d[0]) * sub_s[0];
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i, j)), true_idx);
 
@@ -181,11 +182,11 @@ void test_2d_static()
     }
 
     // Check final structure. 
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        if (  (0 == (i % get_value<0>(sub_s)))
-           && (0 == (j % get_value<1>(sub_s)))
+        if (  (0 == (i % sub_s[0]))
+           && (0 == (j % sub_s[1]))
            )
             BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 17);
         else
@@ -212,15 +213,14 @@ void test_2d_dynamic()
         sub_l(sub_s, dimensions<0, 0>());
 
     // Initialize all elements as 42.
-    std::vector<int> data(get_value<0>(d)*get_value<1>(d), 42);
+    std::vector<int> data(d[0]*d[1], 42);
     int* dptr = data.data();
 
     // Set every (Nth, Mth) element to 17.
-    for (auto j = 0; j < get_value<1>(sub_d); ++j)
-    for (auto i = 0; i < get_value<0>(sub_d); ++i)
+    for (auto j = 0; j < sub_d[1]; ++j)
+    for (auto i = 0; i < sub_d[0]; ++i)
     {
-        auto const true_idx = (i + j*get_value<1>(sub_s)*get_value<0>(sub_d))
-                            * get_value<0>(sub_s);
+        auto const true_idx = (i + j*sub_s[1]*sub_d[0]) * sub_s[0];
 
         BOOST_TEST_EQ((sub_l.index(sub_d, i, j)), true_idx);
 
@@ -236,11 +236,11 @@ void test_2d_dynamic()
     }
 
     // Check final structure. 
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        if (  (0 == (i % get_value<0>(sub_s)))
-           && (0 == (j % get_value<1>(sub_s)))
+        if (  (0 == (i % sub_s[0]))
+           && (0 == (j % sub_s[1]))
            )
         {
             BOOST_TEST_EQ((l.access(dptr, l.index(d, i, j))), 17);

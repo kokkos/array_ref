@@ -16,9 +16,33 @@ namespace std { namespace experimental { namespace detail
 template <std::size_t... Dims>
 struct dimensions_impl;
 
-template <std::size_t I, std::size_t... Dims>
-inline constexpr typename dimensions_impl<Dims...>::size_type
-get_value_impl(dimensions_impl<Dims...>, std::true_type) noexcept;
+///////////////////////////////////////////////////////////////////////////////
+
+// Runtime implementation of the std::extent metafunction. 
+template <typename Idx>
+inline std::size_t constexpr dynamic_extent(
+    Idx idx
+    ) noexcept;
+
+template <typename Idx, typename Head, typename... Tail>
+inline std::size_t constexpr dynamic_extent(
+    Idx idx, Head head, Tail... tail
+    ) noexcept;
+
+// Maps a dimension index referring to a dynamic index (idx) to an index in the
+// dynamic dimension array. E.g. if you have dimensions<3, 0, 4, 0>, this
+// metafunction would map 1 to 0 (the first dynamic dimension) and 3 to 1 (the
+// second one).
+// Base case.
+template <typename Idx>
+inline constexpr std::size_t index_into_dynamic_dims(
+    Idx idx
+    ) noexcept;
+
+template <typename Idx, typename Head, typename... Tail>
+inline constexpr std::size_t index_into_dynamic_dims(
+    Idx idx, Head head, Tail... tail
+    ) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -29,21 +53,13 @@ get_value_impl(dimensions_impl<Dims...>, std::true_type) noexcept;
 template <std::size_t Dim>
 struct replace_0_with_dynamic_dimension;
 
-// Builds a std::tuple with one entry for each dynamic dimension.
-template <typename Tuple, std::size_t... Dims>
-struct build_dims_tuple;
-
-// Maps an actual dynamic dimension index (Idx) to an index in the dynamic
-// dimension tuple. E.g. if you have dimensions<3, 0, 4, 0>, this metafunction
-// would map 1 to 0 (the first dynamic dimension) and 3 to 1 (the second one).
-// Pass the input index as Idx, 0 for MappedIdx and the list of dimensions as
-// Dims when calling. 
-template <std::size_t Idx, std::size_t MappedIdx, std::size_t... Dims>
-struct dynamic_dim_tuple_index;
-
 // Counts the number of dynamic dimensions.
 template <std::size_t... Dims>
 struct count_dynamic_dims;
+
+// Builds a std::array with one entry for each dynamic dimension.
+template <std::size_t... Dims>
+struct build_dims_array;
 
 // Metafunction which returns true if std::is_integral<> is true for all of the
 // types in the parameter pack.

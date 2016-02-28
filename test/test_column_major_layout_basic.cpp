@@ -8,11 +8,13 @@
 #include <boost/detail/lightweight_test.hpp>
 
 #include <vector>
+#include <tuple>
 
 #include <array_ref>
 
+using std::vector;
+using std::tuple;
 using std::experimental::dimensions;
-using std::experimental::get_value;
 using std::experimental::column_major_layout;
 constexpr auto dyn = std::experimental::dynamic_dimension;
 
@@ -24,7 +26,7 @@ void test_1d_static()
 
     int dptr[X];
 
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto i = 0; i < d[0]; ++i)
     {
         BOOST_TEST_EQ((l.index(d, i)), i);
 
@@ -42,10 +44,10 @@ void test_1d_dynamic()
     dimensions<dyn> d(X);
     column_major_layout<int, dimensions<1>, dimensions<0> > l;
 
-    std::vector<int> data(get_value<0>(d), 42);
+    vector<int> data(d[0], 42);
     int* dptr = data.data();
 
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto i = 0; i < d[0]; ++i)
     {
         BOOST_TEST_EQ((l.index(d, i)), i);
 
@@ -67,15 +69,15 @@ void test_2d_static()
 { // {{{
     dimensions<X, Y> d;
     column_major_layout<
-        std::tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
+        tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
     > l;
 
-    std::tuple<int, int> dptr[X*Y];
+    tuple<int, int> dptr[X*Y];
 
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        auto const true_idx = i + j*get_value<0>(d);
+        auto const true_idx = i + j*d[0];
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
@@ -94,19 +96,17 @@ void test_2d_dynamic()
 { // {{{
     dimensions<dyn, dyn> d(X, Y);
     column_major_layout<
-        std::tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
+        tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
     > l;
 
-    std::vector<std::tuple<int, int> > data(
-        get_value<0>(d)*get_value<1>(d), std::tuple<int, int>(17, 42)
-    );
+    vector<tuple<int, int> > data(d[0]*d[1], tuple<int, int>(17, 42));
 
-    std::tuple<int, int>* dptr = data.data();
+    tuple<int, int>* dptr = data.data();
 
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        auto const true_idx = i + j*get_value<0>(d);
+        auto const true_idx = i + j*d[0];
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
@@ -132,19 +132,17 @@ void test_2d_mixed()
 { // {{{
     dimensions<dyn, Y> d(X);
     column_major_layout<
-        std::tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
+        tuple<int, int>, dimensions<1, 1>, dimensions<0, 0>
     > l;
 
-    std::vector<std::tuple<int, int> > data(
-        get_value<0>(d)*get_value<1>(d), std::tuple<int, int>(17, 42)
-    );
+    vector<tuple<int, int> > data(d[0]*d[1], tuple<int, int>(17, 42));
 
-    std::tuple<int, int>* dptr = data.data();
+    tuple<int, int>* dptr = data.data();
 
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        auto const true_idx = i + j*get_value<0>(d);
+        auto const true_idx = i + j*d[0];
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
@@ -170,17 +168,16 @@ void test_3d_static()
 { // {{{
     dimensions<X, Y, Z> d;
     column_major_layout<
-        std::tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
+        tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
     > l;
 
-    std::tuple<int, int, int> dptr[X*Y*Z];
+    tuple<int, int, int> dptr[X*Y*Z];
 
-    for (auto k = 0; k < get_value<2>(d); ++k)
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto k = 0; k < d[2]; ++k)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        auto const true_idx =
-            i + j*get_value<0>(d) + k*get_value<1>(d)*get_value<0>(d);
+        auto const true_idx = i + j*d[0] + k*d[1]*d[0];
 
         BOOST_TEST_EQ((l.index(d, i, j, k)), true_idx);
 
@@ -201,22 +198,20 @@ void test_3d_dynamic()
 { // {{{
     dimensions<dyn, dyn, dyn> d(X, Y, Z);
     column_major_layout<
-        std::tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
+        tuple<int, int, int>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
     > l;
 
-    std::vector<std::tuple<int, int, int> > data(
-        get_value<0>(d)*get_value<1>(d)*get_value<2>(d)
-      , std::tuple<int, int, int>(17, 42, 73)
+    vector<tuple<int, int, int> > data(
+        d[0]*d[1]*d[2], tuple<int, int, int>(17, 42, 73)
     );
 
-    std::tuple<int, int, int>* dptr = data.data();
+    tuple<int, int, int>* dptr = data.data();
 
-    for (auto k = 0; k < get_value<2>(d); ++k)
-    for (auto j = 0; j < get_value<1>(d); ++j)
-    for (auto i = 0; i < get_value<0>(d); ++i)
+    for (auto k = 0; k < d[2]; ++k)
+    for (auto j = 0; j < d[1]; ++j)
+    for (auto i = 0; i < d[0]; ++i)
     {
-        auto const true_idx =
-            i + j*get_value<0>(d) + k*get_value<1>(d)*get_value<0>(d);
+        auto const true_idx = i + j*d[0] + k*d[1]*d[0];
 
         BOOST_TEST_EQ((l.index(d, i, j, k)), true_idx);
 
