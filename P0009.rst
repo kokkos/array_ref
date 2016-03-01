@@ -586,7 +586,7 @@ memory architecture, and user access pattern hints.
   template< class T > struct is_regular ;
   template< class T > constexpr bool is_regular_v = is_regular<T>::value ;
   
-  constexpr size_t maximum_rank = /\* >= 10 \*/ ;
+  constexpr size_t maximum_rank = /* >= 10 */ ;
   
   // Specify mix of explicit and implict dimensions
   template< size_t ... >
@@ -1032,41 +1032,22 @@ For example:
 
 ..
 
-The 'std::is_assignable' meta-function must be partial specialized to
-implement the array_ref assignability rules regarding value type, dimensions, and properties.
-
-.. code-block:: c++
-
-  template< class Utype , class ... Uprop
-          , class Vtype , class ... Vprop >
-  struct is_assignable< array_ref< Utype , Uprop ... >
-                      , array_ref< Vtype , Vprop ... > >
-    : public integral_const< bool ,
-        is_assignable< typename array_ref< Utype , Uprop ... >::pointer
-                     , typename array_ref< Vtype , Vprop ... >::pointer
-                     >::value
-        &&
-        ( array_ref< Utype , Uprop ... >::rank() ==
-          array_ref< Vtype , Vprop ... >::rank() )
-        &&
-        (
-          // Extent is either equal or implicit.
-          extent<Utype,#>::value == extent<Vtype,#>::value ||
-          extent<Utype,#>::value == 0
-        )
-        &&
-        // other possible conditions
-        > {}
-    
-..
+The 'std::is_assignable' meta-function must be partial specialized to implement
+the array_ref assignability rules regarding value type, dimensions, and
+properties.
 
 Assignability extends beyond the **cv** qualification of the array_ref's data.  
 For example,
 
-  1. Implicitly dimensioned array_ref are assignable from equal rank explicitly dimensioned array_ref,
-  2. Strided layout array_ref with implicit dimensions are assignable from equal rank array_ref with regular layout, or
-  3. A array_ref with an access intent property, such as *random* or *restrict* may be assigned from a array_ref without such a property.
+  1. The underlying pointer types of the two array_ref<>s must be assignable.
+  2. The rank of the two array_ref<>s must be equal.
+  3. For each explicit dimension in the LHS array_ref<>, the corresponding
+     dimension in the RHS array_ref<> must be an explicit dimension with the
+     same extent, or an implicit dimension.
 
+Properties may impose additional assignability conditions, which will be
+addressed further in future drafts that describe the property interfaces more
+fully.
 
 ******************************************************************
 Subarray Interface
