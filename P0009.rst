@@ -668,8 +668,7 @@ the layout is ``void``.
 
   if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular
      && 0 <= i && i <= a_type::rank() && 0 <= ji && ji < a.extent(i) - 1 ) {
-    assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...)
-            == a.stride(i) );
+    assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...) == a.stride(i) );
   }
 
   if ( std::is_same_v< a_type::layout , void > ) {
@@ -1167,11 +1166,12 @@ precedence in the standard for library functions with unspecified return types
   array_ref<>'s rank will be is one less than the rank of ``ar``. 
 
 .. code-block:: c++
+
   assert(subarray(ar, x, array_property::all)(y) == ar(x, y));
   assert(subarray(ar, array_property::all, y)(x) == ar(x, y));
 
-  assert(subarray(ar, array_property::all, y, array_property::all)(x, z)
-      == ar(x, y, z));
+  assert(subarray(ar, array_property::all, y, array_property::all)(x, z) == ar(x, y, z));
+
 ..
 
   Remarks: For each SliceSpecifier parameter which expresses an interval of
@@ -1179,12 +1179,14 @@ precedence in the standard for library functions with unspecified return types
   ``[ 0 , b - a )`` in the corresponding dimension.
 
 .. code-block:: c++
+
   // Ok
   assert(subarray(ar, {10, 20})(0)  == ar(10));
   assert(subarray(ar, {10, 20})(10) == ar(20));
 
   // Undefined behavior: subarray is out of bounds.
   assert(subarray(ar, {10, 20})(20) == ar(20));
+
 ..
 
 **template< typename T , typename ... Properties , typename ... SliceSpecifiers >**
