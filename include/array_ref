@@ -13,22 +13,25 @@
 #include "impl/dimensions.hpp"
 
 #include "impl/basic_layout_left.hpp"
+#include "impl/layout_left.hpp"
+#include "impl/accessor_native.hpp"
 
 namespace std { namespace experimental 
 {
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 struct array_ref
 {
     // TYPES
 
+    using dimensions = Dims;
     using layout = Layout;
+    using accessor = Accessor;
 
-    using size_type = typename layout::size_type;
-    using value_type = ValueType;
-    using pointer = typename add_pointer<value_type>::type;
-    using reference = typename add_lvalue_reference<value_type>::type;
-    using const_reference = typename add_const<reference>::type;
+    using size_type  = typename layout::size_type;
+    using value_type = typename accessor::value_type;
+    using pointer    = typename accessor::pointer;
+    using reference  = typename accessor::reference;
 
     // CONSTRUCTORS, DESTRUCTORS AND ASSIGNMENT OPERATORS
 
@@ -51,14 +54,15 @@ struct array_ref
     // EXPECTS: ptr != nullptr 
     // ENSURES: this->data() == p
     constexpr array_ref(
-        pointer p, Dims const& d, Layout const& t = Layout()
+        pointer p, dimensions const& d
+      , layout const& l = Layout(), accessor const& a = Accessor()
         ) noexcept;
 
     // Conversion constructor.
     // TYPE-REQUIREMENTS: BValueType must be assignment-compatible
     template <typename OtherValueType>
     constexpr array_ref(
-        array_ref<OtherValueType, Dims, Layout> const& other
+        array_ref<OtherValueType, Dims, Layout, Accessor> const& other
         ) noexcept;
 
     constexpr array_ref(array_ref const& b) noexcept = default;
@@ -97,99 +101,103 @@ struct array_ref
     pointer ptr_;
     Dims dims_;
     Layout layout_;
+    Accessor accessor_;
 };
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
-array_ref<ValueType, Dims, Layout>::array_ref() noexcept
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref() noexcept
   : ptr_(nullptr)
   , dims_()
   , layout_()
+  , accessor_()
 {}
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
-array_ref<ValueType, Dims, Layout>::array_ref(
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
     std::nullptr_t
     ) noexcept
   : ptr_(nullptr)
   , dims_()
   , layout_()
+  , accessor_()
 {}
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 template <typename... Sizes>
 constexpr
-array_ref<ValueType, Dims, Layout>::array_ref(
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
     pointer p, Sizes... sizes
     ) noexcept
   : ptr_(p)
   , dims_(sizes...) // dimensions<> does the relevant static_asserts.
   , layout_()
+  , accessor_()
 {}
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
-array_ref<ValueType, Dims, Layout>::array_ref(
-    pointer p, Dims const& d, Layout const& l
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+    pointer p, dimensions const& d, layout const& l, accessor const& a
     ) noexcept
   : ptr_(p)
   , dims_(d)
   , layout_(l)
+  , accessor_(a)
 {}
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 template <typename OtherValueType> 
 constexpr
-array_ref<ValueType, Dims, Layout>::array_ref(
-    array_ref<OtherValueType, Dims, Layout> const& other
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+    array_ref<OtherValueType, Dims, Layout, Accessor> const& other
     ) noexcept
   : ptr_(other.ptr_)
   , dims_(other.dims_)
   , layout_(other.layout_)
+  , accessor_(other.accessor_)
 {}
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline static constexpr typename
-    array_ref<ValueType, Dims, Layout>::size_type
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
 rank() noexcept
 {
     return Dims::rank();
 }
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline static constexpr typename
-    array_ref<ValueType, Dims, Layout>::size_type
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
 num_dynamic_dims() noexcept
 {
     return Dims::num_dynamic_dims();
 }
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 template <typename... Idx>
 inline typename std::enable_if<
     Dims::rank() == sizeof...(Idx) && detail::pack_is_integral<Idx...>::value
-  , typename array_ref<ValueType, Dims, Layout>::reference
->::type array_ref<ValueType, Dims, Layout>::operator()(
+  , typename array_ref<ValueType, Dims, Layout, Accessor>::reference
+>::type array_ref<ValueType, Dims, Layout, Accessor>::operator()(
     Idx... idx
     ) const noexcept
 {
     size_type const raw_idx = layout_.index(dims_, idx...);
-    return ptr_[raw_idx];
-//    return layout_.access(ptr_, raw_idx);
+    return accessor_.access(ptr_, raw_idx);
 }
 
-template <typename ValueType, typename Dims, typename Layout>
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 template <typename Idx>
 inline typename std::enable_if<
     std::is_integral<Idx>::value
-  , typename array_ref<ValueType, Dims, Layout>::reference
->::type array_ref<ValueType, Dims, Layout>::operator[](
+  , typename array_ref<ValueType, Dims, Layout, Accessor>::reference
+>::type array_ref<ValueType, Dims, Layout, Accessor>::operator[](
     Idx idx
     ) const noexcept
 {
-    return ptr_[idx];
-//    return layout_.access(ptr_, idx);
+    return accessor_.access(ptr_, idx);
 }
 
 }} // std::experimental

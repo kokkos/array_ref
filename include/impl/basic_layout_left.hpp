@@ -36,8 +36,7 @@ struct basic_layout_left
     // INDEXING 
 
     template <std::size_t... Dims, typename... Idx>
-    size_type
-    index(detail::dimensions_impl<Dims...> d, Idx... idx) const noexcept; 
+    size_type index(dimensions<Dims...> d, Idx... idx) const noexcept; 
 
   private:
     // Recursive column-major layout implementation.
@@ -55,7 +54,7 @@ struct basic_layout_left
     template <std::size_t... Dims
             , typename IdxHead, typename IdxNextHead, typename... IdxTail>
     size_type index_impl(
-        detail::dimensions_impl<Dims...> d
+        dimensions<Dims...> d
       , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
     ) const noexcept;
 
@@ -63,21 +62,21 @@ struct basic_layout_left
     template <std::size_t... Dims
             , typename IdxHead>
     size_type index_impl(
-        detail::dimensions_impl<Dims...> d
+        dimensions<Dims...> d
       , IdxHead idx_0
     ) const noexcept;
 
     // 0 == rank()
     template <std::size_t... Dims>
     size_type index_impl(
-        detail::dimensions_impl<Dims...> d
+        dimensions<Dims...> d
     ) const noexcept;
 
     // Nth index
     template <std::size_t N, std::size_t... Dims
             , typename IdxHead, typename IdxNextHead, typename... IdxTail>
     size_type index_impl_n(
-        detail::dimensions_impl<Dims...> d
+        dimensions<Dims...> d
       , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
     ) const noexcept;
 
@@ -85,7 +84,7 @@ struct basic_layout_left
     template <std::size_t N, std::size_t... Dims
             , typename IdxHead>
     size_type index_impl_n(
-        detail::dimensions_impl<Dims...> d
+        dimensions<Dims...> d
       , IdxHead idx_n
     ) const noexcept;
 
@@ -115,18 +114,18 @@ template <typename Striding, typename Padding>
 template <std::size_t... Dims, typename... Idx>
 inline typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::index(
-    detail::dimensions_impl<Dims...> d, Idx... idx
+    dimensions<Dims...> d, Idx... idx
     ) const noexcept
 {
-    // TODO: These static asserts need to actually live in multi_array_ref.
-    // The first one is particularly important, otherwise it will silently
-    // do the wrong thing.
+    // TODO: These static asserts need to actually live in array_ref. The
+    // first one is particularly important, otherwise it will silently do the
+    // wrong thing.
     static_assert(
-        detail::dimensions_impl<Dims...>::rank() == sizeof...(idx) 
-      , "incorrect number of indices passed to layout");
+        dimensions<Dims...>::rank() == sizeof...(idx) 
+      , "incorrect number of indices passed to basic_layout_left");
     static_assert(
-        detail::dimensions_impl<Dims...>::rank() == Striding::rank()
-      , "dimensions<> passed into layout has wrong rank");
+        dimensions<Dims...>::rank() == Striding::rank()
+      , "dimensions<> passed into basic_layout_left has wrong rank");
     return index_impl(d, idx...);
 }
 
@@ -136,7 +135,7 @@ template <std::size_t... Dims
         , typename IdxHead, typename IdxNextHead, typename... IdxTail>
 inline typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::index_impl(
-    detail::dimensions_impl<Dims...> d
+    dimensions<Dims...> d
   , IdxHead idx_0, IdxNextHead idx_1, IdxTail... idx_tail
     ) const noexcept
 {
@@ -150,7 +149,7 @@ template <std::size_t... Dims
         , typename IdxHead>
 inline typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::index_impl(
-    detail::dimensions_impl<Dims...> d
+    dimensions<Dims...> d
   , IdxHead idx_0
     ) const noexcept
 {
@@ -162,7 +161,7 @@ template <typename Striding, typename Padding>
 template <std::size_t... Dims>
 inline typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::index_impl(
-    detail::dimensions_impl<Dims...> d
+    dimensions<Dims...> d
     ) const noexcept
 {
     return 0;
@@ -174,13 +173,13 @@ template <std::size_t N, std::size_t... Dims
         , typename IdxHead, typename IdxNextHead, typename... IdxTail>
 inline typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::index_impl_n(
-    detail::dimensions_impl<Dims...> d
+    dimensions<Dims...> d
   , IdxHead idx_n, IdxNextHead idx_n_plus_1, IdxTail... idx_tail
     ) const noexcept
 {
-    static_assert(0                                        < N
+    static_assert(0                           < N
                 , "dimension index is out of bounds in layout");
-    static_assert(detail::dimensions_impl<Dims...>::rank() > N
+    static_assert(dimensions<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
     return (d[N-1]*stride_[N-1] + pad_[N-1])
          * ( stride_[N]*idx_n
@@ -193,13 +192,13 @@ template <std::size_t N, std::size_t... Dims
         , typename IdxHead>
 inline typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::index_impl_n(
-    detail::dimensions_impl<Dims...> d
+    dimensions<Dims...> d
   , IdxHead idx_n
     ) const noexcept
 {
-    static_assert(0                                        < N
+    static_assert(0                           < N
                 , "dimension index is out of bounds in layout");
-    static_assert(detail::dimensions_impl<Dims...>::rank() > N
+    static_assert(dimensions<Dims...>::rank() > N
                 , "dimension index is out of bounds in layout");
     return (d[N-1]*stride_[N-1] + pad_[N-1])
          * (stride_[N]*idx_n);

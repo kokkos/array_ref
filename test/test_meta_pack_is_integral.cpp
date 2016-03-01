@@ -9,10 +9,10 @@
 
 #include <array_ref>
 
+using std::experimental::detail::pack_is_integral;
+
 int main()
 {
-    using std::experimental::detail::pack_is_integral;
-
     BOOST_TEST_EQ((pack_is_integral<int  >::value), true);
     BOOST_TEST_EQ((pack_is_integral<float>::value), false);
 

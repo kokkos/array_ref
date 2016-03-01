@@ -11,11 +11,11 @@
 #include "impl/fwd.hpp"
 #include "impl/meta.hpp"
 
-namespace std { namespace experimental { namespace detail
+namespace std { namespace experimental 
 {
 
 template <std::size_t... Dims>
-struct dimensions_impl
+struct dimensions
 {
     // TYPES
 
@@ -24,42 +24,39 @@ struct dimensions_impl
     using value_type = std::size_t;
     using size_type = std::size_t;
 
-    // NOTE: Not defined in the spec, public for unit tests. 
-    using dynamic_dims_type = typename detail::build_dims_array<Dims...>::type;
-
     // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
 
-    ~dimensions_impl() = default;
+    ~dimensions() = default;
 
     // Default constructor. Default-initializes any dynamic dimensions.
-    constexpr dimensions_impl() noexcept;
+    constexpr dimensions() noexcept;
 
     // Constructs from a set of dynamic dimensions.
     // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDims)
     // EXPECTS: std::is_integral<> is true for all the types in Sizes
     template <typename... DynamicDims>
-    constexpr dimensions_impl(DynamicDims... ddims) noexcept;
+    constexpr dimensions(DynamicDims... ddims) noexcept;
 
     // Copy constructor.
-    constexpr dimensions_impl(dimensions_impl const&) = default;
+    constexpr dimensions(dimensions const&) = default;
 
     // Move constructor.
-    constexpr dimensions_impl(dimensions_impl&&) = default;
+    constexpr dimensions(dimensions&&) = default;
 
     // Copy assignment operator.
-    dimensions_impl& operator=(dimensions_impl const&) = default;
+    dimensions& operator=(dimensions const&) = default;
 
     // Move assignment operator.
-    dimensions_impl& operator=(dimensions_impl&&) = default;
+    dimensions& operator=(dimensions&&) = default;
 
     // METADATA ACCESS
 
     // Returns the number of dimensions of the referenced array.
-    static constexpr value_type rank() noexcept;
+    static constexpr size_type rank() noexcept;
 
     // Returns the number of dimension which are dynamic.
     // NOTE: Not currently in spec.
-    static constexpr value_type num_dynamic_dims() noexcept;
+    static constexpr size_type num_dynamic_dims() noexcept;
 
     // Member accessor.
     // NOTE: Spec needs to clarify the return value of this function if idx
@@ -68,7 +65,7 @@ struct dimensions_impl
     constexpr value_type operator[](IntegralType idx) const noexcept;
 
   private:
-    dynamic_dims_type dynamic_dims_;
+    detail::make_dynamic_dims_array_t<Dims...> dynamic_dims_;
 };
 
 // FIXME: Confirm that default-initializing an integral type is guranteed to
@@ -76,13 +73,13 @@ struct dimensions_impl
 // memset, because lol icpc).
 template <std::size_t... Dims>
 constexpr
-dimensions_impl<Dims...>::dimensions_impl() noexcept
+dimensions<Dims...>::dimensions() noexcept
   : dynamic_dims_{} {}
 
 template <std::size_t... Dims>
 template <typename... DynamicDims>
 constexpr
-dimensions_impl<Dims...>::dimensions_impl(DynamicDims... ddims) noexcept
+dimensions<Dims...>::dimensions(DynamicDims... ddims) noexcept
   // FIXME: We cast here to avoid a narrowing conversion warning from GCC.
   // I'm not thrilled about it.
   : dynamic_dims_{static_cast<value_type>(ddims)...}
@@ -92,38 +89,40 @@ dimensions_impl<Dims...>::dimensions_impl(DynamicDims... ddims) noexcept
       , "Non-integral types passed to dimensions<> constructor" 
     );
     static_assert(
-        detail::count_dynamic_dims<Dims...>::value
-        == sizeof...(DynamicDims)
+        detail::count_dynamic_dims<Dims...>::value == sizeof...(DynamicDims)
       , "Incorrect number of dynamic dimensions passed to dimensions<>"
         );
 }
 
 template <std::size_t... Dims>
-inline constexpr typename dimensions_impl<Dims...>::value_type
-dimensions_impl<Dims...>::rank() noexcept
+inline constexpr typename dimensions<Dims...>::size_type
+dimensions<Dims...>::rank() noexcept
 {
-    return std::rank<dimensions_impl>::value;
+    return std::rank<dimensions>::value;
 }
 
 template <std::size_t... Dims>
-inline constexpr typename dimensions_impl<Dims...>::value_type
-dimensions_impl<Dims...>::num_dynamic_dims() noexcept
+inline constexpr typename dimensions<Dims...>::size_type
+dimensions<Dims...>::num_dynamic_dims() noexcept
 {
     return detail::count_dynamic_dims<Dims...>::value;
 }
 
 template <std::size_t... Dims>
 template <typename IntegralType>
-inline constexpr typename dimensions_impl<Dims...>::value_type
-dimensions_impl<Dims...>::operator[](IntegralType idx) const noexcept
+inline constexpr typename dimensions<Dims...>::value_type
+dimensions<Dims...>::operator[](IntegralType idx) const noexcept
 {
-    return ( dynamic_extent(idx, Dims...) == dynamic_dimension
-           ? dynamic_dims_[index_into_dynamic_dims(idx, Dims...)]
-           : dynamic_extent(idx, Dims...)
+    return ( detail::dynamic_extent(idx, Dims...) == dyn
+           ? dynamic_dims_[detail::index_into_dynamic_dims(idx, Dims...)]
+           : detail::dynamic_extent(idx, Dims...)
            );
 } 
 
 ///////////////////////////////////////////////////////////////////////////////
+
+namespace detail
+{
 
 // Base case.
 template <typename Idx>
@@ -160,7 +159,7 @@ inline constexpr std::size_t index_into_dynamic_dims(
     ) noexcept
 {
     return
-        ( head == dynamic_dimension && idx != 0
+        ( head == dyn && idx != 0
         ? index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), tail...) + 1
         : index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), tail...)
         );

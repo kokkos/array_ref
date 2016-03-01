@@ -11,14 +11,11 @@
 
 #include <array_ref>
 
-using std::experimental::dimensions; using std::experimental::array_ref;
-constexpr auto dyn = std::experimental::dynamic_dimension;
+using std::experimental::dimensions;
+using std::experimental::array_ref;
 
 int main()
 {
-    {
-        
-    }
 
     return boost::report_errors();
 }

@@ -14,10 +14,10 @@
 
 using std::vector;
 using std::tuple;
-using std::extent;
+
+using std::experimental::dyn;
 using std::experimental::dimensions;
 using std::experimental::basic_layout_left;
-constexpr auto dyn = std::experimental::dynamic_dimension;
 
 template <std::size_t N, std::size_t X>
 void test_1d_static()

@@ -9,21 +9,15 @@
 
 #include <array_ref>
 
+using std::experimental::dyn;
+using std::experimental::detail::index_into_dynamic_dims;
+
 int main()
 {
-    using std::experimental::detail::index_into_dynamic_dims;
-    constexpr auto dyn = std::experimental::dynamic_dimension;
-
     BOOST_TEST_EQ((index_into_dynamic_dims(0               )), 0);
     BOOST_TEST_EQ((index_into_dynamic_dims(0, 3            )), 0);
     BOOST_TEST_EQ((index_into_dynamic_dims(0, 3,   5       )), 0);
     BOOST_TEST_EQ((index_into_dynamic_dims(0, 3,   5,   9  )), 0);
-
-    // The 0 == dynamic_dimension alias does not work here, so we do not test
-    // it. The metafunction that maps 0 to dynamic_dimension is applied in the
-    // template alias defining dimensions<>; count_dynamic_dims<> works on a
-    // parameter pack directly, so 0s used here are not mapped to
-    // dynamic_dimension.
 
     BOOST_TEST_EQ((index_into_dynamic_dims(0, dyn, 5,   9  )), 0);
     BOOST_TEST_EQ((index_into_dynamic_dims(1, dyn, 5,   9  )), 1);

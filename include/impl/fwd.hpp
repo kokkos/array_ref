@@ -13,12 +13,11 @@
 namespace std { namespace experimental { namespace detail
 {
 
-template <std::size_t... Dims>
-struct dimensions_impl;
-
 ///////////////////////////////////////////////////////////////////////////////
 
 // Runtime implementation of the std::extent metafunction. 
+
+// Base case.
 template <typename Idx>
 inline std::size_t constexpr dynamic_extent(
     Idx idx
@@ -30,9 +29,10 @@ inline std::size_t constexpr dynamic_extent(
     ) noexcept;
 
 // Maps a dimension index referring to a dynamic index (idx) to an index in the
-// dynamic dimension array. E.g. if you have dimensions<3, 0, 4, 0>, this
+// dynamic dimension array. E.g. if you have dimensions<3, dyn, 4, dyn>, this
 // metafunction would map 1 to 0 (the first dynamic dimension) and 3 to 1 (the
 // second one).
+
 // Base case.
 template <typename Idx>
 inline constexpr std::size_t index_into_dynamic_dims(
@@ -46,43 +46,54 @@ inline constexpr std::size_t index_into_dynamic_dims(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Metafunction which maps 0 to dynamic_dimension, and returns the identity
-// otherwise. This is used to allow 0 to be used to specify dynamic dimensions,
-// without the extent-related complications of actually making dynamic_dimension
-// 0.
-template <std::size_t Dim>
-struct replace_0_with_dynamic_dimension;
-
 // Counts the number of dynamic dimensions.
 template <std::size_t... Dims>
 struct count_dynamic_dims;
 
 // Builds a std::array with one entry for each dynamic dimension.
 template <std::size_t... Dims>
-struct build_dims_array;
+struct make_dynamic_dims_array;
 
-// Metafunction which returns true if std::is_integral<> is true for all of the
-// types in the parameter pack.
+template <std::size_t... Dims>
+using make_dynamic_dims_array_t =
+    typename make_dynamic_dims_array<Dims...>::type;
+
+// Returns a dimensions<> object of size N with static extents of Value.
+template <std::size_t N, std::size_t Value, std::size_t... Dims>
+struct make_filled_dims;
+
+template <std::size_t N, std::size_t Value, std::size_t... Dims>
+using make_filled_dims_t = typename make_filled_dims<N, Value, Dims...>::type;
+
+// Returns true if std::is_integral<> is true for all of the types in the
+// parameter pack.
 template <typename... T>
 struct pack_is_integral;
+
+// Produces a dimensions<> object from a native array declaration.
+template <typename T, std::size_t... Dims>
+struct extract_dimensions;
 
 } // detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
-constexpr std::size_t dynamic_dimension = -1;
+template <typename T>
+using extract_dimensions = detail::extract_dimensions<T>;
+
+template <typename T>
+using extract_dimensions_t = typename extract_dimensions<T>::type;
+
+///////////////////////////////////////////////////////////////////////////////
+
+constexpr std::size_t dyn = -1;
 
 template <std::size_t... Dims>
-using dimensions = detail::dimensions_impl<
-    detail::replace_0_with_dynamic_dimension<Dims>::value...
->;
+struct dimensions;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename ValueType, typename Dims, typename Traits>
-struct array_ref;
-
-///////////////////////////////////////////////////////////////////////////////
+// TODO: Specify ArrayRefLayout concept which these classes implement.
 
 template <typename Striding, typename Padding>
 struct basic_layout_left;
@@ -95,7 +106,6 @@ struct basic_layout_right;
 template <typename Striding, typename Padding, typename Ordering>
 struct basic_layout_order;
 
-// TODO
 struct layout_left;
 
 // TODO
@@ -104,6 +114,24 @@ struct layout_right;
 // TODO
 template <std::size_t... Ordering>
 struct layout_order;
+
+using layout_native = layout_right;
+
+///////////////////////////////////////////////////////////////////////////////
+
+// TODO: Specify ArrayRefAccessor concept which these classes implement.
+
+template <typename ValueType>
+struct accessor_native;
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename ValueType
+        , typename Dim       = extract_dimensions_t<ValueType>
+        , typename Layout    = layout_native
+        , typename Accessor  = accessor_native<ValueType>
+         >
+struct array_ref;
 
 }} // std::experimental
 
