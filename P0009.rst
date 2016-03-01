@@ -246,7 +246,7 @@ The "magic value" of zero is chosen for consistency with **std::extent**.
   assert( y.extent(1) == 0 );
   assert( y.extent(2) == 3 );
 
-  array_ref< int , array_proprety::dimension<0,0,3> > z(ptr,N0,N1);
+  array_ref< int , array_property::dimension<0,0,3> > z(ptr,N0,N1);
   assert( z.extent(0) == N0 );
   assert( z.extent(1) == N1 );
   assert( z.extent(2) == 3 );
@@ -602,6 +602,9 @@ memory architecture, and user access pattern hints.
     ~dimension() = default ;
   
     constexpr dimension() noexcept ;
+
+    template <typename... DynamicDims>
+    constexpr dimension( DynamicDims... ddims ) noexcept ;
   
     constexpr dimension( dimension && rhs ) noexcept = default ;
     constexpr dimension( const dimension & rhs ) noexcept = default ;
@@ -811,7 +814,7 @@ following declarations.
 
   Requires: std::is_integral< IntegralType >::value
 
-  Returns: When ``r < rank()`` the exent of dimension, otherwise 1.
+  Returns: When ``r < rank()`` the extent of dimension, otherwise 0.
   A default constructed array_ref will have ``extent(r) == 0``
   for all implicit dimensions.
   The return value of an explicit dimension queried with a
@@ -1147,8 +1150,7 @@ precedence in the standard for library functions with unspecified return types
   Requires: ``sizeof...(Properties) == sizeof...(SliceSpecifiers)``
 
   Requires: Each SliceSpecifier parameter must either be an integral type T, a
-  pair<T, T>, a tuple<T, T>, an initializer_list<T> with a size of 2, or an
-  array<T, 2>.
+  pair<T, T>, a tuple<T, T>, or an array<T, 2>.
 
   Requires: A SliceSpecifier parameter for dimension ``i`` which expresses
   a fixed index indices must be within the range ``[ 0 , ar.extent(i) )``.
