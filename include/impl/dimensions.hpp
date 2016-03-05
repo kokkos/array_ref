@@ -17,50 +17,33 @@ namespace std { namespace experimental
 template <std::size_t... Dims>
 struct dimensions
 {
+    ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
-    // NOTE: We may need/want the full set of container types.
-
     using value_type = std::size_t;
-    using size_type = std::size_t;
+    using size_type  = std::size_t;
 
-    // CONSTRUCTORS, DESTRUCTORS, ASSIGNMENT OPERATORS
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
-    ~dimensions() = default;
-
-    // Default constructor. Default-initializes any dynamic dimensions.
     constexpr dimensions() noexcept;
 
-    // Constructs from a set of dynamic dimensions.
-    // EXPECTS: rank_dynamic() == sizeof...(DynamicDims)
-    // EXPECTS: std::is_integral<> is true for all the types in Sizes
+    constexpr dimensions(dimensions const&) = default;
+    constexpr dimensions(dimensions&&) = default;
+    dimensions& operator=(dimensions const&) = default;
+    dimensions& operator=(dimensions&&) = default;
+
     template <typename... DynamicDims>
     constexpr dimensions(DynamicDims... ddims) noexcept;
 
-    // Copy constructor.
-    constexpr dimensions(dimensions const&) = default;
+    /////////////////////////////////////////////////////////////////////////// 
+    // RANK, SIZE AND EXTENT 
 
-    // Move constructor.
-    constexpr dimensions(dimensions&&) = default;
-
-    // Copy assignment operator.
-    dimensions& operator=(dimensions const&) = default;
-
-    // Move assignment operator.
-    dimensions& operator=(dimensions&&) = default;
-
-    // METADATA ACCESS
-
-    // Returns the number of dimensions of the referenced array.
     static constexpr size_type rank() noexcept;
-
-    // Returns the number of dimension which are dynamic.
-    // NOTE: Not currently in spec.
     static constexpr size_type rank_dynamic() noexcept;
 
     constexpr size_type size() noexcept;
 
-    // Member accessor.
     // NOTE: Spec needs to clarify the return value of this function if idx
     // is out of bound. Currently, you get 0.
     template <typename IntegralType>
@@ -82,6 +65,8 @@ struct dimensions
     constexpr size_type product_extents(
         Idx idx, Head head, Tail... tail
         ) noexcept;
+
+    ///////////////////////////////////////////////////////////////////////////
 
     detail::make_dynamic_dims_array_t<Dims...> dynamic_dims_;
 };

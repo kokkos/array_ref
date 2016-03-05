@@ -20,19 +20,37 @@ struct basic_layout_left
     static_assert(Striding::rank() == Padding::rank() 
                 , "striding and padding have different rank");
 
-    // TYPES 
+    ///////////////////////////////////////////////////////////////////////////
+    // TYPES
 
     using size_type = std::size_t;
 
-    // CONSTRUCTORS
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
     constexpr basic_layout_left() noexcept;
 
-    constexpr basic_layout_left(
-        Striding const& striding
-      , Padding const& pad
-    ) noexcept;
+    constexpr basic_layout_left(basic_layout_left const& b) noexcept = default;
+    constexpr basic_layout_left(basic_layout_left&& b) noexcept = default;
+    basic_layout_left& operator=(basic_layout_left const& b) noexcept = default;
+    basic_layout_left& operator=(basic_layout_left&& b) noexcept = default;
 
+    constexpr basic_layout_left(
+        Striding const& striding, Padding const& pad
+        ) noexcept;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // DOMAIN SPACE 
+
+    static constexpr bool is_regular() noexcept;    
+
+    constexpr size_type stride(size_type rank) noexcept;
+
+    // TODO
+    template <std::size_t... Dims>
+    constexpr size_type span(dimensions<Dims...> d) const noexcept;    
+
+    /////////////////////////////////////////////////////////////////////////// 
     // INDEXING 
 
     template <std::size_t... Dims, typename... Idx>
@@ -109,6 +127,20 @@ basic_layout_left<Striding, Padding>::basic_layout_left(
   : stride_(striding)
   , pad_(pad)
 {}
+
+template <typename Striding, typename Padding>
+inline constexpr bool
+basic_layout_left<Striding, Padding>::is_regular() noexcept
+{
+    return true;
+}
+
+template <typename Striding, typename Padding>
+inline constexpr typename basic_layout_left<Striding, Padding>::size_type
+basic_layout_left<Striding, Padding>::stride(size_type rank) const noexcept
+{
+    return stride_[rank];
+}
 
 template <typename Striding, typename Padding>
 template <std::size_t... Dims, typename... Idx>

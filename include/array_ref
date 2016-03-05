@@ -67,7 +67,6 @@ struct array_ref
     static constexpr size_type rank() noexcept;
     static constexpr size_type rank_dynamic() noexcept;
 
-    // TODO
     constexpr size_type size() const noexcept;
 
     constexpr size_type extent(size_type rank) const noexcept;
@@ -75,10 +74,9 @@ struct array_ref
     /////////////////////////////////////////////////////////////////////////// 
     // LAYOUT INTERFACE 
 
-    // TODO
     static constexpr bool is_regular() noexcept;
 
-    // TODO
+    // TODO: TEST
     constexpr size_type stride(size_type rank) noexcept;
 
     // TODO
@@ -140,7 +138,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::rank() noexcept
 {
-    return Dims::rank();
+    return dimensions::rank();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -148,7 +146,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
 {
-    return Dims::rank_dynamic();
+    return dimensions::rank_dynamic();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -167,6 +165,23 @@ array_ref<ValueType, Dims, Layout, Accessor>::extent(
     ) const noexcept
 {
     return dims_[rank];
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr bool
+array_ref<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
+{
+    return layout::is_regular();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::stride(
+    size_type rank
+    ) const noexcept
+{
+    return layout_.stride(rank);
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
