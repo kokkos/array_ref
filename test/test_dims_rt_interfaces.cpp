@@ -27,6 +27,10 @@ int main()
         BOOST_TEST_EQ((e2[0]), 3);
         BOOST_TEST_EQ((e2[1]), 5);
         BOOST_TEST_EQ((e2[2]), 9);
+
+        BOOST_TEST_EQ((e0.size()), 3    );
+        BOOST_TEST_EQ((e1.size()), 3*5  );
+        BOOST_TEST_EQ((e2.size()), 3*5*9);
     }
 
     {
@@ -45,6 +49,10 @@ int main()
         BOOST_TEST_EQ((e2[0]), 3);
         BOOST_TEST_EQ((e2[1]), 5);
         BOOST_TEST_EQ((e2[2]), 9);
+
+        BOOST_TEST_EQ((e0.size()), 3*5*9);
+        BOOST_TEST_EQ((e1.size()), 3*5*9);
+        BOOST_TEST_EQ((e2.size()), 3*5*9);
     }
 
 
@@ -64,6 +72,10 @@ int main()
         BOOST_TEST_EQ((e2[0]), 3);
         BOOST_TEST_EQ((e2[1]), 5);
         BOOST_TEST_EQ((e2[2]), 9);
+
+        BOOST_TEST_EQ((e0.size()), 3*5*9);
+        BOOST_TEST_EQ((e1.size()), 3*5*9);
+        BOOST_TEST_EQ((e2.size()), 3*5*9);
     }
 
     {
@@ -79,6 +91,10 @@ int main()
         BOOST_TEST_EQ((e2[0]), 3);
         BOOST_TEST_EQ((e2[1]), 5);
         BOOST_TEST_EQ((e2[2]), 9);
+
+        BOOST_TEST_EQ((e0.size()), 3    );
+        BOOST_TEST_EQ((e1.size()), 3*5  );
+        BOOST_TEST_EQ((e2.size()), 3*5*9);
     }
 
     return boost::report_errors();

@@ -32,7 +32,7 @@ struct dimensions
     constexpr dimensions() noexcept;
 
     // Constructs from a set of dynamic dimensions.
-    // EXPECTS: num_dynamic_dims() == sizeof...(DynamicDims)
+    // EXPECTS: rank_dynamic() == sizeof...(DynamicDims)
     // EXPECTS: std::is_integral<> is true for all the types in Sizes
     template <typename... DynamicDims>
     constexpr dimensions(DynamicDims... ddims) noexcept;
@@ -56,7 +56,9 @@ struct dimensions
 
     // Returns the number of dimension which are dynamic.
     // NOTE: Not currently in spec.
-    static constexpr size_type num_dynamic_dims() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
+
+    constexpr size_type size() noexcept;
 
     // Member accessor.
     // NOTE: Spec needs to clarify the return value of this function if idx
@@ -65,6 +67,22 @@ struct dimensions
     constexpr value_type operator[](IntegralType idx) const noexcept;
 
   private:
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Computes the product of all extents. Pass 0 as idx and unpack Dims when
+    // calling. 
+
+    // Base case.
+    template <typename Idx>
+    constexpr size_type product_extents(
+        Idx idx
+        ) noexcept;
+
+    template <typename Idx, typename Head, typename... Tail>
+    constexpr size_type product_extents(
+        Idx idx, Head head, Tail... tail
+        ) noexcept;
+
     detail::make_dynamic_dims_array_t<Dims...> dynamic_dims_;
 };
 
@@ -103,9 +121,16 @@ dimensions<Dims...>::rank() noexcept
 
 template <std::size_t... Dims>
 inline constexpr typename dimensions<Dims...>::size_type
-dimensions<Dims...>::num_dynamic_dims() noexcept
+dimensions<Dims...>::rank_dynamic() noexcept
 {
     return detail::count_dynamic_dims<Dims...>::value;
+}
+
+template <std::size_t... Dims>
+inline constexpr typename dimensions<Dims...>::size_type
+dimensions<Dims...>::size() noexcept
+{
+    return product_extents(0, Dims...);
 }
 
 template <std::size_t... Dims>
@@ -118,6 +143,24 @@ dimensions<Dims...>::operator[](IntegralType idx) const noexcept
            : detail::dynamic_extent(idx, Dims...)
            );
 } 
+
+// Base case.
+template <std::size_t... Dims>
+template <typename Idx>
+inline constexpr typename dimensions<Dims...>::size_type
+dimensions<Dims...>::product_extents(Idx idx) noexcept
+{
+    return 1;
+}
+
+template <std::size_t... Dims>
+template <typename Idx, typename Head, typename... Tail>
+inline constexpr typename dimensions<Dims...>::size_type
+dimensions<Dims...>::product_extents(Idx idx, Head head, Tail... tail) noexcept
+{
+    return (head == dyn ? (*this)[idx] : head)
+         * product_extents(idx + 1, tail...);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -159,6 +202,7 @@ inline constexpr std::size_t index_into_dynamic_dims(
     ) noexcept
 {
     return
+        // FIXME: Is idx != 0 needed
         ( head == dyn && idx != 0
         ? index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), tail...) + 1
         : index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), tail...)

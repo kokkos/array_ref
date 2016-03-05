@@ -70,6 +70,11 @@ using make_filled_dims_t = typename make_filled_dims<N, Value, Dims...>::type;
 template <typename... T>
 struct pack_is_integral;
 
+// Returns true if std::is_unsigned<> is true for all of the types in the
+// parameter pack.
+template <typename... T>
+struct pack_is_unsigned;
+
 // Produces a dimensions<> object from a native array declaration.
 template <typename T, std::size_t... Dims>
 struct extract_dimensions;

@@ -89,7 +89,17 @@ struct pack_is_integral<> : std::true_type {};
 
 template <typename Head, typename... Tail>
 struct pack_is_integral<Head, Tail...>
-  : conjunction<std::is_integral<Head>, pack_is_integral<Tail...> > {};
+  : conjunction<is_integral<Head>, pack_is_integral<Tail...> > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Base case.
+template <>
+struct pack_is_unsigned<> : std::true_type {};
+
+template <typename Head, typename... Tail>
+struct pack_is_unsigned<Head, Tail...>
+  : conjunction<is_unsigned<Head>, pack_is_unsigned<Tail...> > {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
