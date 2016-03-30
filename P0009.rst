@@ -123,7 +123,7 @@ and a parameter pack for polymorphic properties of the reference.
 
   |  namespace std {
   |  namespace experimental {
-  |    template< typename DataType , typename ... Properties >
+  |    template< typename ValueType , typename ... Properties >
   |    struct array_ref ;
   |  }}
 
@@ -490,83 +490,66 @@ memory architecture, and user access pattern hints.
   namespace std {
   namespace experimental {
   
-  template< typename DataType , typename ... Properties >
+  template <typename ValueType, typename... Properties>
   struct array_ref {
-    //--------------------
-    // Types:
+    ///////////////////////////////////////////////////////////////////////////
+    // TYPES
   
-    // Types are implementation and Properties dependent.
-    // The following type implementation are normative 
-    // with respect to empty Properties.
+    using layout = // implementation-defined
+
+    using value_type = // implementation-defined 
+    using reference  = // implementation-defined 
+    using pointer    = // implementation-defined 
+    using size_type  = // implementation-defined 
+ 
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
   
-    using value_type = typename std::remove_all_extents< DataType >::type ;
-    using reference  = value_type & ; // Typical type, but implementation defined
-    using pointer    = value_type * ; // Typical type, but implementation defined
-    using size_type  = size_t ; // Typical type, but implementation defined
+    constexpr array_ref() noexcept;
+
+    constexpr array_ref(array_ref&& rhs) noexcept = default;
+    constexpr array_ref(array_ref const& rhs) noexcept = default;
+    array_ref& operator=(array_ref&& rhs ) noexcept = default;
+    array_ref& operator=(array_ref const& rhs ) noexcept = default;
   
-    using layout = *array layout type* ;
+    template <typename... UnsignedIntegers>
+    explicit constexpr array_ref(pointer p, UnsignedIntegers... implicit_dims) noexcept;
+
+    explicit constexpr array_ref(pointer p, Properties const&... props) noexcept;
   
-    //--------------------
-    // Domain index space properties:
+    template <typename UType, typename ... UProperties>
+    constexpr array_ref(array_ref<UType, UProperties...> const& rhs) noexcept;
+    template <typename UType, typename ... UProperties>
+    array_ref& operator=(array_ref<UType , UProperties...> const& rhs) noexcept;
   
-    static constexpr size_type rank() noexcept ;
+    /////////////////////////////////////////////////////////////////////////// 
+    // RANK, SIZE AND EXTENT 
   
-    template< typename IntegralType >
-    constexpr size_type extent( IntegralType index ) const noexcept ;
+    static constexpr size_type rank() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
   
-    // Cardinality of index space; i.e., product of extents
-    constexpr size_type size() const noexcept ;
+    constexpr size_type size() const noexcept;
   
-    //--------------------
-    // Layout mapping properties:
+    constexpr size_type extent(size_type rank) const noexcept;
   
-    static constexpr bool is_regular() noexcept ;
+    /////////////////////////////////////////////////////////////////////////// 
+    // LAYOUT INTERFACE 
   
-    // If the layout mapping is regular then return the
-    // distance between members when index \# is increased by one.
-    template< typename IntegralType >
-    constexpr size_type stride( IntegralType index ) const noexcept ;
+    static constexpr bool is_regular() noexcept;
   
-    // Span covering the members
-    constexpr size_type span() const noexcept ;
+    constexpr size_type stride(size_type rank) const noexcept;
   
-    // Span of an array with regular layout if it
-    // is constructed with the given implicit dimensions.
-    template< typename ... IntegralArgs >
-    static constexpr size_type span( IntegralArgs ... implicit_dims ) noexcept;
+    constexpr size_type span() const noexcept;
   
-    // Pointer to member memory
-    constexpr pointer data() const noexcept ;
+    /////////////////////////////////////////////////////////////////////////// 
+    // ELEMENT AND DATA ACCESS 
   
-    //--------------------
-    // Member access
+    constexpr pointer data() const noexcept;
   
-    template< typename ... IntegralArgs >
-    reference operator()( IntegralArgs ... indices ) const noexcept ;
+    template <typename... UnsignedIntegers>
+    reference operator()(UnsignedIntegers... indices) const noexcept;
   
-    template< typename IntegralType >
-    reference operator[]( IntegralType index ) const noexcept ;
-  
-    //--------------------
-    // Construct/move/copy/destroy:
-  
-    ~array_ref() ;
-  
-    constexpr array_ref() noexcept ;
-  
-    constexpr array_ref( array_ref && rhs ) noexcept = default ;
-    constexpr array_ref( const array_ref & rhs ) noexcept = default ;
-    array_ref & operator = ( array_ref && rhs ) noexcept = default ;
-    array_ref & operator = ( const array_ref & rhs ) noexcept = default ;
-  
-    template< typename ... IntegralArgs >
-    constexpr array_ref( pointer , IntegralArgs ... implicit_dims ) noexcept ;
-  
-    template< typename UType , typename ... UProperties >
-    constexpr array_ref( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
-  
-    template< typename UType , typename ... UProperties >
-    array_ref & operator = ( const array_ref< UType , UProperties ... > & rhs ) noexcept ;
+    reference operator[](size_type idx) const noexcept;
   };
   
   }}
@@ -575,49 +558,49 @@ memory architecture, and user access pattern hints.
   namespace experimental {
   namespace array_property {
   
-  struct layout_right ;
-  struct layout_left ;
-  template< unsigned ... > layout_order ;
-  struct layout_stride ;
+  struct layout_right;
+  struct layout_left;
+  template <size_t... Ordering> layout_order;
+  struct layout_stride;
   
-  template< class T > struct is_layout ;
-  template< class T > constexpr bool is_layout_v = is_layout<T>::value ;
+  template <typename T> struct is_layout;
+  template <typename T> constexpr bool is_layout_v = is_layout<T>::value;
   
-  template< class T > struct is_regular ;
-  template< class T > constexpr bool is_regular_v = is_regular<T>::value ;
+  template <typename T> struct is_regular;
+  template <typename T> constexpr bool is_regular_v = is_regular<T>::value;
   
-  constexpr size_t maximum_rank = /* >= 10 */ ;
-  
-  // Specify mix of explicit and implict dimensions
-  template< size_t ... >
+  template <size_t... Dims>
   struct dimension {
-    //--------------------
-    // Types:
+    ///////////////////////////////////////////////////////////////////////////
+    // TYPES
   
-    using value_type = size_t ; // Typical type, but implementation defined
+    using value_type = // implementation-defined 
+    using size_type  = // implementation-defined 
   
-    //--------------------
-    // Construct/move/copy/destroy:
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
   
-    ~dimension() = default ;
-  
-    constexpr dimension() noexcept ;
+    constexpr dimension() noexcept;
 
     template <typename... DynamicDims>
-    constexpr dimension( DynamicDims... ddims ) noexcept ;
+    constexpr dimension(DynamicDims... ddims) noexcept;
   
-    constexpr dimension( dimension && rhs ) noexcept = default ;
-    constexpr dimension( const dimension & rhs ) noexcept = default ;
-    dimension & operator = ( dimension && rhs ) noexcept = default ;
-    dimension & operator = ( const dimension & rhs ) noexcept = default ;
+    constexpr dimension(dimension&& rhs) noexcept = default;
+    constexpr dimension(dimension const& rhs) noexcept = default;
+    dimension& operator=(dimension&& rhs) noexcept = default;
+    dimension& operator=(const dimension& rhs) noexcept = default;
   
-    static constexpr size_type rank() noexcept ;
+    /////////////////////////////////////////////////////////////////////////// 
+    // RANK, SIZE AND EXTENT 
+
+    static constexpr size_type rank() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
+
+    constexpr value_type operator[](size_type dim) const noexcept;
   
     //--------------------
     // Member access
   
-    template< typename IntegralType >
-    constexpr value_type operator[]( IntegralType dim ) const noexcept ;
   };
   
   }}}
@@ -662,31 +645,31 @@ the layout is ``void``.
 
 .. code-block:: c++
 
-  using a_type = array_ref<DataType,Properties...> ;
+  using a_type = array_ref<ValueType,Properties...> ;
 
   a_type a( ptr , dims... );
 
-  if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular
+  if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular()
      && 0 <= i && i <= a_type::rank() && 0 <= ji && ji < a.extent(i) - 1 ) {
     assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...) == a.stride(i) );
   }
 
   if ( std::is_same_v< a_type::layout , void > ) {
-    assert( a_type::is_regular );
+    assert( a_type::is_regular() );
     if ( i + 1 == a_type::rank() )
       assert( a.stride(i) == 1 );
     else if ( 0 < i )
       assert( a.stride(i) == a.stride(i+1) * a.dimension(i+1) );
   }
   else if ( std::is_same_v< a_type::layout , layout_right > ) {
-    assert( a_type::is_regular )
+    assert( a_type::is_regular() )
     if ( i + 1 == a_type::rank() )
       assert( a.stride(i) == 1 );
     else if ( 0 < i )
       assert( a.stride(i) >= a.stride(i+1) * a.dimension(i+1) );
   }
   else if ( std::is_same_v< a_type::layout , layout_left > ) {
-    assert( a_type::is_regular )
+    assert( a_type::is_regular() )
     if ( i == 0 && 0 < a.rank() )
       assert( a.stride(i) == 1 );
     else if ( i < a_type::rank() )
@@ -713,7 +696,7 @@ the layout is ``void``.
 
   using a_type = array_ref<int[][3][4] , layout_order< i0 , i1 , i2 > > ;
 
-  assert( a_type::is_regular );
+  assert( a_type::is_regular() );
 
   a_type A( ptr , dims... );
 
@@ -726,7 +709,7 @@ the layout is ``void``.
 **Dimension Specification**
 
 The dimension specification of an array_ref may be given
-through the ``DataType`` template argument or through one of the
+through the ``ValueType`` template argument or through one of the
 ``Properties`` template arguments. For example, the dimension
 specification for an array_ref with leading implicit dimension
 and a second explicit dimension is specified by either of the
@@ -739,7 +722,7 @@ following declarations.
 
 ..
 
-  Remark: When a dimension specification is part of the ``DataType``
+  Remark: When a dimension specification is part of the ``ValueType``
   the specification is limited by the valid
   *multidimensional array type* declaration syntax (n4567 8.3.4.p3).
   If a
@@ -747,16 +730,16 @@ following declarations.
   were made the ``array_property::dimension< ... >`` would be unnecessary and
   eliminated from this proposal.
 
-  Requires: If ``std::extent< DataType >::value == 0`` then at most
+  Requires: If ``std::extent< ValueType >::value == 0`` then at most
   one ``Properties`` template argument may be
   ``array_property::dimension< ... >``.
 
   Effects: When the dimension specification is given 
-  as part of the ``DataType`` then
+  as part of the ``ValueType`` then
   an explicit dimension is specified by each ``[N]``,
   an implicit dimension is specified by each ``[]``,
-  ``rank() == std::rank< DataType >::value``, and
-  ``extent(i) == std::extent< DataType , i >::value``
+  ``rank() == std::rank< ValueType >::value``, and
+  ``extent(i) == std::extent< ValueType , i >::value``
   for ``i < rank()`` and default constructed array_ref.
 
   Effects: When the dimension specification is given via
@@ -777,7 +760,7 @@ following declarations.
   must support at least this rank.
 
 
-**using value_type = typename std::remove_all_extents< DataType >::type**
+**using value_type = typename std::remove_all_extents< ValueType >::type**
 
   The type of each element of the referenced array.
 
@@ -821,7 +804,7 @@ following declarations.
 
 **constexpr size_type size() const noexcept**
 
-  Returns: The product of the extents.
+  Returns: Cardinality of the index space, i.e. the product of the extents.
 
 **static constexpr bool is_regular() noexcept**
 
@@ -902,7 +885,7 @@ following declarations.
                          , typename ArrayRefType::reference >::type
   array_ref_index( I0 i0, I1 i1, I2 i2, IntegralArgs ... indices ) noexcept ;
 
-  template< typename DataType , typename ... Properties >
+  template< typename ValueType , typename ... Properties >
   struct array_ref {
      template< typename ... IntegralArgs >
      reference operator()( IntegralArgs ... indices ) const noexcept {
@@ -978,13 +961,15 @@ following declarations.
 
 **constexpr array_ref( pointer ptr , IntegralArgs ... implicit_dims ) noexcept**
 
+  Remark: Shall not participate in overload resolution unless all IntegralArgs
+  are unsigned integral types.
+
   Requires: The input ``ptr`` references memory ``[ ptr , ptr + S )``
   where S = ``array_ref::span(args...)``.
 
   Effects: The *wrapping constructor* constructs a multidimensional array
   reference of the given member memory
   such that all data members are in the span ``[ ptr , ptr + span() )``.
-
 
 **template< typename UType , typename ... UProperties >**
 
@@ -1099,22 +1084,22 @@ precedence in the standard for library functions with unspecified return types
   
   }
   
-  template< typename DataType , typename ... Properties ,
+  template< typename ValueType , typename ... Properties ,
             typename ... SliceSpecifiers >
   /*unspecified array_ref<>*/ 
-  subarray( const array_ref< DataType, Properties ... > & ar ,
+  subarray( const array_ref< ValueType, Properties ... > & ar ,
             SliceSpecifiers ... specs) noexcept;
   
-  template< typename DataType , typename ... Properties ,
+  template< typename ValueType , typename ... Properties ,
             typename ... SliceSpecifiers >
   /*unspecified array_property::dimension<>*/ 
-  subdimensions( const array_ref< DataType, Properties ... > & ar ,
+  subdimensions( const array_ref< ValueType, Properties ... > & ar ,
                  SliceSpecifiers ... specs) noexcept;
   
-  template< typename DataType , typename ... Properties ,
+  template< typename ValueType , typename ... Properties ,
             typename ... StrideSpecifiers >
   /*unspecified array_ref<>*/ 
-  stridearray( const array_ref< DataType, Properties ... > & ar ,
+  stridearray( const array_ref< ValueType, Properties ... > & ar ,
                StrideSpecifiers ... specs) noexcept;
   
   }}
