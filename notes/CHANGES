@@ -1,0 +1,6 @@
+Removed span() overload that takes arguments - couldn't find any uses in Kokkos, I can't
+think of any uses, and I don't want to overload a static function with a non-static function.
+
+Removed maximum_rank, as per LEWG discussion
+
+Removed interfaces with integral parameters that templated to avoid implicit conversions, as per LEWG discussion.

@@ -1,0 +1,70 @@
+Add specification of dimensions<> 
+
+Rationale
+    * Paragraph 3 - Do we mean "polymorphic" here?
+        - Mention other forms of polymorphism (access mechanism can be
+          polymorphic)
+    * Paragraph 4 - Mention my reference implementation. Maybe mention other
+      libraries such as Eigen, Boost.Multi Array. Talk about how we're
+      standardizing existing practice.
+
+Compare and Contrast
+    * Compare to latest Microsoft array_view proposal.
+
+Array Reference
+    * Mention how std::vector used to have arbitrary properties (establishing
+      precedence). Because we can have variadic template template-template
+      parameters, this should not make it overly complicated for users to
+      write generic code that works with array_ref<>s.
+
+One-Dimensional Array
+    * For the comparison to array + size, should we have array_ref<int[N]>
+      instead of array_ref<int[]>?
+        - NO - for first example, passing a dynamic size. Don't want to pass
+          a static size for the second one.
+    * Mention that the T[] syntax is similar to the T[] syntax for unique_ptr<>
+      and shared_ptr<>.
+    * Constness semantics are the same as unique_ptr<> and shared_ptr<>.
+
+Multidimensional Array with Multiple Implicit Dimensions
+    * Discuss possible issues with picking 0 as a magic value. Propose
+      alternative of a file-scope constexpr value (dynamic_extent).
+
+Array Reference Properties: Layout Polymorphism
+    * Second code-block - what is the purpose of this code (in particular the
+      asserts.
+    * void for default layout seems wrong. We should have a layout_default.
+        - Carter: No reason not to.
+    * layout_order and layout_stride - what direction are these (e.g. left or
+      right)? Don't we really need a layout_right/_left that has padding and
+      striding?
+        - layout_stride - you fully specify it.
+        - No, we don't need a layout_right/_left thta is strided.
+    * Which of the five specified orderings do right_mapping and left_mapping
+      implement.
+    * Compile-time specification of padding.
+
+Array Reference Properties: Extensible Layout Polymorphism
+    * Couldn't layout_tile_left be implemented with something like left_mapping
+      and right_mapping? You just need the proper padding.
+    * Is there a better way to do tiling_left_mapping? Can't this be done with
+      a base class pointer + padding, instead of modulo and divides? Aren't
+      those going to be slow (should be integer modulo/division though).
+
+Array Reference Properties: Flexibility and Extensibility
+    * Not sure I understand how this functions at all.
+        - For metaprogramming (e.g. disable by returning void, enable by
+          returning correct type).
+
+Specification with Simple Array Reference Properties
+    * Make is_regular a function?
+    * Utility constructors from Microsoft array_view<> proposal.
+    * Raw types (e.g. unsigned, size_t) should not be used - use size_type, etc
+      instead.
+
+Limited iterator interface
+    * Add example of slicing down to 1D array_ref
+
+Preferred Syntax for Multidimensional Array with Multiple Implicit Dimensions
+    * We basically have two sections for the preferred syntax, can we combine
+      them?

@@ -1,0 +1,37 @@
+MultiArrayRefTraits Interface
+*****************************
+
+template <typename ValueType>
+struct MultiArrayRefTraits
+{
+    // multi_array_ref types.
+
+    // allocator-style rebind.
+
+    constexpr MultiArrayRefTraits() noexcept;
+
+    template <size_type... Dims, typename... Idx>
+    index_type index(dims<Dims...> d, Idx... idx) const; // Maybe noexcept?
+
+    reference access(pointer p, index_type raw_idx) const; // Maybe noexcept?
+};
+
+DESIGN DECISIONS
+----------------
+* The get_value<>() interface for dims<> was chosen over get<>() because
+  we cannot return a reference in the case of a non-dynamic dims<>.
+* An optimal implementation will ensure that a non-dynamic dims<> will be an
+  empty struct, and that for a dynamic dims<>:
+    sizeof(dims<>) == (# of dynamic dims)*sizeof(dims<>::size_type).
+
+OPEN ISSUES
+-----------
+* The constructor which takes a set of dynamic extents as arguments is templated
+  so that it can accept all integral types without implicit conversion, as
+  implicit conversions can inhibit vectorization. However, since we cannot
+  SFINAE a constructor, this overload may accept other constructor signatures.
+  Is this signature acceptable?
+* One easy way to implement storage for dynamic extents is to use std::tuple<>.
+  Is std::tuple<> conditionally noexcept if the underlying types have noexcept
+  default/copy/move constructors?
+* extents<>::num_dynamic() may not be a clear name, bikeshed a better one.
