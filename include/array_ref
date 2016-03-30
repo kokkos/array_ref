@@ -1,0 +1,213 @@
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (c) 2015-2016 Bryce Adelstein Lelbach aka wash
+//
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
+//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+////////////////////////////////////////////////////////////////////////////////
+
+#if !defined(STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0)
+#define STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+
+#include "impl/fwd.hpp"
+#include "impl/meta.hpp"
+#include "impl/dimensions.hpp"
+
+#include "impl/basic_layout_left.hpp"
+#include "impl/layout_left.hpp"
+#include "impl/accessor_native.hpp"
+
+namespace std { namespace experimental 
+{
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+struct array_ref
+{
+    ///////////////////////////////////////////////////////////////////////////
+    // TYPES
+
+    using layout     = Layout;
+    using dimensions = Dims;
+    using accessor   = Accessor;
+
+    using value_type = typename accessor::value_type;
+    using reference  = typename accessor::reference;
+    using pointer    = typename accessor::pointer;
+    using size_type  = typename layout::size_type;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+
+    constexpr array_ref() noexcept;
+
+    constexpr array_ref(array_ref const& b) noexcept = default;
+    constexpr array_ref(array_ref&& b) noexcept = default;
+    array_ref& operator=(array_ref const& b) noexcept = default;
+    array_ref& operator=(array_ref&& b) noexcept = default;
+
+    template < typename... UnsignedIntegers
+             , typename = typename enable_if<
+                   detail::pack_is_unsigned<UnsignedIntegers...>::value
+               >::type
+             >
+    explicit constexpr array_ref(
+        pointer p, UnsignedIntegers... implicit_dims
+        ) noexcept;
+
+    explicit constexpr array_ref(
+        pointer p, dimensions const& d
+      , layout const& l = Layout(), accessor const& a = Accessor()
+        ) noexcept;
+
+    // TODO: Conversion constructor and assignment operator (omitted due to
+    // incomplete specification).
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // RANK, SIZE AND EXTENT 
+
+    static constexpr size_type rank() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
+
+    constexpr size_type size() const noexcept;
+
+    constexpr size_type extent(size_type rank) const noexcept;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // LAYOUT INTERFACE 
+
+    static constexpr bool is_regular() noexcept;
+
+    // TODO: TEST
+    constexpr size_type stride(size_type rank) noexcept;
+
+    // TODO
+    constexpr size_type span() const noexcept;    
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // ELEMENT AND DATA ACCESS 
+
+    template <typename... UnsignedIntegers>
+    typename std::enable_if<
+        Dims::rank() == sizeof...(UnsignedIntegers)
+        && detail::pack_is_integral<UnsignedIntegers...>::value
+      , reference
+    >::type operator()(UnsignedIntegers... indices) const noexcept;
+
+    reference operator[](size_type idx) const noexcept;
+
+  private:
+    pointer ptr_;
+    Dims dims_;
+    Layout layout_;
+    Accessor accessor_;
+};
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+constexpr
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref() noexcept
+  : ptr_(nullptr)
+  , dims_()
+  , layout_()
+  , accessor_()
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+template <typename... UnsignedIntegers, typename>
+constexpr
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+    pointer p, UnsignedIntegers... implicit_dims
+    ) noexcept
+  : ptr_(p)
+  , dims_(implicit_dims...) // dimensions<> does the relevant static_asserts.
+  , layout_()
+  , accessor_()
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+constexpr
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+    pointer p, dimensions const& d, layout const& l, accessor const& a
+    ) noexcept
+  : ptr_(p)
+  , dims_(d)
+  , layout_(l)
+  , accessor_(a)
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::rank() noexcept
+{
+    return dimensions::rank();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
+{
+    return dimensions::rank_dynamic();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::size() const noexcept
+{
+    return dims_.size();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::extent(
+    size_type rank
+    ) const noexcept
+{
+    return dims_[rank];
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr bool
+array_ref<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
+{
+    return layout::is_regular();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::stride(
+    size_type rank
+    ) const noexcept
+{
+    return layout_.stride(rank);
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+template <typename... UnsignedIntegers>
+inline typename std::enable_if<
+       Dims::rank() == sizeof...(UnsignedIntegers)
+    && detail::pack_is_integral<UnsignedIntegers...>::value
+  , typename array_ref<ValueType, Dims, Layout, Accessor>::reference
+>::type array_ref<ValueType, Dims, Layout, Accessor>::operator()(
+    UnsignedIntegers... indices
+    ) const noexcept
+{
+    size_type const raw_idx = layout_.index(dims_, indices...);
+    return accessor_.access(ptr_, raw_idx);
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+typename array_ref<ValueType, Dims, Layout, Accessor>::reference
+array_ref<ValueType, Dims, Layout, Accessor>::operator[](
+    size_type idx
+    ) const noexcept
+{
+    return accessor_.access(ptr_, idx);
+}
+
+}} // std::experimental
+
+#endif // STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+
