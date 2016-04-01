@@ -1354,6 +1354,15 @@ to an integral range.
 |
 |     constexpr size_type span() const noexcept ;
 |     constexpr size_type stride( size_type ith ) const noexcept ;
+|
+|     constexpr mapping();
+|     constexpr mapping( mapping const &);
+|     constexpr mapping( mapping && );
+|     constexpr mapping & operator = ( mapping const &);
+|     constexpr mapping & operator = ( mapping && );
+|
+|     template< typename ... IntegralArgs >
+|     constexpr mapping( IntegralArgs ... dynamic_dimensions );
 |   };
 | };
 
