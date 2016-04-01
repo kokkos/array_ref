@@ -541,7 +541,7 @@ memory architecture, and user access pattern hints.
     static constexpr bool is_always_contiguous = // implementation defined
     static constexpr bool is_always_regular    = // implementation defined
 
-    static constexpr bool is_contiguous() noexcept;
+    constexpr bool is_contiguous() const noexcept;
     static constexpr bool is_regular() noexcept;
   
     constexpr size_type stride(size_type rank) const noexcept;
@@ -849,7 +849,7 @@ following declarations.
 
   Requires: If default layout then ``true == is_always_regular``.
 
-**static constexpr bool is_contiguous() noexcept**
+**constexpr bool is_contiguous() const noexcept**
 
   Returns: True if all array members occupy a contiguous span of memory.
   If ``is_always_contiguous`` then true.
@@ -1194,9 +1194,23 @@ precedence in the standard for library functions with unspecified return types
 ..
 
 
-******************************************************************
+Subarray Type Deduction
+------------------------------------------------------------------------
+
+The ``subarray`` function returns ``array_ref<`` *deduced...* ``>``.
+The return type is deduced from the input ``array_ref`` and the slicing argument pack.
+The deduction rules must be defined to insure correctness and
+should be defined for performance.
+For example, a simple rule wuld define the returned type to always
+have a strided layout.  While correct there are many use cases
+where a better performing layout can be deduced.
+
+Subarray type deduction is necessarily dependent upon the layout.
+
+
+
 Example Usage in an 8th Order Finite Difference Stencil
-******************************************************************
+------------------------------------------------------------------------
 
 The subarray interface provides a powerful mechanism for accessing
 3-dimensional data in numerical kernels in a fashion which utilizes performant
@@ -1310,9 +1324,40 @@ Note that all the code is now decoupled from the arrays' layout.
 
 ..
 
-Slicing down to a 1-dimensional array_ref<> in the inner-most unit-stride loops
-also facilitates the use of the 1-dimensional iterator interface, enabling
-interoperability with iterator-based algorithms.
+
+******************************************************************
+Layout Concept / Layout Extensibility
+******************************************************************
+
+To support performant layout extensibility we must define a
+*layout concept* that includes a layout mapping from
+a ``array_layout::dimension`` defined multi-index space
+to an integral range.
+
+| struct *layout_concept* {
+|
+|   template< typename DimensionType >
+|   struct mapping {
+|
+|     template< typename ... IntegralArgs >
+|     constexpr size_type offset( IntegralArgs ... indices ) const noexcept ;
+|
+|     static constexpr bool is_always_regular = *layout specific* ;
+|     static constexpr bool is_always_contiguous = *layout specific* ;
+|
+|     static constexpr bool is_regular() noexcept ;
+|     constexpr bool is_contiguous() const noexcept ;
+|
+|     static constexpr size_type rank() noexcept ;
+|     constexpr size_type extent( size_type ith ) const noexcept ;
+|     constexpr size_type size() const noexcept ;
+|
+|     constexpr size_type span() const noexcept ;
+|     constexpr size_type stride( size_type ith ) const noexcept ;
+|   };
+| };
+
+
 
 ******************************************************************************
 Preferred Syntax for Multidimensional Array with Multiple Implicit Dimensions
