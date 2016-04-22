@@ -11,7 +11,7 @@ Extensibility mechanism
     * Carter: Still working on this, we think we are close to having this right.
 
 Specification
-    * Eric: Can the datatype by const?
+    * Eric: Can the datatype be const?
         * Carter: Yes.
         * Bryce: Operates like unique_ptr<> for const-ness
     * Tony: Are there use cases for using reference NOT being add_reference_t<value_type>
@@ -37,7 +37,7 @@ Specification
         * Bryce: Yes.
     * Eric: How about [{0,1,2}] for indexing operator?
         * Carter: Our users would be unhappy.
-        * Carter and Bryce: We could do this, or something like [][][] with a DSEL, but the call operator is not complex we believe the best option.
+        * Carter and Bryce: We could do this, or something like [][][] with a DSEL, but the call operator is not complex and we believe the best option.
     * Discussion of maximum rank.
         * Carter: We've found we do not have codes that have more than 8 dimensions in practice.
         * Bryce: We have 6.

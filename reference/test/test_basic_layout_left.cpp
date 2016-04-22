@@ -23,7 +23,14 @@ template <std::size_t X>
 void test_1d_static()
 { // {{{
     dimensions<X> d;
-    basic_layout_left<dimensions<1>, dimensions<0> > l;
+    basic_layout_left<dimensions<1>, dimensions<0> > const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X);
+    BOOST_TEST_EQ((l.span(d)), X);
 
     int dptr[X];
 
@@ -43,7 +50,14 @@ template <std::size_t X>
 void test_1d_dynamic()
 { // {{{
     dimensions<dyn> d(X);
-    basic_layout_left<dimensions<1>, dimensions<0> > l;
+    basic_layout_left<dimensions<1>, dimensions<0> > const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X);
+    BOOST_TEST_EQ((l.span(d)), X);
 
     vector<int> data(d[0], 42);
     int* dptr = data.data();
@@ -69,7 +83,15 @@ template <std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
     dimensions<X, Y> d;
-    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > l;
+    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y);
+    BOOST_TEST_EQ((l.span(d)), X*Y);
 
     tuple<int, int> dptr[X*Y];
 
@@ -94,7 +116,15 @@ template <std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
     dimensions<dyn, dyn> d(X, Y);
-    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > l;
+    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y);
+    BOOST_TEST_EQ((l.span(d)), X*Y);
 
     vector<tuple<int, int> > data(d[0]*d[1], tuple<int, int>(17, 42));
 
@@ -128,7 +158,15 @@ template <std::size_t X, std::size_t Y>
 void test_2d_mixed()
 { // {{{
     dimensions<dyn, Y> d(X);
-    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > l;
+    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y);
+    BOOST_TEST_EQ((l.span(d)), X*Y);
 
     vector<tuple<int, int> > data(d[0]*d[1], tuple<int, int>(17, 42));
 
@@ -162,7 +200,16 @@ template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_static()
 { // {{{
     dimensions<X, Y, Z> d;
-    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> > l;
+    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> >  const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+    BOOST_TEST_EQ((l.stride(2)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y*Z);
+    BOOST_TEST_EQ((l.span(d)), X*Y*Z);
 
     tuple<int, int, int> dptr[X*Y*Z];
 
@@ -190,7 +237,16 @@ template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_dynamic()
 { // {{{
     dimensions<dyn, dyn, dyn> d(X, Y, Z);
-    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> > l;
+    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> > const l;
+
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+    BOOST_TEST_EQ((l.stride(2)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y*Z);
+    BOOST_TEST_EQ((l.span(d)), X*Y*Z);
 
     vector<tuple<int, int, int> > data(
         d[0]*d[1]*d[2], tuple<int, int, int>(17, 42, 73)
@@ -231,7 +287,12 @@ int main()
 {
     {
         dimensions<> d;
-        basic_layout_left<dimensions<>, dimensions<> > l;
+        basic_layout_left<dimensions<>, dimensions<> >  const l;
+
+        BOOST_TEST_EQ((l.is_regular()), true);
+
+        BOOST_TEST_EQ((d.size()),  1);
+        BOOST_TEST_EQ((l.span(d)), 1);
 
         int data = 42;
         int* dptr = &data;

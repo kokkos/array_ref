@@ -76,10 +76,8 @@ struct array_ref
 
     static constexpr bool is_regular() noexcept;
 
-    // TODO: TEST
     constexpr size_type stride(size_type rank) noexcept;
 
-    // TODO
     constexpr size_type span() const noexcept;    
 
     /////////////////////////////////////////////////////////////////////////// 

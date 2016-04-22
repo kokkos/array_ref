@@ -10,6 +10,7 @@
 
 #include "impl/fwd.hpp"
 #include "impl/meta.hpp"
+#include "impl/dimensions_reductions.hpp"
 
 namespace std { namespace experimental 
 {
@@ -50,6 +51,7 @@ struct dimensions
     constexpr value_type operator[](IntegralType idx) const noexcept;
 
   private:
+
     ///////////////////////////////////////////////////////////////////////////
 
     // Computes the product of all extents. Pass 0 as idx and unpack Dims when
@@ -70,6 +72,7 @@ struct dimensions
 
     detail::make_dynamic_dims_array_t<Dims...> dynamic_dims_;
 };
+
 
 // FIXME: Confirm that default-initializing an integral type is guranteed to
 // zero it. If it's not, maybe do an inlined memset (don't actually call
@@ -115,7 +118,13 @@ template <std::size_t... Dims>
 inline constexpr typename dimensions<Dims...>::size_type
 dimensions<Dims...>::size() noexcept
 {
-    return product_extents(0, Dims...);
+    return detail::dims_unary_reduction<
+        detail::identity_by_value
+      , detail::multiplies_by_value
+      , detail::static_sentinel<1>
+      , 0
+      , rank()
+    >()(*this);
 }
 
 template <std::size_t... Dims>

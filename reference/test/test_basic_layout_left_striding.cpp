@@ -30,9 +30,23 @@ void test_1d_static()
     dimensions<X/N> sub_d; 
     dimensions<N> sub_s;
 
-    basic_layout_left<decltype(s), dimensions<0> > l;
+    basic_layout_left<decltype(s), dimensions<0> > const l;
 
-    basic_layout_left<decltype(sub_s), dimensions<0> > sub_l;
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X);
+    BOOST_TEST_EQ((l.span(d)), X);
+
+    basic_layout_left<decltype(sub_s), dimensions<0> > const sub_l;
+
+    BOOST_TEST_EQ((sub_l.is_regular()), true);
+
+    BOOST_TEST_EQ((sub_l.stride(0)), N);
+
+    BOOST_TEST_EQ((sub_d.size()),      X/N);
+    BOOST_TEST_EQ((sub_l.span(sub_d)), X);
 
     int dptr[X];
 
@@ -83,11 +97,25 @@ void test_1d_dynamic()
     dimensions<dyn> sub_d(X/N); 
     dimensions<dyn> sub_s(N);
 
-    basic_layout_left<decltype(s), dimensions<0> >
+    basic_layout_left<decltype(s), dimensions<0> > const
         l(s, dimensions<0>());
 
-    basic_layout_left<decltype(sub_s), dimensions<0> >
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X);
+    BOOST_TEST_EQ((l.span(d)), X);
+
+    basic_layout_left<decltype(sub_s), dimensions<0> > const
         sub_l(sub_s, dimensions<0>());
+
+    BOOST_TEST_EQ((sub_l.is_regular()), true);
+
+    BOOST_TEST_EQ((sub_l.stride(0)), N);
+
+    BOOST_TEST_EQ((sub_d.size()),      X/N);
+    BOOST_TEST_EQ((sub_l.span(sub_d)), X);
 
     // Initialize all elements as 42.
     std::vector<int> data(d[0], 42);
@@ -137,14 +165,30 @@ void test_2d_static()
     static_assert(0 == (Y % M), "Y must be divisable by M");
 
     dimensions<X, Y> d;
-    dimensions<1, 1>  s;
+    dimensions<1, 1> s;
 
     dimensions<X/N, Y/M> sub_d; 
     dimensions<N,   M  > sub_s;
 
-    basic_layout_left<decltype(s), dimensions<0, 0> > l;
+    basic_layout_left<decltype(s), dimensions<0, 0> > const l;
 
-    basic_layout_left<decltype(sub_s), dimensions<0, 0> > sub_l;
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y);
+    BOOST_TEST_EQ((l.span(d)), X*Y);
+
+    basic_layout_left<decltype(sub_s), dimensions<0, 0> > const sub_l;
+
+    BOOST_TEST_EQ((sub_l.is_regular()), true);
+
+    BOOST_TEST_EQ((sub_l.stride(0)), N);
+    BOOST_TEST_EQ((sub_l.stride(1)), M);
+
+    BOOST_TEST_EQ((sub_d.size()),      (X/N)*(Y/M));
+    BOOST_TEST_EQ((sub_l.span(sub_d)), X*Y);
 
     int dptr[X*Y];
 
@@ -203,11 +247,27 @@ void test_2d_dynamic()
     dimensions<dyn, dyn> sub_d(X/N, Y/M); 
     dimensions<dyn, dyn> sub_s(N,   M  );;
 
-    basic_layout_left<decltype(s), dimensions<0, 0> >
+    basic_layout_left<decltype(s), dimensions<0, 0> > const
         l(s, dimensions<0, 0>());
 
-    basic_layout_left<decltype(sub_s), dimensions<0, 0> >
+    BOOST_TEST_EQ((l.is_regular()), true);
+
+    BOOST_TEST_EQ((l.stride(0)), 1);
+    BOOST_TEST_EQ((l.stride(1)), 1);
+
+    BOOST_TEST_EQ((d.size()),  X*Y);
+    BOOST_TEST_EQ((l.span(d)), X*Y);
+
+    basic_layout_left<decltype(sub_s), dimensions<0, 0> > const 
         sub_l(sub_s, dimensions<0, 0>());
+
+    BOOST_TEST_EQ((sub_l.is_regular()), true);
+
+    BOOST_TEST_EQ((sub_l.stride(0)), N);
+    BOOST_TEST_EQ((sub_l.stride(1)), M);
+
+    BOOST_TEST_EQ((sub_d.size()),      (X/N)*(Y/M));
+    BOOST_TEST_EQ((sub_l.span(sub_d)), X*Y);
 
     // Initialize all elements as 42.
     std::vector<int> data(d[0]*d[1], 42);

@@ -15,6 +15,52 @@ namespace std { namespace experimental { namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Reduction-style visitation of the extents of dimensions<>. Op, Reduction and
+// Sentinel are function objects with a constexpr const method that takes the
+// correct number of dimensions<> objects by value. 
+
+template <
+    typename Op
+  , typename Reduction
+  , typename Sentinel
+  , std::size_t Idx
+  , std::size_t Size
+    >
+struct dims_unary_reduction;
+
+template <
+    typename Op
+  , typename Reduction
+  , typename Sentinel
+  , std::size_t Idx
+  , std::size_t Size
+    >
+struct dims_binary_reduction;
+
+template <
+    typename Op
+  , typename Reduction
+  , typename Sentinel
+  , std::size_t Idx
+  , std::size_t Size
+    >
+struct dims_ternary_reduction;
+
+///////////////////////////////////////////////////////////////////////////////
+
+// <functional>-style function objects with value semantics.
+
+struct identity_by_value;
+
+struct multiplies_by_value;
+
+struct span_by_value;
+
+template <std::size_t Value> 
+struct static_sentinel;
+
+///////////////////////////////////////////////////////////////////////////////
+
 // Runtime implementation of the std::extent metafunction. 
 
 // Base case.

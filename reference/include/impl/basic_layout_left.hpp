@@ -46,7 +46,6 @@ struct basic_layout_left
 
     constexpr size_type stride(size_type rank) noexcept;
 
-    // TODO
     template <std::size_t... Dims>
     constexpr size_type span(dimensions<Dims...> d) const noexcept;    
 
@@ -140,6 +139,20 @@ inline constexpr typename basic_layout_left<Striding, Padding>::size_type
 basic_layout_left<Striding, Padding>::stride(size_type rank) const noexcept
 {
     return stride_[rank];
+}
+
+template <typename Striding, typename Padding>
+template <std::size_t... Dims>
+inline constexpr typename basic_layout_left<Striding, Padding>::size_type
+basic_layout_left<Striding, Padding>::span(dimensions<Dims...> d) const noexcept
+{
+    return detail::dims_ternary_reduction<
+        detail::span_by_value
+      , detail::multiplies_by_value
+      , detail::static_sentinel<1>
+      , 0
+      , dimensions<Dims...>::rank()
+    >()(d, stride_, pad_);
 }
 
 template <typename Striding, typename Padding>
