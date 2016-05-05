@@ -579,7 +579,7 @@ memory architecture, and user access pattern hints.
   
   struct layout_right;
   struct layout_left;
-  template <size_t... Ordering> layout_order;
+  template <size_t... Ordering> struct layout_order;
   struct layout_stride;
   
   template <typename T> struct is_layout;
