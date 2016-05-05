@@ -1331,8 +1331,7 @@ Layout Concept / Layout Extensibility
 
 To support performant layout extensibility we must define a
 *layout concept* that includes a layout mapping from
-a ``array_layout::dimension`` defined multi-index space
-to an integral range.
+a multi-index space to an integral range.
 
 | struct *layout_concept* {
 |
@@ -1360,6 +1359,8 @@ to an integral range.
 |     constexpr mapping( mapping && );
 |     constexpr mapping & operator = ( mapping const &);
 |     constexpr mapping & operator = ( mapping && );
+|
+|     constexpr explicit mapping( *layout_concept* const & );
 |
 |     template< typename ... IntegralArgs >
 |     constexpr mapping( IntegralArgs ... dynamic_dimensions );
