@@ -94,7 +94,7 @@ public:
   static constexpr size_type rank() noexcept { return sizeof...(Dim); }
 
   /**\brief  Number of dynamic extents */
-  static constexpr size_type rank_dynamic() noexcept { return base::RankDyn ; }
+  static constexpr size_type rank_dynamic() noexcept { return base::rank_dynamic ; }
 
   /**\brief Product of extents */
   constexpr value_type size() const noexcept
@@ -102,7 +102,7 @@ public:
 
   /**\brief  Value of an extent */
   constexpr value_type operator[]( const size_type i ) const noexcept
-    { return base::get_extent(i); }
+    { return base::get_value(i); }
 
   /**\brief  Direct access to value of an extent */
   template< size_type I > using extent = typename base::template extent<I> ;

@@ -2,10 +2,109 @@
 #include <array_ref>
 #include <iostream>
 
+template< typename Dimension , unsigned N >
+struct prepend_dim ;
+
+template< typename ValueType , ValueType ... Dims  , unsigned N >
+struct prepend_dim
+  < std::experimental::array_property::dimension_typed<ValueType, Dims... >
+  , N >
+{
+  using type =
+   std::experimental::array_property::dimension_typed<ValueType, N , Dims... > ;
+};
+
+template< typename ValueType , unsigned RankStatic , unsigned RankDynamic , unsigned R = 0 >
+struct generate_dimension {
+
+  using type = typename std::conditional
+    < ( RankStatic < RankDynamic )
+    , typename prepend_dim
+         < typename generate_dimension<ValueType,RankStatic,(RankDynamic?RankDynamic-1:0),R+1>::type , 0 >::type
+    , typename prepend_dim
+         < typename generate_dimension<ValueType,(RankStatic?RankStatic-1:0),RankDynamic,R+1>::type , 2*(R+1) > ::type
+    >::type ;
+};
+
+template< typename ValueType , unsigned R >
+struct generate_dimension< ValueType , 0 , 0 , R >
+{
+  using type = std::experimental::array_property::dimension_typed<ValueType> ;
+};
+
+template< typename ValueType , unsigned RankStatic , unsigned R >
+struct generate_dimension< ValueType , RankStatic , 0 , R >
+{
+  using nest = typename generate_dimension<ValueType,RankStatic-1,0,R+1>::type ;
+  using type = typename prepend_dim< nest , 2*(R+1) >::type ;
+};
+
+template< typename ValueType , unsigned RankDynamic , unsigned R >
+struct generate_dimension< ValueType , 0 , RankDynamic , R >
+{
+  using nest = typename generate_dimension<ValueType,0,RankDynamic-1,R+1>::type ;
+  using type = typename prepend_dim< nest , 0 >::type ;
+};
+
+void test_dimension_constexpr()
+{
+  using dim_size_t_00_00_t = typename generate_dimension<size_t,0,0>::type ;
+  using dim_int_00_00_t    = typename generate_dimension<int,0,0>::type ;
+  using dim_int_07_00_t    = typename generate_dimension<int,7,0>::type ;
+  using dim_int_00_07_t    = typename generate_dimension<int,0,7>::type ;
+  using dim_int_07_07_t    = typename generate_dimension<int,7,7>::type ;
+
+  static_assert( dim_size_t_00_00_t::rank() == 0 , "" );
+  static_assert( dim_int_00_00_t::rank() == 0 , "" );
+  static_assert( dim_int_07_00_t::rank() == 7 , "" );
+  static_assert( dim_int_00_07_t::rank() == 7 , "" );
+  static_assert( dim_int_07_07_t::rank() == 14 , "" );
+
+  static_assert( dim_size_t_00_00_t::rank_dynamic() == 0 , "" );
+  static_assert( dim_int_00_00_t::rank_dynamic() == 0 , "" );
+  static_assert( dim_int_07_00_t::rank_dynamic() == 0 , "" );
+  static_assert( dim_int_00_07_t::rank_dynamic() == 7 , "" );
+  static_assert( dim_int_07_07_t::rank_dynamic() == 7 , "" );
+
+  static_assert( sizeof(dim_size_t_00_00_t) <= sizeof(size_t) , "" );
+  static_assert( sizeof(dim_int_00_00_t) <= sizeof(int) , "" );
+  static_assert( sizeof(dim_int_07_00_t) <= sizeof(int) , "" );
+  static_assert( sizeof(dim_int_00_07_t) == 7 * sizeof(int) , "" );
+  static_assert( sizeof(dim_int_07_07_t) == 7 * sizeof(int) , "" );
+
+  constexpr dim_int_00_00_t dim_int_00_00 ;
+  constexpr dim_int_07_00_t dim_int_07_00 ;
+  constexpr dim_int_00_07_t dim_int_00_07 ;
+  constexpr dim_int_07_07_t dim_int_07_07 ;
+
+  static_assert( dim_int_07_00[0] == (2*1) , "" );
+  static_assert( dim_int_07_00[1] == (2*2) , "" );
+  static_assert( dim_int_07_00[2] == (2*3) , "" );
+  static_assert( dim_int_07_00[3] == (2*4) , "" );
+  static_assert( dim_int_07_00[4] == (2*5) , "" );
+  static_assert( dim_int_07_00[5] == (2*6) , "" );
+  static_assert( dim_int_07_00[6] == (2*7) , "" );
+  static_assert( dim_int_07_00.size() == (2*1)*(2*2)*(2*3)*(2*4)*(2*5)*(2*6)*(2*7) , "" );
+
+  static_assert( dim_int_07_07[0] == (2*1) , "" );
+  static_assert( dim_int_07_07[1] == 0 , "" );
+  static_assert( dim_int_07_07[2] == (2*3) , "" );
+  static_assert( dim_int_07_07[3] == 0 , "" );
+  static_assert( dim_int_07_07[4] == (2*5) , "" );
+  static_assert( dim_int_07_07[5] == 0 , "" );
+  static_assert( dim_int_07_07[6] == (2*7) , "" );
+  static_assert( dim_int_07_07[7] == 0 , "" );
+  static_assert( dim_int_07_07[8] == (2*9) , "" );
+  static_assert( dim_int_07_07[9] == 0 , "" );
+  static_assert( dim_int_07_07[10] == (2*11) , "" );
+  static_assert( dim_int_07_07[11] == 0 , "" );
+  static_assert( dim_int_07_07[12] == (2*13) , "" );
+  static_assert( dim_int_07_07[13] == 0 , "" );
+}
+
 int main()
 {
-
-
+  test_dimension_constexpr();
   return 0 ;
 }
 
