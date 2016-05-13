@@ -1,0 +1,263 @@
+/*
+//@HEADER
+// ************************************************************************
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
+// 
+// ************************************************************************
+//@HEADER
+*/
+
+#ifndef STD_EXPERIMENTAL_ARRAY_REF_HEADER
+#define STD_EXPERIMENTAL_ARRAY_REF_HEADER
+
+
+#include <detail/dimension_helper>
+#include <detail/array_ref_property>
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+namespace std {
+namespace experimental {
+namespace array_property {
+
+template< typename ValueType , ValueType ... Dim >
+struct dimension_typed ;
+
+template< size_t ... Dim >
+using dimension = dimension_typed< size_t , Dim ... > ;
+
+
+template< typename ValueType , ValueType ... Dim >
+struct dimension_typed : detail::dimension_extent< 0 , ValueType , Dim... >
+{
+private:
+
+  using base = detail::dimension_extent< 0 , ValueType , Dim... > ;
+
+  template< unsigned J >
+  constexpr bool check_bounds() const noexcept { return true ; }
+
+  template< unsigned J , typename T , typename ... IntegralType >
+  constexpr bool check_bounds( T i , IntegralType ... tail ) const noexcept
+    {
+      return 0 <= i && i < base::template get<J>::extent &&
+      dimension_typed::template check_bounds<J+1>( tail ... );
+    }
+
+public:
+
+  //----------------------------------------
+  // TYPES
+
+  using value_type = ValueType ; ///< storage type for extent values
+  using size_type  = unsigned ;  ///< extent indexing type
+
+  //----------------------------------------
+  // OBSERVERS
+
+  /**\brief  Number extents */
+  static constexpr size_type rank() noexcept { return sizeof...(Dim); }
+
+  /**\brief  Number of dynamic extents */
+  static constexpr size_type rank_dynamic() noexcept { return base::RankDyn ; }
+
+  /**\brief Product of extents */
+  constexpr value_type size() const noexcept
+    { return base::get_size(); }
+
+  /**\brief  Value of an extent */
+  constexpr value_type operator[]( const size_type i ) const noexcept
+    { return base::get_extent(i); }
+
+  /**\brief  Direct access to value of an extent */
+  template< size_type I > using extent = typename base::template extent<I> ;
+  // template< size_type I > using extent_v = typename base::template get<I>::extent ;
+
+  //----------------------------------------
+
+  constexpr dimension_typed() = default ;
+  constexpr dimension_typed( dimension_typed && ) = default ;
+  constexpr dimension_typed( dimension_typed const & ) = default ;
+  dimension_typed & operator = ( dimension_typed const & ) = default ;
+
+  template< typename ... IntegralType >
+  constexpr explicit dimension_typed( IntegralType ... dyn_dims ) noexcept
+    : base( dyn_dims... )
+    {
+      static_assert( detail::pack_is_integral<IntegralType...>::value , "" );
+      static_assert( rank_dynamic() == sizeof...(IntegralType) , "" );
+    }
+
+  template< typename ... IntegralType >
+  constexpr bool in_bounds( IntegralType ... indices ) const noexcept
+    { return check_bounds<0>( indices... ); }
+};
+
+//--------------------------------------------------------------------------
+
+struct layout_right {
+
+template< typename Dimension >
+struct mapping {
+public:
+
+  using value_type = typename Dimension::value_type ;
+
+private:
+
+
+  Dimension const m_dim ;
+
+  template< unsigned I >
+  constexpr value_type offset( value_type sum ) const noexcept
+    { return sum ; }
+
+  template< unsigned I , typename IR , typename ... Arg >
+  constexpr value_type
+  offset( value_type sum , IR ir , Arg ... arg ) const noexcept
+    {
+      // Guard extent extraneous zeros in the tail.
+      return I ? mapping::template offset<(I?I-1:0)>( ir + m_dim.Dimension::template get< Dimension::rank() - I >::extent * sum , arg... ) : sum ;
+    }
+
+public:
+
+
+};
+
+};
+
+
+//--------------------------------------------------------------------------
+
+}}} // std::experimental::array_property
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+#if 0
+
+namespace std {
+namespace experimental {
+
+//--------------------------------------------------------------------------
+
+template < typename ArrayType , typename ... Properties >
+struct array_ref
+{
+    ///////////////////////////////////////////////////////////////////////////
+    // TYPES
+
+    using layout     = Layout;
+    using dimensions = Dims;
+    using accessor   = Accessor;
+
+    using value_type = typename accessor::value_type;
+    using reference  = typename accessor::reference;
+    using pointer    = typename accessor::pointer;
+    using size_type  = typename layout::size_type;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+
+    constexpr array_ref() noexcept;
+
+    constexpr array_ref(array_ref const& b) noexcept = default;
+    constexpr array_ref(array_ref&& b) noexcept = default;
+    array_ref& operator=(array_ref const& b) noexcept = default;
+    array_ref& operator=(array_ref&& b) noexcept = default;
+
+    template < typename... UnsignedIntegers
+             , typename = typename enable_if<
+                   detail::pack_is_unsigned<UnsignedIntegers...>::value
+               >::type
+             >
+    explicit constexpr array_ref(
+        pointer p, UnsignedIntegers... implicit_dims
+        ) noexcept;
+
+    explicit constexpr array_ref(
+        pointer p, dimensions const& d
+      , layout const& l = Layout(), accessor const& a = Accessor()
+        ) noexcept;
+
+    // TODO: Conversion constructor and assignment operator (omitted due to
+    // incomplete specification).
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // RANK, SIZE AND EXTENT 
+
+    static constexpr size_type rank() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
+
+    constexpr size_type size() const noexcept;
+
+    constexpr size_type extent(size_type rank) const noexcept;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // LAYOUT INTERFACE 
+
+    static constexpr bool is_regular() noexcept;
+
+    constexpr size_type stride(size_type rank) noexcept;
+
+    constexpr size_type span() const noexcept;    
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // ELEMENT AND DATA ACCESS 
+
+    template <typename... UnsignedIntegers>
+    typename std::enable_if<
+        Dims::rank() == sizeof...(UnsignedIntegers)
+        && detail::pack_is_integral<UnsignedIntegers...>::value
+      , reference
+    >::type operator()(UnsignedIntegers... indices) const noexcept;
+
+    reference operator[](size_type idx) const noexcept;
+
+  private:
+    pointer        m_ptr ;
+    layout_mapping m_map ;
+};
+
+}} // std::experimental
+
+#endif
+
+#endif // #ifndef STD_EXPERIMENTAL_ARRAY_REF_HEADER
+

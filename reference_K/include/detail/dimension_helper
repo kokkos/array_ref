@@ -1,0 +1,158 @@
+/*
+//@HEADER
+// ************************************************************************
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
+// 
+// ************************************************************************
+//@HEADER
+*/
+
+#ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DIMENSION_HELPER_HEADER
+#define STD_EXPERIMENTAL_ARRAY_PROPERTY_DIMENSION_HELPER_HEADER
+
+#include <utility>
+#include <type_traits>
+
+//--------------------------------------------------------------------------
+
+namespace std {
+namespace experimental {
+namespace array_property {
+namespace detail {
+
+//--------------------------------------------------------------------------
+
+template< typename ... IntegralTypes >
+struct pack_is_integral ;
+
+template<>
+struct pack_is_integral<> : std::true_type {};
+
+template< typename T , typename ... IntegralTypes >
+struct pack_is_integral<T,IntegralTypes...> :
+  std::integral_constant< bool ,
+    std::is_integral<T>::value &&
+    pack_is_integral< IntegralTypes ... >::value >
+  {};
+
+//--------------------------------------------------------------------------
+
+template< unsigned I , typename ValueType , size_t ... Dim >
+struct dimension_extent ;
+
+template< unsigned I , typename ValueType >
+struct dimension_extent< I , ValueType >
+{
+  enum : unsigned  { rank_dynamic = 0 };
+  enum : ValueType { value_static = static_cast<ValueType>(1) };
+  enum : ValueType { value        = static_cast<ValueType>(1) };
+
+  template< unsigned > using extent = dimension_extent ;
+
+  constexpr ValueType get_value( unsigned ) const noexcept { return value ; }
+
+  constexpr ValueType get_size() const noexcept { return value ; }
+};
+
+template< unsigned I , typename ValueType , size_t Head , size_t ... Tail >
+struct dimension_extent< I , ValueType , Head , Tail ... >
+  : dimension_extent< I + 1 , ValueType , Tail ... >
+{
+  using next = dimension_extent< I + 1 , ValueType , Tail ... > ;
+
+  enum : unsigned  { rank_dynamic = next::rank_dynamic };
+  enum : ValueType { value_static = static_cast<ValueType>(Head) };
+  enum : ValueType { value        = static_cast<ValueType>(Head) };
+
+  template< unsigned J > using extent = typename
+    std::conditional< J == I
+                    , dimension_extent
+                    , typename next::template extent<J>
+                    >::type ;
+
+  constexpr dimension_extent() = default ;
+  constexpr dimension_extent( dimension_extent && ) = default ;
+  constexpr dimension_extent( dimension_extent const & ) = default ;
+  dimension_extent & operator = ( dimension_extent const & ) = default ;
+
+  template< typename Arg0 , typename ... Args >
+  constexpr explicit
+  dimension_extent( Arg0 arg0 , Args ... args ) : next( arg0 , args... ) {}
+
+  constexpr ValueType get_value( unsigned i ) const noexcept
+    { return I == i ? value : next::get_value(i); }
+
+  constexpr ValueType get_size() const noexcept
+    { return value * next::get_size(); }
+};
+
+template< unsigned I , typename ValueType , size_t ... Tail >
+struct dimension_extent< I , ValueType , 0 , Tail ... >
+  : dimension_extent< I + 1 , ValueType , Tail ... >
+{
+  using next = dimension_extent< I + 1 , ValueType , Tail ... > ;
+
+  enum : unsigned  { rank_dynamic = next::rank_dynamic + 1 };
+  enum : ValueType { value_static = static_cast<ValueType>(0) };
+  ValueType value ;
+
+  template< unsigned J > using extent = typename
+    std::conditional< J == I
+                    , dimension_extent
+                    , typename next::template extent<J>
+                    >::type ;
+
+  constexpr dimension_extent() noexcept : next() , value(0) {}
+  constexpr dimension_extent( dimension_extent && ) = default ;
+  constexpr dimension_extent( dimension_extent const & ) = default ;
+  dimension_extent & operator = ( dimension_extent const & ) = default ;
+
+  template< typename Arg0 , typename ... Args >
+  constexpr explicit
+  dimension_extent( Arg0 arg0 , Args ... args ) : next(args...), value(arg0) {}
+
+  constexpr ValueType get_value( unsigned i ) const noexcept
+    { return I == i ? value : next::get_value(i); }
+
+  constexpr ValueType get_size() const noexcept
+    { return value * next::get_size(); }
+};
+
+}}}} // std::experimental::array_property::detail
+
+#endif // #ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DIMENSION_HELPER_HEADER
+
