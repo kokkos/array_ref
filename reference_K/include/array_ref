@@ -75,7 +75,7 @@ private:
   template< unsigned J , typename T , typename ... IntegralType >
   constexpr bool check_bounds( T i , IntegralType ... tail ) const noexcept
     {
-      return 0 <= i && i < base::template get<J>::extent &&
+      return 0 <= i && i < base::template extent<J>::value &&
       dimension_typed::template check_bounds<J+1>( tail ... );
     }
 

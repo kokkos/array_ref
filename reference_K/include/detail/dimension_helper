@@ -86,6 +86,15 @@ struct dimension_extent< I , ValueType >
   constexpr ValueType get_value( unsigned ) const noexcept { return value ; }
 
   constexpr ValueType get_size() const noexcept { return value ; }
+
+  constexpr dimension_extent() = default ;
+  constexpr dimension_extent( dimension_extent && ) = default ;
+  constexpr dimension_extent( dimension_extent const & ) = default ;
+  dimension_extent & operator = ( dimension_extent const & ) = default ;
+
+  template< typename ... Args >
+  constexpr explicit
+  dimension_extent( Args const & ... args ) {}
 };
 
 template< unsigned I , typename ValueType , size_t Head , size_t ... Tail >
@@ -111,7 +120,7 @@ struct dimension_extent< I , ValueType , Head , Tail ... >
 
   template< typename Arg0 , typename ... Args >
   constexpr explicit
-  dimension_extent( Arg0 arg0 , Args ... args ) : next( arg0 , args... ) {}
+  dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next( arg0 , args... ) {}
 
   constexpr ValueType get_value( unsigned i ) const noexcept
     { return I == i ? value : next::get_value(i); }
@@ -143,7 +152,7 @@ struct dimension_extent< I , ValueType , 0 , Tail ... >
 
   template< typename Arg0 , typename ... Args >
   constexpr explicit
-  dimension_extent( Arg0 arg0 , Args ... args ) : next(args...), value(arg0) {}
+  dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next(args...), value(arg0) {}
 
   constexpr ValueType get_value( unsigned i ) const noexcept
     { return I == i ? value : next::get_value(i); }

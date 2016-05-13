@@ -100,6 +100,42 @@ void test_dimension_constexpr()
   static_assert( dim_int_07_07[11] == 0 , "" );
   static_assert( dim_int_07_07[12] == (2*13) , "" );
   static_assert( dim_int_07_07[13] == 0 , "" );
+
+  constexpr dim_int_07_07_t dim_int_07_07_value( 2*2 , 2*4 , 2*6 , 2*8 , 2*10 , 2*12 , 2*14 );
+
+  static_assert( dim_int_07_07_value[0] == (2*1) , "" );
+  static_assert( dim_int_07_07_value[1] == (2*2) , "" );
+  static_assert( dim_int_07_07_value[2] == (2*3) , "" );
+  static_assert( dim_int_07_07_value[3] == (2*4) , "" );
+  static_assert( dim_int_07_07_value[4] == (2*5) , "" );
+  static_assert( dim_int_07_07_value[5] == (2*6) , "" );
+  static_assert( dim_int_07_07_value[6] == (2*7) , "" );
+  static_assert( dim_int_07_07_value[7] == (2*8) , "" );
+  static_assert( dim_int_07_07_value[8] == (2*9) , "" );
+  static_assert( dim_int_07_07_value[9] == (2*10) , "" );
+  static_assert( dim_int_07_07_value[10] == (2*11) , "" );
+  static_assert( dim_int_07_07_value[11] == (2*12) , "" );
+  static_assert( dim_int_07_07_value[12] == (2*13) , "" );
+  static_assert( dim_int_07_07_value[13] == (2*14) , "" );
+
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<0>::value == (2*1) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<1>::value == (2*2) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<2>::value == (2*3) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<3>::value == (2*4) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<4>::value == (2*5) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<5>::value == (2*6) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<6>::value == (2*7) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<7>::value == (2*8) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<8>::value == (2*9) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<9>::value == (2*10) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<10>::value == (2*11) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<11>::value == (2*12) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<12>::value == (2*13) , "" );
+  static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<13>::value == (2*14) , "" );
+
+  static_assert( dim_int_07_07_value.in_bounds(1,2,3,4,5,6,7,8,9,10,11,12,13) , "" );
+  static_assert( ! dim_int_07_07_value.in_bounds(1,2,3,4,5,6,7,8,9,10,11,12,30) , "" );
+
 }
 
 int main()
