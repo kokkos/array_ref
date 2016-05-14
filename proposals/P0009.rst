@@ -1338,8 +1338,8 @@ a multi-index space to an integral range.
 |   template< typename DimensionType >
 |   struct mapping {
 |
-|     template< typename ... IntegralArgs >
-|     constexpr size_type offset( IntegralArgs ... indices ) const noexcept ;
+|     template< typename ... Integral >
+|     constexpr size_type operator()( Integral ... indices ) const noexcept ;
 |
 |     static constexpr bool is_always_regular = *layout specific* ;
 |     static constexpr bool is_always_contiguous = *layout specific* ;
@@ -1357,8 +1357,8 @@ a multi-index space to an integral range.
 |     constexpr mapping();
 |     constexpr mapping( mapping const &);
 |     constexpr mapping( mapping && );
-|     constexpr mapping & operator = ( mapping const &);
-|     constexpr mapping & operator = ( mapping && );
+|     mapping & operator = ( mapping const &);
+|     mapping & operator = ( mapping && );
 |
 |     constexpr explicit mapping( *layout_concept* const & );
 |

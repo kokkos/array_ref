@@ -136,12 +136,26 @@ template< typename Dimension >
 struct mapping {
 public:
 
+  // TYPES
+
+  using size_type  = typename Dimension::size_type ;
   using value_type = typename Dimension::value_type ;
 
 private:
 
-
   Dimension const m_dim ;
+
+  template< unsigned I >
+  constexpr value_type str( size_type i ) const noexcept
+    {
+      // Start the product when i < I
+      // Multiply to the right until the end.
+
+      return ( i < I ? m_dim.Dimension::template extent<I>::value : 1 ) *
+             ( I + 1 < Dimension::rank()
+               ? mapping::template str<(I+1<Dimension::rank()?I+1:I)>(i)
+               : 1 );
+    }
 
   template< unsigned I >
   constexpr value_type offset( value_type sum ) const noexcept
@@ -152,12 +166,56 @@ private:
   offset( value_type sum , IR ir , Arg ... arg ) const noexcept
     {
       // Guard extent extraneous zeros in the tail.
-      return I ? mapping::template offset<(I?I-1:0)>( ir + m_dim.Dimension::template get< Dimension::rank() - I >::extent * sum , arg... ) : sum ;
+      return I ? mapping::template offset<(I?I-1:0)>( ir + m_dim.Dimension::template extent< Dimension::rank() - I >::value * sum , arg... ) : sum ;
     }
 
 public:
 
+  // OBSERVERS
 
+  static constexpr bool is_always_regular = true ;
+  static constexpr bool is_always_contiguous = true ;
+
+  constexpr bool is_regular() const noexcept
+    { return is_always_regular ; }
+
+  constexpr bool is_contiguous() const noexcept
+    { return is_always_contiguous ; }
+
+  Dimension const & dimension() const noexcept
+    { return m_dim ; }
+
+  constexpr value_type span() const noexcept
+    { return m_dim.size(); }
+
+  constexpr value_type stride( size_type i ) const noexcept
+    { return mapping::template str<0>(i); }
+
+  // CTOR
+
+  constexpr mapping() noexcept = default ;
+
+  constexpr explicit mapping( Dimension const & D ) noexcept : m_dim(D) {}
+
+  // OPERATOR
+
+  template< typename ... Integral >
+  constexpr typename std::enable_if
+    < array_property::detail::pack_is_integral< Integral ... >::value &&
+      Dimension::rank() == 0
+    , typename Dimension::value_type 
+    >::type operator()
+    ( Integral const & ... indices ) const noexcept
+    { return 0 ; } 
+
+  template< typename I0 , typename ... Integral >
+  constexpr typename std::enable_if
+    < array_property::detail::pack_is_integral< I0 , Integral ... >::value &&
+      0 < Dimension::rank()
+    , typename Dimension::value_type 
+    >::type operator()
+    ( I0 const & i0 , Integral const & ... indices ) const noexcept
+    { return mapping::template offset< Dimension::rank() - 1 >(i0,indices...); }
 };
 
 };
