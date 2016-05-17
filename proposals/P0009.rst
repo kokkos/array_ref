@@ -4,7 +4,7 @@ D0009r2 : Polymorphic Multidimensional Array Reference
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
 :Number: D0009r2
-:Date: 2016-03-01
+:Date: 2016-05-27
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -12,10 +12,6 @@ D0009r2 : Polymorphic Multidimensional Array Reference
 :Contact: balelbach@lbl.gov
 :Author: Christian Trott
 :Contact: crtrott@sandia.gov
-:Author: Juan Alday
-:Contact: juanalday@gmail.com
-:Author: Jesse Perla
-:Contact: jesse.perla@ubc.ca
 :Author: Mauro Bianco
 :Contact: mbianco@cscs.ch
 :Author: Robin Maffeo
@@ -26,462 +22,354 @@ D0009r2 : Polymorphic Multidimensional Array Reference
 :Audience: Evolution Working Group (EWG) for concise array declaration
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
+
+
++------------+-------------------------------------------------------------+
+| **Revision History**                                                     |
++------------+-------------------------------------------------------------+
+| P0009r0    | Original multidimensional array reference paper with        |
+|            | motivation, specification, and examples.                    |
++------------+-------------------------------------------------------------+
+| P0009r1    | Revised with renaming from ``view`` to ``array_ref``        |
+|            | and allow unbounded rank through variadic arguments.        |
++------------+-------------------------------------------------------------+
+| P0009r2    | Adding details for layout mapping.                          |
+| *(current)*| Move motivation, examples, and relaxed array declaration    |
+|            | to separate papers.                                         |
++------------+-------------------------------------------------------------+
+| **References**                                                           |
++------------+-------------------------------------------------------------+
+| P0331      | Multidimensional array reference motivation and examples    |
++------------+-------------------------------------------------------------+
+| P0332      | Relaxed array declaration                                   |
++------------+-------------------------------------------------------------+
+| P0122      | span: bounds-safe views for sequences of objects            |
++------------+-------------------------------------------------------------+
+| earlier related papers: N4512, N4355, N4300, N4222                       |
++------------+-------------------------------------------------------------+
+
 .. sectnum::
 
-******************************************************************
-Rationale for polymorphic multidimensional array reference
-******************************************************************
-
-Multidimensional arrays are a foundational data structure
-for science and engineering codes, as demonstrated by their
-extensive use in FORTRAN for five decades.
-A *multidimensional array reference* is a reference to a memory extent
-through a **layout** mapping from a multi-index space (domain) to
-that extent (range).
-A array layout mapping may be bijective as in the case of a traditional
-multidimensional array, injective as in the case of a subarray, or
-surjective to express symmetry.
-
-Traditional layout mappings have been specfied as part of the language.
-For example, FORTRAN specifies *column major* layout and
-C specifies *row major* layout.
-Such a language-imposed specification requires signficant code refactoring
-to change an array's layout, and requires significant code complexity to
-implement non-traditional layouts such as tiling in modern linear algebra
-or structured grid application domains.  Such layout changes are required
-to adapt and optimize code for varying computer architectures; for example,
-to change a code from *array of structures* to *structure of arrays*.
-Furthermore, multiple versions of code must be maintained for each required layout.
-
-A multidimensional array reference abstraction
-with a polymorphic layout is required
-to enable changing array layouts without extensive code refactoring and
-maintenance of functionally redundant code.
-Layout polymorphism is a critical capability; however, it is not the only
-beneficial form of polymorphism.
-
-The Kokkos library (github.com/kokkos/kokkos) implements
-multidimensional array references with polymorphic layout,
-and other access properties as well.
-Until recently the Kokkos implementation was limited
-to C++1998 standard and is incrementally being refactored
-to C++2011 standard.
-Additionally, there is a standalone reference implementation of this proposal
-which is publicly available on github (github.com/brycelelbach/array_ref).
-
-******************************************************************
-Extensibility beyond multdimensional array layout
-******************************************************************
-
-The polymorphic **array_ref** abstraction and interface has utility
-well beyond the multidimensional array layout property.
-Other planned and prototyped properties include specification
-of which *memory space* within a heterogeneous memory system
-the referenced data resides on and algorithmic access intent properties.
-Examples of access intent properties include
-
-  1. *read-only random with locality* such that member queries are
-     performed through GPU texture cache hardware for GPU memory spaces,
-  2. *atomic* such that member access operations are overloaded
-     via proxy objects to atomic operations (see P0019, Atomic View),
-  3. *non-temporal* such that member access operations can be overloaded
-     with non-caching reads and writes, and
-  4. *restrict* to guarantee non-aliasing of referenced data within the
-     current context.
 
 ******************************************************************
 Array Reference
 ******************************************************************
 
-The proposed **array_ref** has template arguments for the data type of the array
-and a parameter pack for polymorphic properties of the reference.
+The header ``<array_ref>`` defines types and functions for
+a multidimensional array reference into a contiguous span of objects.
 
-  |  namespace std {
-  |  namespace experimental {
-  |    template< typename DataType , typename ... Properties >
-  |    struct array_ref ;
-  |  }}
-
-
-The complete proposed specification for **array_ref** is
-included at the end of this paper.
-We present the specification incrementally to
-convey the rational for this specification.
-
-An initial set of properties are proposed.
-These properties are defined by class types
-and reside in the **array_property** namespace,
-similar to the namespaces for **std::rel_ops** functions,
-**std::chrono** classes, or **std::regex_constants** constants.
-
-  | namespace std {
-  | namespace experimental {
-  | namespace array_property {
-  |   // array property classes
-  | }}}
-
-
-******************************************************************
-One-Dimensional Array
-******************************************************************
-
-A reference to a one-dimension array is anticipated to subsume the functionality
-of a pointer to a memory extent combined with an array length.
-For example, a one-dimensional array is passed to a function as follows.
+----------------------------------------------------------------------------
+Header ``<array_ref>`` synopsis
+----------------------------------------------------------------------------
 
 .. code-block:: c++
 
-  void foo( int A[] , size_t N ); // Traditional API
-  void foo( const int A[] , size_t N ); // Traditional API
+  namespace std {
+  namespace experimental {
 
-  void foo( array_ref< int[] > A ); // Reference API
-  void foo( array_ref< const int[] > A ); // Reference API
+    template< typename DataType , typename ... Properties >
+    struct array_ref ;
 
-  void bar()
-  {
-    enum { L = ... };
-    int buffer[ L ];
-    array_ref<int[]> A( buffer , L );
+    template< typename DataType , typename ... Properties , typename ... SliceSpecifiers >
+    array_ref< /* deduced */ >
+    subarray( const array_ref< DataType, Properties ... > & , SliceSpecifiers ... ) noexcept;
 
-    assert( L == A.size() );
-    assert( & A[0] == buffer );
+  }}
+  
 
-    foo( array );
-  }
+  namespace std {
+  namespace experimental {
+  namespace array_property {
 
+    template< typename >
+    struct is_array_property /* = std::integral_constant<bool,?> */ ;
+
+    template< typename T >
+    using is_array_property_v = is_array_property<T>::value ;
+
+    // array dimension property
+    template < typename IntegralType , IntegralType ... Dims >
+    struct dimension_typed ;
+
+    template< size_t ... Dims >
+    using dimension = dimension_typed< size_t , Dims ... > ;
+
+    // array layout property
+    struct layout_right ;
+    struct layout_left ;
+    struct layout_stride ;
+
+    template <typename T> struct is_layout ;
+    template <typename T> constexpr bool is_layout_v = is_layout<T>::value;
+
+    // bounds checking property
+    template< bool Enable >
+    struct bounds_check_if ;
+
+    using bounds_check = bounds_check_if< true > ;
+
+    // Assignability property
+    template< class array_ref_V , class array_ref_U >
+    struct is_assignable /* : std::integral_constant<bool,?> {} */ ;
+
+    template < class array_ref_V , class array_ref_U >
+    using is_assignable_v = is_assignable< array_ref_V , array_ref_U >::value ;
+
+    // subarray support
+    struct all_type {};
+    constexpr all_type all = all_type();
+
+  }}}
 ..
 
-The *const-ness* of an **array_ref** is analogous to the *const-ness*
-of a pointer.
-A **const array_ref<D>** is similar to a const-pointer in that the **array_ref**
-may not be modifid but the referenced extent of memory may be modified.
-A **array_ref<const D>** is similar to a pointer-to-const in that the
-referenced extent of memory may not be modified. These are the same *const-ness*
-semantics of **unique_ptr** and **shared_ptr**. 
 
-The **T[]** syntax has precedence in the standard; **unique_ptr** supports this
-syntax to denote a **unique_ptr** which manages the lifetime of a dynamically
-allocated array of objects.
+----------------------------------------------------------------------------
+Layout Mapping
+----------------------------------------------------------------------------
 
-***********************************************************************
-Traditional Multidimensional Array with Explicit Dimensions
-***********************************************************************
+The multidimensional array reference ``array_ref``
+maps multi-indices to objects by composing a
+*layout mapping* with a sequence of objects.
+The *domain* of a layout mapping is multidimensional index space
+defined by the Cartesian product of integral extents,
+``[0..extent<0>)x[0..extent<1>)x...``.
+The *codomain* of a layout mapping is a subset of span of
+integer values.
 
-A traditional multidimensional array with explicit dimensions
-(for example, an array of 3x3 tensors) is passed to a function as follows.
 
-.. code-block:: c++
-
-  void foo( double A[][3][3] , size_t N0 ); // Traditional API
-  void foo( array_ref< double[][3][3] > A ); // Reference API
-
-  void bar()
-  {
-    enum { L = ... };
-    int buffer[ L * 3 * 3 ];
-    array_ref< double[][3][3] > A( buffer , L );
-
-    assert( 3 == A.rank() );
-    assert( L == A.extent(0) );
-    assert( 3 == A.extent(1) );
-    assert( 3 == A.extent(2) );
-    assert( A.size() == A.extent(0) * A.extent(1) * A.extent(2) );
-    assert( & A(0,0,0) == buffer );
-
-    foo( A );
-  }
-
-..
-
-********************************************************************************
-Multidimensional Array with Multiple Implicit Dimensions
-********************************************************************************
-
-The current multidimensional array type declaration in **n4567 8.3.4.p3**
-restricts array declarations such that only the leading dimension
-may be implicit.
-Multidimensional arrays with multiple implicit dimensions as well as
-explicit dimensions are supported with the **dimension** property.
-The dimension property uses the "magic value" zero to denote an
-implicit dimension.
-The "magic value" of zero is chosen for consistency with **std::extent**.
+Multidimensional Index Space
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
-  array_ref< int[][3] > x ;
+  namespace std {
+  namespace experimental {
+  namespace array_property {
+  
+  template < typename IntegralType , IntegralType ... Dims>
+  struct dimension_typed {
+    // types
+  
+    using size_type  = /* implementation-defined */ ;
+    using value_type = IntegralType ;
+  
+    // constructors, copy, assignment, destructor
+  
+    constexpr dimension_typed() noexcept ;
 
-  assert( x.extent(0) == 0 );
-  assert( x.extent(1) == 3 );
+    template <typename... IntegralArgs>
+    constexpr dimension_typed(IntegralArgs... dynamic_dims) noexcept;
+  
+    constexpr dimension_typed(dimension_typed && rhs) noexcept ;
+    constexpr dimension_typed(dimension_typed const& rhs) noexcept ;
+    dimension_typed & operator=(dimension_typed && rhs) noexcept ;
+    dimension_typed & operator=(const dimension_typed & rhs) noexcept ;
 
-  assert( extent< int[][3] , 0 >::value == 0 );
-  assert( extent< int[][3] , 1 >::value == 0 );
+    ~dimension();
+  
+    // observers
 
-  array_ref< int , array_property::dimension<0,0,3> > y ;
-  assert( y.extent(0) == 0 );
-  assert( y.extent(1) == 0 );
-  assert( y.extent(2) == 3 );
+    static constexpr size_type rank() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
 
-  array_ref< int , array_property::dimension<0,0,3> > z(ptr,N0,N1);
-  assert( z.extent(0) == N0 );
-  assert( z.extent(1) == N1 );
-  assert( z.extent(2) == 3 );
+    template< size_type ith >
+    static constexpr value_type static_extent() noexcept ;
+
+    constexpr value_type extent( size_type ith ) const noexcept ;
+
+    constexpr value_type size() const noexcept ;
+  };
+  
+  }}}
 
 ..
 
 
-Preferred Syntax
-------------------------------------------------------------------------------
+| ``template < typename IntegralType , IntegralType ... Dims>``
+| ``struct dimension_typed``
 
-We prefer the following concise and intuitive syntax for arrays
-with multiple implict dimensions.
+  Requires: ``is_integral_v<IntegralType>`` and ``( 0 <= Dims )...``.
 
-.. code-block:: c++
+  Effects:  Each non-zero ``Dims`` denotes a static extent.
+  Each zero ``Dims`` denotes a dynamic extent..
+  ``rank() == sizeof...(IntegralType)``.
+  ``rank_dynamic()`` is the number of zero valued members of ``Dims...``.
 
-  array_ref< int[][][3] > y ; // concise intuitive syntax
+``constexpr dimension_typed() noexcept``
 
-..
+  Effects: Constructs a ``dimension_typed`` object such that
+  the value of the ith member of ``Dims``, denoted by ``Dims[ith]``,
+  is ``Dims[ith] == operator()[ith]``. 
 
-However, this syntax requires a
-`relaxation of the current multidimensional array type declaration`_
-in **n4567 8.3.4.p3**.
-Furthermore, this concise and intuitive syntax eliminates the need
-for ``array_property::dimension<...>`` and the associated "magic value"
-of zero to denote an implicit dimension.
+| ``template< typename ... IntegralArgs >``
+| ``constexpr dimension_typed( IntegralArgs ... dynamic_dim ) noexcept``
 
-******************************************************************
-Array Reference Properties
-******************************************************************
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
+  Each ``dynamic_dims`` is non-negative.
+  ``sizeof...(IntegralArgs) == rank_dynamic()``.
 
-Layout Polymorphism
-------------------------------------------------------------------------------
+  Effects: Constructs a ``dimension_typed`` object such that
+  the value of each dynamic extent is initialized by the
+  corresponding value from ``dynamic_dims...``.
 
-The **array_ref::operator()** maps the input multi-index from the array's
-cartesian product multi-index *domain* space to a member in the array's *range* space.
-This is the **layout** mapping for the referenced array.
-For natively declared multidimensional arrays the layout mapping
-is defined to conform to treating the multidimensional array as
-an *array of arrays of arrays ...*; i.e., the size and span are
-equal and the strides increase from right-to-left (the layout specified in the
-C language).
-In the FORTRAN language defines layout mapping with strides
-increasing from left-to-right.
-These *native* layout mappings are only two of many possible layouts.
-For example, the *basic linear algebra subprograms (BLAS)* standard
-defines dense matrix layout mapping with padding of the leading dimension,
-requiring both dimensions and **LDA** parameters to fully declare a matrix layout.
+| ``template< size_type ith >``
+| ``static constexpr value_type static_extent() noexcept ;``
+
+  Requires: ``0 <= ith``.
+
+  Returns: When ``ith < sizeof...(Dims)`` value of the
+  *ith* member of ``Dims...``, otherwise 1.
+
+``constexpr value_type extent(size_type ith) const noexcept``
+
+  Requires: ``0 <= ith``.
+
+  Returns: When ``ith < rank()`` the *ith* extent, otherwise 1.
+
+``constexpr value_type size() const noexcept``
+
+  Returns: Product of the extents.
 
 
-A property template parameter specifies a layout mapping.
-If this property is omitted the layout mapping of the array reference 
-conforms to a corresponding natively declared multidimensional array
-as if implicit dimensions were declared explicitly.
-The default layout is *regular* - the distance is constant between
-entries when a single index of the multi-index is incremented.
-This distance is the *stride* of the corresponding dimension.
-The default layout mapping is bijective and the stride increases
-monotonically from the right most to the left most dimension.
+Layout Mapping Concept
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
-  // The default layout mapping of a rank-four multidimensional
-  // array is as if implemented as follows.
+  struct /* layout_concept */ {
+ 
+    template< typename DimensionType >
+    struct mapping : DimensionType {
 
-  template< size_t N0 , size_t N1 , size_t N2 , size_t N3 >
-  size_t native_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
-    {
-      return i0 * N3 * N2 * N1 // stride == N3 * N2 * N1
-           + i1 * N3 * N2      // stride == N3 * N2
-           + i2 * N3           // stride == N3
-           + i3 ;              // stride == 1
-    } 
+      // types and constants
 
-..
+      static constexpr bool is_always_unique     = /* layout specific */ ;
+      static constexpr bool is_always_contiguous = /* layout specific */ ;
+      static constexpr bool is_always_regular    = /* layout specific */ ;
 
-An initial set of layout properties are
-**layout_right**, **layout_left**, **layout_order**,
-and **layout_stride**,
+      // constructors, copy, assignment, destructor
+ 
+      constexpr mapping() noexcept ;
+      constexpr mapping( mapping && ) noexcept ;
+      constexpr mapping( mapping const &) noexcept ;
+      mapping & operator = ( mapping && ) noexcept ;
+      mapping & operator = ( mapping const &) noexcept ;
+ 
+      constexpr explicit mapping( layout_concept const & );
 
-  |  namespace std {
-  |  namespace experimental {
-  |  namespace array_property {
-  |    struct layout_right ;
-  |    struct layout_left ;
-  |    template< unsigned ... > struct layout_order ;
-  |    struct layout_stride ;
-  |  }}}
+      template< typename ... IntegralArgs >
+      constexpr mapping( IntegralArgs ... dynamic_dimensions );
 
+      // observers
+ 
+      constexpr bool is_unique() const noexcept ;
+      constexpr bool is_contiguous() const noexcept ;
+      constexpr bool is_regular() noexcept ;
+ 
+      constexpr value_type span() const noexcept ;
+      constexpr value_type stride( size_type ith ) const noexcept ;
 
-.. code-block:: c++
-
-  typedef array_ref< int , array_property::dimension<0,0,3> > array_native ;
-
-  typedef array_ref< int , array_property::dimension<0,0,3>
-                         , array_property::layout_right > array_right ;
-
-  typedef array_ref< int , array_property::dimension<0,0,3>
-                         , array_property::layout_left >  array_left ;
-
-  assert( std::is_same< typename array_native::layout , void >::value );
-  assert( std::is_same< typename array_right ::layout ,
-                        array_property::layout_right >::value );
-  assert( std::is_same< typename array_left  ::layout ,
-                        array_property::layout_left >::value );
-
-  assert( array_native::is_always_regular::value );
-  assert( array_right ::is_always_regular::value );
-  assert( array_left  ::is_always_regular::value );
+      // mapping operator
+ 
+      template< typename ... IntegralArgs >
+      constexpr value_type operator()( IntegralArgs ... indices ) const noexcept ;
+    };
+  };
 
 ..
 
-A **void** (*a.k.a.*, default or native) mapping is regular and bijective with
-strides increasing from increasing from right most to left most dimension.
-A **layout_right** mapping is regular and injective (may have padding) with
-strides increasing from right most to left most dimension.
-A **layout_left** mapping is regular and injective (may have padding) with
-strides increasing from left most to right most dimension.
-A **layout_order** mapping is regular and injective (may have padding)
-with stride ordering defined by the template parameter pack.
-A **layout_stride** mapping is regular; however, it might
-not be injective or surjective.
+| ``template< typename DimensionType >``
+| ``struct mapping : DimensionType``
 
-.. code-block:: c++
+  Requires: ``DimensionType`` is ``dimension_typed``.
 
-  // The right and left layout mapping of a rank-four
-  // multidimensional array could be is as if implemented
-  // as follows.  Note that padding is allowed but not required.
+  Effects: The domain of the mapping is defined by a ``DimensionType`` object.
+  
 
-  template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
-  size_t right_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
-    {
-      const size_t S3 = // stride of dimension 3
-      const size_t P3 = // padding of dimension 3
-      const size_t P2 = // padding of dimension 2
-      const size_t P1 = // padding of dimension 1
-      return i0 * S3 * ( P3 + N3 ) * ( P2 + N2 ) * ( P1 + N1 )
-           + i1 * S3 * ( P3 + N3 ) * ( P2 + N2 )
-           + i2 * S3 * ( P3 + N3 )
-           + i3 * S3 ;
-    }
+``constexpr value_type mapping::span() const noexcept ;``
 
-  template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
-  size_t left_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
-    {
-      const size_t S0 = // stride of dimension 0
-      const size_t P0 = // padding of dimension 0
-      const size_t P1 = // padding of dimension 1
-      const size_t P2 = // padding of dimension 2
-      return i0 * S0
-           + i1 * S0 * ( P0 + N0 )
-           + i2 * S0 * ( P0 + N0 ) * ( P1 + N1 )
-           + i3 * S0 * ( P0 + N0 ) * ( P1 + N1 ) * ( P2 + N2 );
-    }
-
-..
-
-Extensible Layout Polymorphism
-------------------------------------------------------------------------------
-
-The **array_ref** is intended to be extensible such that a user may supply
-a customized layout mapping.
-A user supplied customized layout mapping will be required to conform
-to a specified interface; *a.k.a.*, a C++ Concept.
-Details of this extension point will be included in a subsequent
-proposal.
-Our current extensibility strategy is for
-a user supplied layout property to implement an offset mapping.
+  Returns: The upper bound for a span of integral values
+  ``[0..span())`` such that the codomain of the mapping
+  is a subset of this span.
 
 
-*Motivation:* An important customized layout mapping is hierarchical tiling.
-This kind of layout mapping is used in dense linear algebra matrices and
-computations on Cartesian grids to improve the spatial locality
-of array entries.
-These mappings are bijective but are not regular.
-Computations on such multidimensional arrays typically iterate
-through tiles as *subarray* of the array.
+| ``static constexpr bool mapping::is_always_unique``
+| ``static constexpr bool mapping::is_always_contiguous``
+| ``static constexpr bool mapping::is_always_regular``
+| ``constexpr bool mapping::is_unique() const noexcept ;``
+| ``constexpr bool mapping::is_contiguous() const noexcept ;``
+| ``constexpr bool mapping::is_regular() const noexcept ;``
 
-.. code-block:: c++
+  A layout mapping is *unique* if each multi-index is mapped
+  to a unique value within ``[0..span())``.
 
-  template< size_t N0 , size_t N1 , size_t N2 >
-  size_t tiling_left_mapping( size_t i0 , size_t i1 , size_t i2 )
-  {
-    static constexpr size_t T = // cube tile size
-    constexpr size_t T0 = ( N0 + T - 1 ) / T ; // tiles in dimension 0
-    constexpr size_t T1 = ( N1 + T - 1 ) / T ; // tiles in dimension 1
-    constexpr size_t T2 = ( N2 + T - 1 ) / T ; // tiles in dimension 2
+  A layout mapping is *contiguous* if the codomain is equal to ``[0..span())``.
 
-    // offset within tile + offset to tile
-    return ( i0 % T ) + T * ( i1 % T ) + T * T * ( i2 % T )
-         + T * T * T * ( ( i0 / T ) + T0 * ( ( i1 / T ) + T1 * ( i2 / T ) ) );
-  }
+  A layout mapping that is unique and contiguous is *bijective*
+  and has ``size() == span()``.
 
-..
+  A *regular* layout mapping ``M`` has constant striding
+  between multi-index coordinates.
+  Let ``indices_V...`` and ``indices_U...`` be multi-indices
+  in the domain space such that all coordinates are equal except for 
+  the *ith* coordinate where ``indices_V[ith] = indices_U[ith] + 1``.
+  Then ``M.stride(ith) = M( indices_V... ) - M( indices_U... )``
+  is constant for all coordinates.
 
-Note that a tiled layout mapping is irregular and if padding is 
-required to align with tile boundarries then the span will exceed the size.
-A customized layout mapping will have slightly different requirements
-depending on whether the layout is regular or irregular.
+``constexpr value_type stride( size_type ith ) const noexcept ;``
 
+  Requires: ``is_regular()``.
 
-Flexibility and Extensibility
-------------------------------------------------------------------------------
-
-One or more array properties of **void** are acceptable and have no effect.
-This allows user code to define a template argument list of potential
-array properties and then enable/disable a particular property
-by conditionally setting it to **void**.  For example:
-
-.. code-block:: c++
-
-  using layout = std::conditional<
-      ALLOW_PADDING , array_property::layout_right , void
-  >::type ;
-
-  // If ALLOW_PADDING then use layout_right else use native layout
-  typedef array< int , array_property::dimension<0,0,3> , layout > MyType ;
-
-..
+  Returns: When ``r < rank()`` the distance between members
+  when the index of coordinate ``r`` is incremented by one, otherwise 0.
 
 
-Bounds Checking
-------------------------------------------------------------------------------
+``template< typename ... IntegralArgs >``
+``constexpr size_type mapping::operator()( IntegralArgs ... indices ) const noexcept ;``
 
-Array bounds checking is an invaluable tool for debugging user code.
-This functionality traditionally requires global injection through
-special compiler support.
-In large, long running code global array bounds checking introduces
-a significant overhead that impedes the debugging process.
-A member access array bounds checking array property allows
-the selective injection of array bounds checking and removes
-the need for special compiler support.
-A high quality implementation of bounds checking would output the
-array bounds, multi-index, and traceback of where the array bounds violation occured.
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
+  ``rank() <= sizeof...(IntegralArgs)``.
+  The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
+  is valid: ``0 <= indices[ith] < extent(ith)``.
 
-.. code-block:: c++
+  Returns: The value of the mapping from the dimension domain space
+  to the ``[0..span())`` range space.
 
-  // User enables array bounds checking for selected array_ref.
+  Remark: An implementation may have rank-specific overloads to better
+  enable optimization of the member access operator.
+  Since ``extent(ith) == 1`` for ``rank() <= ith`` then extra zero-value
+  indices are valid.
 
-  using x_property = typename std::conditional<
-      ENABLE_ARRAY_BOUNDS_CHECKING , array_property::bounds_checking , void
-  >::type ;
 
-  array_ref< int , array_property::dimension<0,0,3> , x_property >
-      x(ptr,N0,N1);
+Standard Layouts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-..
+``array_property::layout_right::mapping``
+
+  The ``layout_right::mapping`` is always bijective, regular,
+  and its strides monotonically increase from right to left.
+  Note that the stride of the right-most coordinate is one,
+  ``stride( rank() - 1 ) == 1``.
+
+``array_property::layout_left::mapping``
+
+  The ``layout_left::mapping`` is always bijective, regular,
+  and its strides monotonically increase from left to right.
+  Note that the stride of the left-most coordinate is one,
+  ``stride(0) == 1``.
+  
+``array_property::layout_stride::mapping``
+
+  The ``layout_stride::mapping`` is always regular.
+
+  Remark: This is typically the layout of a
+  subarray obtained from a ``layout_left`` or ``layout_right`` array.
 
 
 
-******************************************************************
-Array Reference Specification
-******************************************************************
-
-Simple array properties include the array layout and if necessary 
-a **array_property::dimension** type for arrays with multiple implicit dimensions.
-Array reference properties are provided through a variadic template to 
-support extensibility of the array reference.
-Possible additional properties include array bounds checking,
-atomic access to members, memory space within a heterogeneous
-memory architecture, and user access pattern hints.
+----------------------------------------------------------------------------
+class template array_ref
+----------------------------------------------------------------------------
 
 .. code-block:: c++
 
@@ -490,30 +378,26 @@ memory architecture, and user access pattern hints.
   
   template <typename DataType, typename... Properties>
   struct array_ref {
-    ///////////////////////////////////////////////////////////////////////////
-    // TYPES
+    // types
   
-    using layout = // implementation-defined
+    using layout     = // deduced
+    using value_type = // deduced
+    using reference  = // deduced
+    using pointer    = // deduced
+    using size_type  = // deduced
 
-    using value_type = // implementation-defined 
-    using reference  = // implementation-defined 
-    using pointer    = // implementation-defined 
-    using size_type  = // implementation-defined 
-
-    using iterator               = // implementation-defined
-    using const_iterator         = // implementation-defined
+    using iterator               = // deduced
+    using const_iterator         = // deduced
     using reverse_iterator       = reverse_iterator<iterator> ;
     using const_reverse_iterator = reverse_iterator<const_iterator> ;
  
-    /////////////////////////////////////////////////////////////////////////// 
-    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+    // constructors, copy, assignment, and destructor
   
     constexpr array_ref() noexcept;
-
-    constexpr array_ref(array_ref&& rhs) noexcept = default;
-    constexpr array_ref(array_ref const& rhs) noexcept = default;
-    array_ref& operator=(array_ref&& rhs ) noexcept = default;
-    array_ref& operator=(array_ref const& rhs ) noexcept = default;
+    constexpr array_ref(array_ref&& rhs) noexcept ;
+    constexpr array_ref(array_ref const& rhs) noexcept ;
+    array_ref& operator=(array_ref&& rhs ) noexcept ;
+    array_ref& operator=(array_ref const& rhs ) noexcept ;
   
     template <typename... IntegralArgs>
     explicit constexpr array_ref(pointer p, IntegralArgs... dynamic_dims) noexcept;
@@ -522,11 +406,13 @@ memory architecture, and user access pattern hints.
 
     template <typename UType, typename ... UProperties>
     constexpr array_ref(array_ref<UType, UProperties...> const& rhs) noexcept;
+
     template <typename UType, typename ... UProperties>
     array_ref& operator=(array_ref<UType , UProperties...> const& rhs) noexcept;
+
+    ~array_ref() noexcept ;
   
-    /////////////////////////////////////////////////////////////////////////// 
-    // DOMAIN INDEX OBSERVERS: SPACE RANK, SIZE AND EXTENT
+    // observers of domain index space
   
     static constexpr size_type rank() noexcept;
     static constexpr size_type rank_dynamic() noexcept;
@@ -535,21 +421,26 @@ memory architecture, and user access pattern hints.
   
     constexpr size_type extent(size_type ith) const noexcept;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // LAYOUT MAPPING OBSERVERS
+    // observers of mapping from domain index space to range value space
 
-    static constexpr bool is_always_contiguous = // implementation defined
-    static constexpr bool is_always_regular    = // implementation defined
+    static constexpr bool is_always_unique     = /* deduced */ ;
+    static constexpr bool is_always_contiguous = /* deduced */ ;
+    static constexpr bool is_always_regular    = /* deduced */ ;
 
+    constexpr bool is_unique() const noexcept;
     constexpr bool is_contiguous() const noexcept;
-    static constexpr bool is_regular() noexcept;
+    constexpr bool is_regular() noexcept;
   
     constexpr size_type stride(size_type rank) const noexcept;
   
     constexpr size_type span() const noexcept;
   
-    /////////////////////////////////////////////////////////////////////////// 
-    // ELEMENT AND DATA ACCESS 
+    template <typename... IntegralArgs>
+    static constexpr size_type required_span( IntegralArgs ... dynamic_dims ) const noexcept;
+  
+    static constexpr size_type required_span( layout const & ) const noexcept;
+  
+    // element and data access
   
     constexpr pointer data() const noexcept;
   
@@ -558,8 +449,7 @@ memory architecture, and user access pattern hints.
   
     reference operator[](size_type idx) const noexcept;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // ITERATOR ACCESS SUPPORT, requires is_contiguous
+    // iterator support, requires is_contiguous
 
     constexpr iterator begin() const noexcept ;
     constexpr iterator end()   const noexcept ;
@@ -573,596 +463,373 @@ memory architecture, and user access pattern hints.
   
   }}
   
-  namespace std {
-  namespace experimental {
-  namespace array_property {
-  
-  struct layout_right;
-  struct layout_left;
-  template <size_t... Ordering> struct layout_order;
-  struct layout_stride;
-  
-  template <typename T> struct is_layout;
-  template <typename T> constexpr bool is_layout_v = is_layout<T>::value;
-  
-  template <typename T> struct is_regular;
-  template <typename T> constexpr bool is_regular_v = is_regular<T>::value;
-
-  template< class array_ref_U , class array_ref_V >
-  struct is_assignable : false_type {};
-
-  template< typename UT , typename ... UP , typename VT , typename ... VP >
-  struct is_assignable< array_ref<UT,UP...> , array_ref<VT,VP...> >
-    : integral_constant< bool , /* deduced */ > {}
-
-  template < class array_ref_U , class array_ref_V >
-  using is_assignable_v = is_assignable< array_ref_U , array_ref_V >::value ;
-
-
-  template <size_t... Dims>
-  struct dimension {
-    ///////////////////////////////////////////////////////////////////////////
-    // TYPES
-  
-    using value_type = // implementation-defined 
-    using size_type  = // implementation-defined 
-  
-    /////////////////////////////////////////////////////////////////////////// 
-    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
-  
-    constexpr dimension() noexcept;
-
-    template <typename... IntegralArgs>
-    constexpr dimension(IntegralArgs... dynamic_dims) noexcept;
-  
-    constexpr dimension(dimension&& rhs) noexcept = default;
-    constexpr dimension(dimension const& rhs) noexcept = default;
-    dimension& operator=(dimension&& rhs) noexcept = default;
-    dimension& operator=(const dimension& rhs) noexcept = default;
-  
-    /////////////////////////////////////////////////////////////////////////// 
-    // OBSERVERS: RANK, SIZE AND EXTENT 
-
-    static constexpr size_type rank() noexcept;
-    static constexpr size_type rank_dynamic() noexcept;
-
-    constexpr value_type operator[](size_type ith) const noexcept;
-  };
-  
-  }}}
-
 ..
 
-**Properties template parameter pack**
 
-An array_ref is given properties
-(such as ``layout_left``, ``layout_right``, and ``layout_stride``)
-through the ``Properties`` template parameter pack.
+Template arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  Effects: A ``void`` member in a ``Properties`` pack is ignored.
+``array_ref`` accepts the ``DataType`` and ``Properties...``
+template arguments.
+
+``DataType``
+
+  ``DataType`` declares the type of array elements and optionally
+  the dimension of the array, if those dimensions can be expressed
+  as an array type (8.3.4.p3).
+
+  Requires: The ``DataType`` argument is either an array type (8.3.4.p3)
+  or complete object type.
+
+``Properties...``
+
+  The ``Properties...`` argument is a pack of array properties. 
+
+  Requires: ``array_property::is_array_property_v< Properties >``
+  for every member of the pack.
+  If ``DataType`` is an array type then  ``Properties...``
+  shall not contain an ``array_property::dimension`` and the array
+  dimensions are deduced from ``DataType``.
 
 
-**Layout Properties**
+Array Dimensions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a layout property does not appear in the ``Properties`` pack
-the layout is ``void``.
+  The dimensions of an instantiated ``array_ref`` type are defined
+  by either the ``DataType`` array type (8.3.4.p3) or an 
+  ``array_property::dimension`` type in the ``Properties...`` pack.
 
-  Requires:  is_layout_v< void > == true,
-  is_layout_v< layout_right > == true,
-  is_layout_v< layout_left > == true,
-  is_layout_v< layout_stride > == true, and
-  is_layout_v< layout_order<...> > == true.
+  If ``DataType`` is an array type each declared extent ``[N]`` denotes
+  a static extent and each omitted extent ``[ ]`` denotes
+  a dynamic extent.
+  For example, ``array_ref<double[ ][3][8]>``
+  declares a rank-three array with
+  dynamic extent in coordinate zero,
+  static extent of 3 in coordinate one, and
+  static extent of 8 in coordinate two.
 
-  Requires:  is_regular_v< void > == true,
-  is_regular_v< layout_right > == true,
-  is_regular_v< layout_left > == true,
-  is_regular_v< layout_stride > == true, and
-  is_regular_v< layout_order<...> > == true.
+  If an ``array_property::dimension`` is given then each
+  positive integral value denotes a static extent and
+  each zero value denotes a dynamic extent.
+  For example, ``array_ref<double,array_property::dimension<0,3,8> >``
+  declares a rank-three array with
+  dynamic extent in coordinate zero,
+  static extent of 3 in coordinate one, and
+  static extent of 8 in coordinate two.
 
-  Requires:  At most one member of the ``Properties`` pack
-  is a layout property.
+  If ``DataType`` is a complete object type and no ``dimension``
+  is given then the array is rank-zero.
 
-  Effects:  ``array_ref::layout`` is the layout property
-  given in the ``Properties`` pack or ``void`` if no
-  layout property is given.
 
-  Effects:  Given a one of these regular layouts an
-  array_ref strides and layout mapping conform to the following.
+Types
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: c++
+``using layout``
 
-  using a_type = array_ref<DataType,Properties...> ;
+  Layout property of the array.
+  If ``Properties...`` does not include a layout property then
+  ``layout`` is ``void``.
 
-  a_type a( ptr , dims... );
+``using value_type``
 
-  if ( std::is_lvalue_reference_v< a_type::reference > && a_type::is_regular()
-     && 0 <= i && i <= a_type::rank() && 0 <= ji && ji < a.extent(i) - 1 ) {
-    assert( std::distance( & a(j0,...,ji,...) , & a(j0,...,ji+1,...) == a.stride(i) );
-  }
+  Type of the objects referenced by the array.
 
-  if ( std::is_same_v< a_type::layout , void > ) {
-    assert( a_type::is_regular() );
-    if ( i + 1 == a_type::rank() )
-      assert( a.stride(i) == 1 );
-    else if ( 0 < i )
-      assert( a.stride(i) == a.stride(i+1) * a.dimension(i+1) );
-  }
-  else if ( std::is_same_v< a_type::layout , layout_right > ) {
-    assert( a_type::is_regular() )
-    if ( i + 1 == a_type::rank() )
-      assert( a.stride(i) == 1 );
-    else if ( 0 < i )
-      assert( a.stride(i) >= a.stride(i+1) * a.dimension(i+1) );
-  }
-  else if ( std::is_same_v< a_type::layout , layout_left > ) {
-    assert( a_type::is_regular() )
-    if ( i == 0 && 0 < a.rank() )
-      assert( a.stride(i) == 1 );
-    else if ( i < a_type::rank() )
-      assert( a.stride(i) >= a.stride(i-1) * a.dimension(i-1) );
-  }
+  Remark: A likely implementation is
+  ``using value_type = typename std::remove_all_extents< DataType >::type``.
 
-..
-
-**array_property::layout_order< unsigned ... order >**
-
-  Requires: The members of ``order`` are the integers [ 0 , ``sizeof...(order)`` ).
-
-  Requires: When an ``array_ref`` has a ``layout_order`` property
-  then ``rank() == sizeof...(order)``.
-
-  Effects: The ``order`` pack specifies the ordering relationship of
-  dimensions in the mapping.
-
-.. code-block:: c++
-
-  constexpr unsigned i0 = /* [0, 3) */ ;
-  constexpr unsigned i1 = /* [0, 3)  and  != i1 */ ;
-  constexpr unsigned i2 = /* [0, 3)  and  != i1  and  != i2 */ ;
-
-  using a_type = array_ref<int[][3][4] , layout_order< i0 , i1 , i2 > > ;
-
-  assert( a_type::is_regular() );
-
-  a_type A( ptr , dims... );
-
-  assert( a.stride(i0) == 1 );
-  assert( a.stride(i1) >= a.stride(i0) * a.extent(i0) );
-  assert( a.stride(i2) >= a.stride(i1) * a.extent(i1) );
-
-..
-
-**Dimension Specification**
-
-The dimension specification of an array_ref may be given
-through the ``DataType`` template argument or through one of the
-``Properties`` template arguments. For example, the dimension
-specification for an array_ref with leading implicit dimension
-and a second explicit dimension is specified by either of the
-following declarations.
-
-.. code-block:: c++
-
-  array_ref< T [][3] >
-  array_ref< T , array_property::dimension< 0 , 3 > >
-
-..
-
-  Remark: When a dimension specification is part of the ``DataType``
-  the specification is limited by the valid
-  *multidimensional array type* declaration syntax (n4567 8.3.4.p3).
-  If a
-  `relaxation of the current multidimensional array type declaration`_
-  were made the ``array_property::dimension< ... >`` would be unnecessary and
-  eliminated from this proposal.
-
-  Requires: If ``std::extent< DataType >::value == 0`` then at most
-  one ``Properties`` template argument may be
-  ``array_property::dimension< ... >``.
-
-  Effects: When the dimension specification is given 
-  as part of the ``DataType`` then
-  an explicit dimension is specified by each ``[N]``,
-  an implicit dimension is specified by each ``[]``,
-  ``rank() == std::rank< DataType >::value``, and
-  ``extent(i) == std::extent< DataType , i >::value``
-  for ``i < rank()`` and default constructed array_ref.
-
-  Effects: When the dimension specification is given via
-  ``array_property::dimension< N0, N1 , ... >`` then
-  ``0 <= Nj`` for all j,
-  an explicit dimensions is specified by ``0 < Nj``
-  an implicit dimensions is specified by ``0 == Nj``
-  ``rank() ==`` number of arguments, and
-  ``extent(j) == Nj`` for ``j < rank()`` and
-  default constructed array_ref.
-
-  Requires: ``10 <= maximum_rank``
-
-  Effect: An implementation supports array references up to maximum_rank.
-
-  Remark: An array_ref implementation may use rank-specific optimizations.
-  As such an indefinite maximum rank may be impractical.  An implementation
-  must support at least this rank.
-
-**using layout=**
-
-  The layout type property that defaults to ``void``.
-
-**using value_type =**
-
-  The type of each element of the referenced array.
-
-  Remark: Likely implementation is ``typename std::remove_all_extents< DataType >::type``.
-
-**using reference =**
+``using reference``
 
   The type returned by the member access operator.
   Typically this will be ``value_type &``.
-  [Note: The reference type may be a proxy depending upon the ``Properties``.
+  [Note: The reference type may be a proxy depending upon  ``Properties...``.
   For example, if a property indicates that all member references
   are to be atomic then the reference type would be a
   proxy conforming to *atomic-view-concept* introduced in paper P0019.
   - end note]
 
-**using pointer =**
+``using pointer``
 
   The input type to a wrapping constructor.
+  Typically this will be ``value_type\*``.
 
-**using size_type =**
+``using size_type``
 
-  The type that counts the number of elements in the referenced array.
+  The type used to count the number of elements in the referenced array.
 
-| **using iterator =**
-| **using const_iterator =**
+| ``using iterator``
+| ``using const_iterator``
 
-**static constexpr size_type rank() noexcept**
+  The type used to iterate an array with contiguous elements.
 
-  Returns: The rank of the referenced array.
 
-**constexpr size_type extent( size_type ith ) const noexcept**
+Constructors, copy, assignment, destructor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  Returns: When ``0 <= ith < rank()`` the extent of dimension, otherwise 1.
-  A default constructed array_ref will have ``extent(ith) == 0``
-  for all dynamic dimensions.
+``constexpr array_ref() noexcept``
 
-**constexpr array_property::dimension<** *deduced* **> extents() const noexcept**
+  Effect: Construct a *null* ``array_ref`` with ``data() == nullptr``
+  and ``extent(i) == 0`` for all dynamic dimensions.
 
-  Returns: Extents of the array.
+``constexpr array_ref( const array_ref & rhs ) noexcept``
 
-**constexpr size_type size() const noexcept**
+  Effect: Construct an ``array_ref`` of the same span of objects
+  referenced by ``rhs``.
 
-  Returns: Cardinality of the index space; *i.e.*, the product of the extents.
+  Remark: There may be other ``Properties...`` dependent effects.
 
-**static constexpr bool is_always_contiguous =**
+``constexpr array_ref( array_ref && rhs ) noexcept``
 
-  If it can be statically deduced that the layout mapping is contiguous;
-  *i.e.*, if all members of the array occupy a contiguous span of memory.
+  Effect: Construct an ``array_ref`` the span of objects
+  referenced by ``rhs`` and then ``rhs`` is a *null* ``array_ref``.
 
-  Requires: If default layout then ``true == is_always_contiguous``.
+  Remark: There may be other ``Properties...`` dependent effects.
 
-**static constexpr bool is_always_regular =**
+| ``template< typename UType , typename ... UProperties >``
+| ``constexpr array_ref( const array_ref< UType , UProperties ... > & rhs ) noexcept``
 
-  True if it can be statically deduced that the layout mapping is regular;
-  *i.e.*, if there is a uniform stride between members when incrementing a
-  particular dereferencing index and holding all other indices fixed.
+  Requires:
+  ``array_properties::is_assignable_v< array_ref , array_ref< UType , UProperties ... > >``
+  Each static extent of ``*this`` is equal to the corresponding
+  extent of ``rhs``.
 
-  Requires: If default layout then ``true == is_always_regular``.
+  Effect: Construct an ``array_ref`` of the same span of objects
+  referenced by ``rhs``.
 
-**constexpr bool is_contiguous() const noexcept**
+  Remark: There may be other ``Properties...`` dependent effects.
 
-  Returns: True if all array members occupy a contiguous span of memory.
-  If ``is_always_contiguous`` then true.
+| ``template< typename UType , typename ... UProperties >``
+| ``array_ref & operator = ( const array_ref< UType , UProperties ... > & rhs ) noexcept``
 
-**static constexpr bool is_regular() noexcept**
+  Requires:
+  ``array_properties::is_assignable_v< array_ref , array_ref< UType , UProperties ... > >``.
+  Each static extent of ``*this`` is equal to the corresponding
+  extent of ``rhs``.
 
-  Returns: True if the layout mapping is regular.
-  If ``is_always_regular`` then true.
+  Effect: Construct an ``array_ref`` the span of objects
+  referenced by ``rhs`` and then ``rhs`` is a *null* ``array_ref``.
 
-| **template< typename IntegralType >**
-| **constexpr size_type stride( IntegralType index ) const noexcept**
+  Remark: There may be other ``Properties...`` dependent effects.
 
-  Requires: std::is_integral< IntegralType >::value
+``array_ref & operator = ( const array_ref & rhs ) noexcept``
 
-  Requires: is_regular()
+  Effect: Assigns ``this`` to reference the same span of objects
+  referenced  by ``rhs``.
 
-  Returns: When is_regular::value and ``0 <= r < rank()``
-  the distance between members when index ``r`` is incremented by one,
-  otherwise 0.
+  Remark: There may be other ``Properties...`` dependent effects.
 
-**constexpr size_type span() const noexcept**
+``array_ref & operator = ( array_ref && rhs ) noexcept = default``
 
-  Returns:  A distance that is at least maximum distance between any two
-  members of the array plus one. All member of the array reside in the span
-  ``[ data() , data() + span() )``.
+  Effect: Assigns ``this`` to reference the same span of objects
+  referenced by ``rhs`` and then ``rhs`` is a *null* ``array_ref``.
 
-  Remark: For a one-to-one layout mapping the span will equal the size.
+  Remark: There may be other ``Properties...`` dependent effects.
 
-| **template< typename ... IntegralArgs >**
-| **static constexpr size_type span( IntegralArgs ... dynamic_dims ) noexcept**
+| ``template< typename ... IntegralArgs >``
+| ``constexpr array_ref( pointer ptr , IntegralArgs ... dynamic_dims ) noexcept``
 
-  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``
-
-  Requires: All ``dynamic_dims`` parameters are non-negative. 
-
-  Returns: The span of the array reference if it were constructed with the implicit dimensions.
-
-
-**constexpr pointer data() const noexcept**
-
-  Requires: All members are in the range ``[ data() , data() + span() )``.
-
-  Returns: Pointer to the member with the minimum location.
-
-| **template< typename ... IntegralArgs >**
-| **reference operator()( IntegralArgs ... indices ) const noexcept**
-
-  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``
-
-  Requires: All ``indices`` parameters are non-negative. 
-
-  Requires: ``rank() == sizeof...(IntegralArgs)``
-
-  Requires: The ith argument *indices[i]** is in bounds;
-  *indices[i]* ``< extent(i)``.
-
-  Returns: A reference to the member referenced by the indices argument.
-
-  Remark: An implementation may have rank-specific overloads to better
-  enable optimization of the member access operator.
-
-.. code-block:: c++
-
-  template< typename ArrayRefType, typename I0 >
-  typename std::enable_if< ArrayRefType::rank() == 1
-                         , typename ArrayRefType::reference >::type
-  array_ref_index( I0 i0 ) noexcept ;
-
-  template< typename ArrayRefType, typename I0 , typename I1 >
-  typename std::enable_if< ArrayRefType::rank() == 2
-                         , typename ArrayRefType::reference >::type
-  array_ref_index( I0 i0 , I1 i1 ) noexcept ;
-
-  template< typename ArrayRefType, typename I0, typename I1, typename I2
-          , typename ... IntegralArgs >
-  typename std::enable_if< ArrayRefType::rank() == (sizeof...(IntegralArgs) + 3) 
-                         , typename ArrayRefType::reference >::type
-  array_ref_index( I0 i0, I1 i1, I2 i2, IntegralArgs ... indices ) noexcept ;
-
-  template< typename DataType , typename ... Properties >
-  struct array_ref {
-     template< typename ... IntegralArgs >
-     reference operator()( IntegralArgs ... indices ) const noexcept {
-       return array_ref_index<array_ref>(indices...);
-     }
-  };
-
-..
-
-| **template< typename IntegralType >**
-| **reference operator[]( IntegralType index ) const noexcept**
-
-  Requires: rank() == 1
-
-  Requires: is_integral< IntegralType >::value
-
-  Requires: 0 <= i < extent(0)
-
-  Returns: Reference to member denoted by index ``i``.
-
-  Remark:  Provides compatibility with traditional rank-one array member reference.
-
-  Remark:  It is recommended that the rank and type requirements be enforced
-  by conditionally enabling the operator.
-
-.. code-block:: c++
-
-  template< typename IntegralType >
-  typename std::enable_if<
-      std::is_integral< IntegralType >::value && 1 == rank() , reference
-  >::type
-  operator[]( const IntegralType & i ) const noexcept ;
-
-..
-
-| **constexpr iterator begin() const noexecept**
-| **constexpr iterator end() const noexecept**
-| **constexpr const_iterator cbegin() const noexecept**
-| **constexpr const_iterator cend() const noexecept**
-| **constexpr reverse_iterator rbegin() const noexecept**
-| **constexpr reverse_iterator rend() const noexecept**
-| **constexpr reverse_const_iterator crbegin() const noexecept**
-| **constexpr reverse_const_iterator crend() const noexecept**
-
-  Requires: ``true == is_contiguous()``
-
-  Returns: iterator for the members ``[data(),data()+span())``.
-
-  Remark: The order of iteration is unspecified and necessarily layout dependent.
-
-**~array_ref()**
-
-  Effect: Assigns ``this`` to be a *null* array_ref.
-
-  Remark: There may be other *property* dependent effects.
-
-**constexpr array_ref() noexcept**
-
-  Effect: Construct a *null* array_ref with extent(i) == 0
-  for all implicit dimensions and data() == nullptr.
-
-**constexpr array_ref( const array_ref & rhs ) noexcept = default**
-
-  Effect: Construct a array_ref of the same array referenced by ``rhs``.
-
-  Remark: There may be other *property* dependent effects.
-
-**array_ref & operator = ( const array_ref & rhs ) noexcept = default**
-
-  Effect: Assigns ``this`` to array_ref the same array referenced  by ``rhs``.
-
-  Remark: There may be other *property* dependent effects.
-
-**constexpr array_ref( array_ref && rhs ) noexcept = default**
-
-  Effect: Construct a array_ref of the array referenced by ``rhs`` and then ``rhs`` is *null* array_ref.
-
-  Remark: There may be other *property* dependent effects.
-
-**array_ref & operator = ( array_ref && rhs ) noexcept = default**
-
-  Effect: Assigns ``this`` to array_ref the array referenced by ``rhs`` then assigns ``rhs`` to be a *null* array_ref.
-
-  Remark: There may be other *property* dependent effects.
-
-| **template< typename ... IntegralArgs >**
-| **constexpr array_ref( pointer ptr , IntegralArgs ... dynamic_dims ) noexcept**
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
+  Each ``dynamic_dims`` is non-negative.
+  The span of objects denoted by ``[ ptr , ptr + S )``,
+  where S = ``array_ref::required_span( dymamic_dims... )``,
+  shall be a valid contiguous span of objects.
 
   Remark: Shall not participate in overload resolution unless all IntegralArgs
-  are unsigned integral types.
-
-  Requires: The input ``ptr`` references memory ``[ ptr , ptr + S )``
-  where S = ``array_ref::span(args...)``.
+  are integral types.
 
   Effects: The *wrapping constructor* constructs a multidimensional array
-  reference of the given member memory
-  such that all data members are in the span ``[ ptr , ptr + span() )``.
+  reference into the contiguous span of objects denoted by
+  ``[ ptr , ptr + S )`` where S = ``array_ref::span()`` for ``this``.
+  The dimensions of the array are defined by replacing in order
+  each dynamic extent in the ``array_ref`` type with a value from
+  ``dynamic_dims...``.
 
-**constexpr array_ref( pointer ptr , layout const& lay ) noexcept**
 
-  Requires: The input ``ptr`` references memory ``[ ptr , ptr + lay.span() )``
+``constexpr array_ref( pointer ptr , layout const& lay ) noexcept``
+
+  Requires: The span of objects denoted by ``[ ptr , ptr + S )``,
+  where S = ``array_ref::required_span( lay )``,
+  shall be a valid contiguous span of objects.
 
   Effects: The *wrapping constructor* constructs a multidimensional array
   reference of the given member memory
   such that all data members are in the span ``[ ptr , ptr + lay.span() )``.
 
-| **template< typename UType , typename ... UProperties >**
-| **constexpr array_ref( const array_ref< UType , UProperties ... > & rhs ) noexcept**
+``~array_ref()``
 
-  Requires: ``array_properties::is_assignable_< array_ref , array_ref< UType , UProperties ... > >``
+  Effect: Assigns ``this`` to be a *null* ``array_ref``.
 
-  Effect: Constructs a array_ref of the array referenced by ``rhs``.
-
-.. code-block:: c++
-
-  array_ref< int[][3] > x(ptr, N0);
-
-  // OK: compatible const from non-const and implicit from explicit dimension
-  array_ref< const int , array_properties::dimension< 0 , 0 > > y(x);
-
-  // Error: cannot assign non-const from const
-  array_ref< int , array_properties::dimension< 0 , 0 > > z(y);
-
-..
+  Remark: There may be other ``Properties...`` dependent effects.
 
 
-| **template< typename UType , typename ... UProperties >**
-| **array_ref & operator = ( const array_ref< UType , UProperties ... > & rhs ) noexcept**
+Observers of the domain index space 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  Requires: ``array_properties::is_assignable_< array_ref , array_ref< UType , UProperties ... > >``
+Observers of the domain index space correspond to the
+observers of ``array_property::dimension_typed``.
 
-  Effect: Assigns ``this`` to array_ref the array array_ref by ``rhs``.
+
+| ``static constexpr size_type rank() noexcept``
+| ``static constexpr size_type rank_dynamic() noexcept``
+| ``constexpr size_type extent( size_type ith ) const noexcept``
+| ``constexpr size_type size() const noexcept``
 
 
-| **template< class array_ref_U , class array_ref_V >**
-| **array_properties::is_assignable< array_ref_U , array_ref_V >::value**
+Observers of the layout mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  Indeicates if objects potentially non-identical ``array_ref`` types are assignable.
+Observers of the layout mapping correspond to
+observers of ``array_property::/*layout_concept*/::mapping``.
+
+| ``static constexpr bool is_always_unique``
+| ``static constexpr bool is_always_contiguous``
+| ``static constexpr bool is_always_regular``
+| ``constexpr bool is_unique() const noexcept ;``
+| ``constexpr bool is_contiguous() const noexcept ;``
+| ``constexpr bool:is_regular() const noexcept ;``
+| ``constexpr size_type span() const noexcept ;``
+| ``template< typename IntegralType >``
+| ``constexpr size_type stride( IntegralType index ) const noexcept``
+
+
+| ``template< typename ... IntegralArgs >``
+| ``static constexpr size_type required_span( IntegralArgs ... dynamic_dims ) noexcept``
+
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
+  Each ``dynamic_dims`` is non-negative.
+
+  Returns: Required length of contiguous span of objects
+  for the *wrapping constructor*.
+  The dimensions of the array are defined by replacing in order
+  each dynamic extent in the ``array_ref`` type with a value from
+  ``dynamic_dims...``.
+
+  Remark: As if constructing the corresponding layout mapping
+  with the ``dynamic_dims...` and querying the ``span()`` of this object.
+
+``static constexpr size_type required_span( layout const & ) noexcept``
+
+  Returns: Required length of contiguous span of objects
+  for the *wrapping constructor*.
+
+  Remark: As if constructing the corresponding layout mapping
+  with the layout and querying the ``span()`` of this object.
+
+
+Element and data access
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``constexpr pointer data() const noexcept``
+
+  Returns: Pointer to the member object with the minimum location
+  in the span of the array.
+
+
+| ``template< typename ... IntegralArgs >``
+| ``reference operator()( IntegralArgs ... indices ) const noexcept``
+
+  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
+  ``rank() <= sizeof...(IntegralArgs)``.
+  The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
+  is valid: ``0 <= indices[ith] < extent(ith)``.
+
+  Returns: A reference to the member object referenced by ``indices...``.
+
+  Remark: An implementation may have rank-specific overloads to better
+  enable optimization of the member access operator.
+  Since ``extent(ith) == 1`` for ``rank() <= ith`` then extra zero-value
+  indices are valid.
+  
+
+| ``template< typename IntegralType >``
+| ``reference operator[]( IntegralType index ) const noexcept``
+
+  Requires: ``is_integral<IntegralType>::value``.
+  ``rank() == 1``.
+  ``0 <= i < extent(0)``.
+
+  Returns: A reference to the member object referenced by ``index``.
+
+  Requires: 0 <= i < extent(0)
+
+
+| ``constexpr iterator begin() const noexecept``
+| ``constexpr iterator end() const noexecept``
+| ``constexpr const_iterator cbegin() const noexecept``
+| ``constexpr const_iterator cend() const noexecept``
+| ``constexpr reverse_iterator rbegin() const noexecept``
+| ``constexpr reverse_iterator rend() const noexecept``
+| ``constexpr reverse_const_iterator crbegin() const noexecept``
+| ``constexpr reverse_const_iterator crend() const noexecept``
+
+  Requires: ``is_contiguous()``
+
+  Returns: iterator for member objects ``[data(),data()+span())``.
+
+  Remark: The order of iteration is unspecified and layout dependent.
+  If the layout mapping **is** unique then iterating the span
+  is equivalent to iterating all indices of the domain
+  multidimensional index space.
+
+
+----------------------------------------------------------------------------
+array_property::is_assignable meta-function
+----------------------------------------------------------------------------
+
+| ``template< class array_ref_V , class array_ref_U >``
+| ``array_property::is_assignable< array_ref_V , array_ref_U >``
+
+  Requires:
+  ``array_ref_V`` is ``array_ref< DataType_V , Properties_V... >``
+  ``array_ref_U`` is ``array_ref< DataType_U , Properties_U... >``
+
+  Returns:
+  Deduce the potential assignability of ``array_ref`` objects from
+  their ``DataType`` and ``Properties...``.
+  A ``true_type`` result requires assignability of the value type,
+  equal rank, and compatibility of extents.
+  A dynamic extent may be assigned from a static extent or dynamic extent.
+  A static extent may only be *assigned* from an equal value static extent.
+  A static extent is potentially *assignable* from a dynamic extent,
+  if the dynamic extent has equal value.
+
+
+  Indicates if objects potentially non-identical ``array_ref`` types are assignable.
 
   Assignability is deduced from properties of the array_ref.
 
-  - ``std::is_assignable_v< array_ref_U::pointer , array_ref_V::pointer >``
-  - ``array_ref_U::rank() == array_ref_V::rank()``
-  - If the *ith* dimension of ``array_ref_U`` is static then the *ith* dimension of ``array_ref_V`` must be static and equal.
-  - ``array_ref_U::layout`` must be able to represent ``array_ref_V::layout` for ``array_ref_U:;rank()``
 
+----------------------------------------------------------------------------
+array_property::bounds_check
+----------------------------------------------------------------------------
 
-******************************************************************
-Subarrays
-******************************************************************
+| ``template< bool Enable > struct bounds_check_if ;``
+| ``using bounds_check = bounds_check<true> ;``
 
-The capability to **easily** extract subarrays of an array,
-or subarrays of subarrays, is essential for usability.
-Non-trivial subarrays of regular arrays will often have **layout_stride**.
+  When ``array_ref`` ``Properties...`` includes
+  ``bounds_check_if<true>`` then the mapping operators
+  ``array_ref::operator()`` and ``array_ref::operator[]``
+  verify that each index is valid,
+  ``0 <= indices[ith] < extent(ith)``.
+  Verification failure shall be reported.
 
-.. code-block:: c++
+----------------------------------------------------------------------------
+subarrays
+----------------------------------------------------------------------------
 
-  using U = array_ref< int , array_properties::dimension<0,0,0> > ;
+| ``template< typename DataType , typename ... Properties , typename ... SliceSpecifiers >``
+| ``array_ref< /* deduced */ >``
+| ``subarray( array_ref< DataType, Properties ... > const & ar , SliceSpecifiers ... specs) noexcept``
 
-  U x(buffer,N0,N1,N2);
-
-  // Using std::pair<int,int> for an integral range
-  auto y = subarray( x , std::pair<int,int>(1,N0-1) , 
-                         std::pair<int,int>(1,N1-1) , 1 );
-
-  assert( y.rank() == 2 );
-  assert( y.extent(0) == N0 - 2 );
-  assert( y.extent(0) == N1 - 2 );
-  assert( & y(0,0) == & x(1,1,1) );
-
-  // Using initializer_list of size 2 as an integral range
-  auto z = subarray( x , 1 , {1,N1-1} , 1 );
-
-  assert( z.rank() == 1 );
-  assert( & z(0) == & x(1,1,1) );
-
-  // Conveniently extracting subarray for all of a extent
-  // without having to explicitly extract the dimensions.
-  auto x = subarray( x , array_property::all , 1 , 1 );
-
-..
-
-``subarray()`` returns an unspecified instantiation of ``array_ref<>``. There is
-precedence in the standard for library functions with unspecified return types
-(e.g. ``bind()``).
-
-.. code-block:: c++
-
-  namespace std {
-  namespace experimental {
-  namespace array_property {
-  
-  struct all_type {};
-  constexpr all_type all = all_type();
-  
-  }
-  
-  template< typename DataType , typename ... Properties ,
-            typename ... SliceSpecifiers >
-  /*unspecified array_ref<>*/ 
-  subarray( const array_ref< DataType, Properties ... > & ar ,
-            SliceSpecifiers ... specs) noexcept;
-  
-  template< typename DataType , typename ... Properties ,
-            typename ... SliceSpecifiers >
-  /*unspecified array_property::dimension<>*/ 
-  subdimensions( const array_ref< DataType, Properties ... > & ar ,
-                 SliceSpecifiers ... specs) noexcept;
-  
-  template< typename DataType , typename ... Properties ,
-            typename ... StrideSpecifiers >
-  /*unspecified array_ref<>*/ 
-  stridearray( const array_ref< DataType, Properties ... > & ar ,
-               StrideSpecifiers ... specs) noexcept;
-  
-  }}
-
-..
-
-| **template< typename T , typename ... Properties , typename ... SliceSpecifiers >**
-| **array_ref<** *deduced...* **>**
-| **subarray( const array_ref< T, Properties ... > & ar , SliceSpecifiers ... specs) noexcept**
-
-  Requires: ``ar.rank() == sizeof...(SliceSpecifiers)``
-
-  Requires: The *ith* member of the ``SliceSpecifier...specs`` argument pack
-  is an integral *value* or an integral *range* denoted one of the following.
+  Requires: ``ar.rank() == sizeof...(SliceSpecifiers)``.
+  The *ith* member of the ``SliceSpecifier...specs`` argument pack
+  is an integral *value* or an integral *range* denoted by
+  one of the following.
 
   - an ``initializer_list<T>`` of integral type ``T`` and size 2
   - a ``pair<T,T>`` of integral type ``T`` 
   - a ``tuple<T,T>``  of integral type ``T``
   - an ``array<T,2>`` of integral type ``T``
-  - ``array_property::all`` which denotes [0,extent(ith))
+  - ``array_property::all`` which denotes ``[0..extent(ith))``
   
   The *ith* member of ``SliceSpecifiers...specs`` must be within the range ``[0,ar.extent(ith))``.
 
@@ -1177,310 +844,12 @@ precedence in the standard for library functions with unspecified return types
   The returned ``array_ref`` ``extent(ith)`` is equal to **end-begin**
   of the *ith* integral range argument
 
-.. code-block:: c++
 
-  assert(subarray(ar, x, array_property::all)(y) == ar(x, y));
-  assert(subarray(ar, array_property::all, y)(x) == ar(x, y));
+  Remark: Subarray type deduction should generate an ``array_ref``
+  with the best performing layout mapping.
+  A generated subarray ``array_ref`` that is always given
+  ``layout_stride`` will be less performant than a equivalent
+  subarray with ``layout_right`` or ``layout_left``.
+ 
 
-  assert(subarray(ar, array_property::all, y, array_property::all)(x, z) == ar(x, y, z));
-
-  // Ok
-  assert(subarray(ar, {10, 20})(0)  == ar(10));
-  assert(subarray(ar, {10, 20})(10) == ar(20));
-
-  // Undefined behavior: subarray is out of bounds.
-  assert(subarray(ar, {10, 20})(20) == ar(20));
-
-..
-
-
-Subarray Type Deduction
-------------------------------------------------------------------------
-
-The ``subarray`` function returns ``array_ref<`` *deduced...* ``>``.
-The return type is deduced from the input ``array_ref`` and the slicing argument pack.
-The deduction rules must be defined to insure correctness and
-should be defined for performance.
-For example, a simple rule wuld define the returned type to always
-have a strided layout.  While correct there are many use cases
-where a better performing layout can be deduced.
-
-Subarray type deduction is necessarily dependent upon the layout.
-
-
-
-Example Usage in an 8th Order Finite Difference Stencil
-------------------------------------------------------------------------
-
-The subarray interface provides a powerful mechanism for accessing
-3-dimensional data in numerical kernels in a fashion which utilizes performant
-memory access patterns and is amenable to compiler-assisted vectorization.
-
-The following code is an example of a typical finite difference stencil which
-might be used in a computational fluid dynamics application. This code utilizes
-operator splitting to avoid vector register pressure and moves through memory
-in unit stride to facilitate optimal memory access patterns. With the addition
-of compiler alignment hints (as well as padding and aligned allocations to make
-those assumptions true) and compiler directives or attributes to indicate that
-the input pointers do not alias each other, this code would vectorize well on a
-traditional x86 platform.
-
-.. code-block:: c++
-
-  void eighth_order_stencil(
-    const double* V, double* U,
-    ptrdiff_t dx, ptrdiff_t dy, ptrdiff_t dz,
-    array<double, 5> c)
-  {
-    // Iterate over interior points, skipping the 4 cell wide ghost
-    // zone region.
-    for (int iz = 4; iz < dz - 4; ++iz)
-      for (int iy = 4; iy < dy - 4; ++iy) {
-        // Pre-compute shared iy and iz indexing to ensure redundant
-        // calculations are avoided.
-        double const* v = &V[iy*dx + iz*dx*dy]; 
-        double*       u = &U[iy*dx + iz*dx*dy];
-    
-        // X-direction (unit stride) split.
-        for (int ix = 4; ix < dx - 4; ++ix)
-          u[ix] =  c[0] * v[ix]
-                +  c[1] * (v[ix+1] + v[ix-1])
-                +  c[2] * (v[ix+2] + v[ix-2])
-                +  c[3] * (v[ix+3] + v[ix-3])
-                +  c[4] * (v[ix+4] + v[ix-4]);
-    
-        // Y-direction (dx stride) split.
-        for (int ix = 4; ix < dx - 4; ++ix)
-          u[ix] += c[1] * (v[ix+dx]   + v[ix-dx])
-                +  c[2] * (v[ix+2*dx] + v[ix-2*dx])
-                +  c[3] * (v[ix+3*dx] + v[ix-3*dx])
-                +  c[4] * (v[ix+4*dx] + v[ix-4*dx]);
-    
-        // Z-direction (dx*dy stride) split.
-        for (int ix = 4; ix < dx - 4; ++ix) 
-          u[ix] += c1 * (v[ix+dx*dy]   + v[ix-dx*dy])
-                +  c2 * (v[ix+2*dx*dy] + v[ix-2*dx*dy])
-                +  c3 * (v[ix+3*dx*dy] + v[ix-3*dx*dy])
-                +  c4 * (v[ix+4*dx*dy] + v[ix-4*dx*dy]);
-      }
-  }
-
-..
-
-The corresponding code can be rewritten using array_ref<> and the associated
-subarray() interfaces.
-Note that all the code is now decoupled from the arrays' layout.
-
-.. code-block:: c++
-
-  template< typename ... VP , typename ... UP >
-  void eighth_order_stencil(
-    array_ref<const double, array_property::dimension<0, 0, 0>, VP... > const V,
-    array_ref<double, array_property::dimension<0, 0, 0>, UP... > const U, 
-    array<double, 5> const c)
-  {
-    auto all = array_property::all ;
-
-    const int base = 4 ;
-    const int endx = U.extent(0) - base ;
-    const int endy = U.extent(1) - base ;
-    const int endz = U.extent(2) - base ;
-
-    for ( int iz = base ; iz < endz ; ++iz )
-      for ( int iy = base ; iy < endy ; ++iy ) {
-
-        // Use subarrays to avoid redundant indexing calculations
-        // within the inner loop.
-
-        auto u  = subarray( U, all,  iy,  iz);
-        auto vx = subarray( V, all,  iy,  iz);
-        auto vy = subarray( V, all , {iy-base,iy+base+1}, iz );
-        auto vz = subarray( V, all , iy, {iz-base,iz+base+1} );
-
-        // X-direction split.
-        for (int ix = base ; ix < endx ; ++ix)
-          u[ix] =  c[0] * vx[ix]
-                +  c[1] * ( vx[ix+1] + vx[ix-1] )
-                +  c[2] * ( vx[ix+2] + vx[ix-2] )
-                +  c[3] * ( vx[ix+3] + vx[ix-3] )
-                +  c[4] * ( vx[ix+4] + vx[ix-4] );
-
-        // Y-direction split.
-        for (int ix = base ; ix < endx ; ++ix)
-          u[ix] += c[1] * ( vy(ix,base+1) + vy(ix,base-1) )
-                +  c[2] * ( vy(ix,base+2) + vy(ix,base-2) )
-                +  c[3] * ( vy(ix,base+3) + vy(ix,base-3) )
-                +  c[4] * ( vy(ix,base+4) + vy(ix,base-4) );
-
-        // Z-direction split.
-        for (int ix = base ; ix < endx ; ++ix)
-          u[ix] += c[1] * ( vz(ix,base+1) + vz(ix,base-1) )
-                +  c[2] * ( vz(ix,base+2) + vz(ix,base-2) )
-                +  c[3] * ( vz(ix,base+3) + vz(ix,base-3) )
-                +  c[4] * ( vz(ix,base+4) + vz(ix,base-4) );
-
-      }
-  }
-
-..
-
-
-******************************************************************
-Layout Concept / Layout Extensibility
-******************************************************************
-
-To support performant layout extensibility we must define a
-*layout concept* that includes a layout mapping from
-a multi-index space to an integral range.
-
-| struct *layout_concept* {
-|
-|   template< typename DimensionType >
-|   struct mapping {
-|
-|     template< typename ... Integral >
-|     constexpr size_type operator()( Integral ... indices ) const noexcept ;
-|
-|     static constexpr bool is_always_regular = *layout specific* ;
-|     static constexpr bool is_always_contiguous = *layout specific* ;
-|
-|     static constexpr bool is_regular() noexcept ;
-|     constexpr bool is_contiguous() const noexcept ;
-|
-|     static constexpr size_type rank() noexcept ;
-|     constexpr size_type extent( size_type ith ) const noexcept ;
-|     constexpr size_type size() const noexcept ;
-|
-|     constexpr size_type span() const noexcept ;
-|     constexpr size_type stride( size_type ith ) const noexcept ;
-|
-|     constexpr mapping();
-|     constexpr mapping( mapping const &);
-|     constexpr mapping( mapping && );
-|     mapping & operator = ( mapping const &);
-|     mapping & operator = ( mapping && );
-|
-|     constexpr explicit mapping( *layout_concept* const & );
-|
-|     template< typename ... IntegralArgs >
-|     constexpr mapping( IntegralArgs ... dynamic_dimensions );
-|   };
-| };
-
-
-
-******************************************************************************
-Preferred Syntax for Multidimensional Array with Multiple Implicit Dimensions
-******************************************************************************
-
-..  _`relaxation of the current multidimensional array type declaration`:
-
-One goal of the array_ref interface is to preserve syntax
-between array_ref and arrays with explicit and implicitly declared dimensions.
-In the following example foo1 and foo2 accept rank 3 arrays of integers
-with prescribed explicit / implicit dimensions and fooT accepts a rank 3
-array of integers with unprescribed dimensions.
-
-.. code-block:: c++
-
-  void foo1( array_ref< int[ ][3][3] > a ); // Two explicit dimensions
-  void foo2( array_ref< int[ ][ ][ ] > a ); // All implicit dimensions
-
-  // Accept a array_ref of a rank three array with value type int
-  // and dimensions are explicit or implicit.
-  template< class T , class ... P >
-  typename std::enable_if< array_ref<T,P...>::rank() == 3 >::type
-  foo( array_ref<T,P...> a ) { ... }
-
-  void bar()
-  {
-    enum { L = ... };
-    int buffer[ L * 3 * 3 ];
-    array_ref< int[][][] > a( buffer , L , 3 , 3 );
-
-    assert( 3 == a.rank() );
-    assert( L == a.extent(0) );
-    assert( 3 == a.extent(1) );
-    assert( 3 == a.extent(2) );
-    assert( a.size() == a.extent(0) * a.extent(1) * a.extent(2) );
-    assert( & a(0,0,0) == buffer );
-
-    foo( array );
-  }
-
-..
-
-
-A relaxed multidimensional array type declaration
-------------------------------------------------------------------------------
-
-The current array type declarator constraints are defined in in **n4567 8.3.4.p3** as follows.
-
-  *When several “array of” specifications are adjacent,
-  a multidimensional array type is created;
-  only the first of the constant expressions that
-  specify the bounds of the arrays may be omitted.
-  In addition to declarations in which an incomplete
-  object type is allowed, an array bound may be omitted
-  in some cases in the declaration of a function parameter (8.3.5).
-  An array bound may also be omitted when the declarator is
-  followed by an initializer (8.5).
-  In this case the bound is calculated from the
-  number of initial elements (say, N) supplied (8.5.1),
-  and the type of the identifier of D is “array of N T”.
-  Furthermore, if there is a preceding declaration
-  of the entity in the same scope in which the bound was specified,
-  an omitted array bound is taken to be the same as in that
-  earlier declaration, and similarly for the definition
-  of a static data member of a class.*
-
-The preferred syntax requires a relaxation of
-array type declarator constraints defined in **n4567 8.3.4.p3**
-exclusively for an incomplete object type.
-The following wording change is recommended.
-
-  *When several “array of” specifications are adjacent,
-  a multidimensional array type is created.
-  In declarations in which an incomplete object type is allowed
-  any of the constant expressions that specify bounds
-  of the arrays may be omitted.
-  In some cases in the declaration of a function parameter (8.3.5)
-  the first array bound constant expression may be omitted.
-  The first array bound constant expression
-  may also be omitted when the declarator is
-  followed by an initializer (8.5).
-  In this case the bound is calculated from the
-  number of initial elements (say, N) supplied (8.5.1),
-  and the type of the identifier of D is “array of N T”.
-  Furthermore, if there is a preceding declaration
-  of the entity in the same scope in which the bound was specified,
-  the omitted first array bound constant expression is
-  taken to be the same as in that
-  earlier declaration, and similarly for the definition
-  of a static data member of a class.*
-
-**This minor language specification change has been implemented with
-a trivial (one line) patch to Clang and was permissible in gcc prior to
-version 5.**
-
-
-******************************************************************
-References
-******************************************************************
-
-Related ISO JTC1/SC22/WG21 Working Papers
-------------------------------------------------------------------------------
-
- - N4512 "Multidimensional bounds, offset and array_view"
- - N4355
- - N4300
- - N4222
- - P0122 "array_view: bounds-safe views for sequences of objects"
-
-
-Libraries with conceptually related multidimensional array abstractions
-------------------------------------------------------------------------------
-
- - `array_ref reference implementation <https://github.com/kokkos/array_ref>`_
- - `Kokkos library <https://github.com/kokkos/kokkos>`_
 
