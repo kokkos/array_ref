@@ -67,6 +67,8 @@ struct dimension_typed : detail::dimension_extent< 0 , ValueType , Dim... >
 {
 private:
 
+  enum : unsigned { Rank = sizeof...(Dim) };
+
   using base = detail::dimension_extent< 0 , ValueType , Dim... > ;
 
   template< unsigned J >
@@ -77,6 +79,32 @@ private:
     {
       return 0 <= i && i < base::template extent<J>::value &&
       dimension_typed::template check_bounds<J+1>( tail ... );
+    }
+
+  template< unsigned I >
+  constexpr typename std::enable_if< !( I < Rank ), ValueType >::type
+  get_extent( unsigned ) const noexcept
+    { return 1 ; }
+
+  template< unsigned I >
+  constexpr typename std::enable_if<( I < Rank ), ValueType >::type
+  get_extent( unsigned i ) const noexcept
+    {
+      return I == i ? base::template extent<I>::value
+                    : dimension_typed::template get_extent<I+1>(i) ;
+    }
+
+  template< unsigned I >
+  constexpr typename std::enable_if< !( I < Rank ), ValueType >::type
+  get_size() const noexcept
+    { return 1 ; }
+
+  template< unsigned I >
+  constexpr typename std::enable_if<( I < Rank ), ValueType >::type
+  get_size() const noexcept
+    {
+      return base::template extent<I>::value *
+             dimension_typed::template get_size<I+1>() ;
     }
 
 public:
@@ -91,22 +119,28 @@ public:
   // OBSERVERS
 
   /**\brief  Number extents */
-  static constexpr size_type rank() noexcept { return sizeof...(Dim); }
+  static constexpr size_type rank() noexcept { return Rank ; }
 
   /**\brief  Number of dynamic extents */
   static constexpr size_type rank_dynamic() noexcept { return base::rank_dynamic ; }
 
   /**\brief Product of extents */
   constexpr value_type size() const noexcept
-    { return base::get_size(); }
+    { return dimension_typed::get_size<0>(); }
 
   /**\brief  Value of an extent */
-  constexpr value_type operator[]( const size_type i ) const noexcept
-    { return base::get_value(i); }
+  constexpr value_type extent( const size_type i ) const noexcept
+    { return dimension_typed::template get_extent<0>(i); }
 
-  /**\brief  Direct access to value of an extent */
-  template< size_type I > using extent = typename base::template extent<I> ;
-  // template< size_type I > using extent_v = typename base::template get<I>::extent ;
+  /**\brief  Value of an extent */
+  template< size_type I >
+  constexpr value_type extent() const noexcept
+    { return base::template extent<I>::value ; }
+
+  /**\brief  Value of a the static extent */
+  template< size_type I >
+  constexpr value_type static_extent() const noexcept
+    { return base::template extent<I>::value_static ; }
 
   //----------------------------------------
 
@@ -128,7 +162,14 @@ public:
     { return check_bounds<0>( indices... ); }
 };
 
+}}} // std::experimental::array_property
+
 //--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+namespace std {
+namespace experimental {
+namespace array_property {
 
 struct layout_right {
 

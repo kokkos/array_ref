@@ -83,10 +83,6 @@ struct dimension_extent< I , ValueType >
 
   template< unsigned > using extent = dimension_extent ;
 
-  constexpr ValueType get_value( unsigned ) const noexcept { return value ; }
-
-  constexpr ValueType get_size() const noexcept { return value ; }
-
   constexpr dimension_extent() = default ;
   constexpr dimension_extent( dimension_extent && ) = default ;
   constexpr dimension_extent( dimension_extent const & ) = default ;
@@ -121,12 +117,6 @@ struct dimension_extent< I , ValueType , Head , Tail ... >
   template< typename Arg0 , typename ... Args >
   constexpr explicit
   dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next( arg0 , args... ) {}
-
-  constexpr ValueType get_value( unsigned i ) const noexcept
-    { return I == i ? value : next::get_value(i); }
-
-  constexpr ValueType get_size() const noexcept
-    { return value * next::get_size(); }
 };
 
 template< unsigned I , typename ValueType , size_t ... Tail >
@@ -153,12 +143,6 @@ struct dimension_extent< I , ValueType , 0 , Tail ... >
   template< typename Arg0 , typename ... Args >
   constexpr explicit
   dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next(args...), value(arg0) {}
-
-  constexpr ValueType get_value( unsigned i ) const noexcept
-    { return I == i ? value : next::get_value(i); }
-
-  constexpr ValueType get_size() const noexcept
-    { return value * next::get_size(); }
 };
 
 }}}} // std::experimental::array_property::detail

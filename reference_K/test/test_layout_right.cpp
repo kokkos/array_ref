@@ -15,6 +15,11 @@ void test_layout_right()
   static_assert( m.stride(1) == 30 , "" );
   static_assert( m.stride(2) == 1 , "" );
 
+  static_assert( m(0,0,0) == 0 , "" );
+  static_assert( m(1,0,0) == 1*20*30 , "" );
+  static_assert( m(0,1,0) == 1*30 , "" );
+  static_assert( m(0,0,1) == 1 , "" );
+
 }
 
 
