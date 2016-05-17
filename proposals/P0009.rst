@@ -324,20 +324,20 @@ Layout Mapping Concept
   when the index of coordinate ``r`` is incremented by one, otherwise 0.
 
 
-``template< typename ... IntegralArgs >``
-``constexpr size_type mapping::operator()( IntegralArgs ... indices ) const noexcept ;``
+| ``template< typename ... IntegralArgs >``
+| ``constexpr size_type mapping::operator()( IntegralArgs ... indices ) const noexcept ;``
 
   Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
   ``rank() <= sizeof...(IntegralArgs)``.
   The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
-  is valid: ``0 <= indices[ith] < extent(ith)``.
+  is valid: ``0<=indices[ith]<extent(ith)``.
 
   Returns: The value of the mapping from the dimension domain space
   to the ``[0..span())`` range space.
 
   Remark: An implementation may have rank-specific overloads to better
   enable optimization of the member access operator.
-  Since ``extent(ith) == 1`` for ``rank() <= ith`` then extra zero-value
+  Since ``extent(ith)==1`` for ``rank()<=ith`` then extra zero-value
   indices are valid.
 
 
@@ -349,14 +349,14 @@ Standard Layouts
   The ``layout_right::mapping`` is always bijective, regular,
   and its strides monotonically increase from right to left.
   Note that the stride of the right-most coordinate is one,
-  ``stride( rank() - 1 ) == 1``.
+  ``stride(rank()-1)==1``.
 
 ``array_property::layout_left::mapping``
 
   The ``layout_left::mapping`` is always bijective, regular,
   and its strides monotonically increase from left to right.
   Note that the stride of the left-most coordinate is one,
-  ``stride(0) == 1``.
+  ``stride(0)==1``.
   
 ``array_property::layout_stride::mapping``
 
@@ -541,11 +541,17 @@ Types
 
   The type returned by the member access operator.
   Typically this will be ``value_type &``.
+  The *constness* of the refenced objects is defined by the *constness*
+  of ``value_type``.
+  For example, references to objects of
+  ``array_ref< const double[][3][8] >``
+  are const.
   [Note: The reference type may be a proxy depending upon  ``Properties...``.
   For example, if a property indicates that all member references
   are to be atomic then the reference type would be a
   proxy conforming to *atomic-view-concept* introduced in paper P0019.
   - end note]
+
 
 ``using pointer``
 

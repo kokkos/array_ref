@@ -104,7 +104,7 @@ The full ``array_ref`` library specification is given in P0009r2.
 
   namespace std {
   namespace experimental {
-    template< typename ArrayType , typename ... ArrayProperties >
+    template< typename DataType , typename ... Properties >
     stuct array_ref ;
   }}
 
@@ -251,8 +251,8 @@ This is the **layout** mapping for the referenced array.
 For natively declared multidimensional arrays the layout mapping
 is defined to conform to treating the multidimensional array as
 an *array of arrays of arrays ...*; i.e., the size and span are
-equal and the strides increase from right-to-left (the layout specified in the
-C language).
+equal and the strides increase from right-to-left
+(the layout specified in the C language).
 In the FORTRAN language defines layout mapping with strides
 increasing from left-to-right.
 These *native* layout mappings are only two of many possible layouts.
@@ -299,28 +299,6 @@ An initial set of layout properties are
   |  }}}
 
 
-.. code-block:: c++
-
-  typedef array_ref< int , array_property::dimension<0,0,3> > array_native ;
-
-  typedef array_ref< int , array_property::dimension<0,0,3>
-                         , array_property::layout_right > array_right ;
-
-  typedef array_ref< int , array_property::dimension<0,0,3>
-                         , array_property::layout_left >  array_left ;
-
-  assert( std::is_same< typename array_native::layout , void >::value );
-  assert( std::is_same< typename array_right ::layout ,
-                        array_property::layout_right >::value );
-  assert( std::is_same< typename array_left  ::layout ,
-                        array_property::layout_left >::value );
-
-  assert( array_native::is_always_regular::value );
-  assert( array_right ::is_always_regular::value );
-  assert( array_left  ::is_always_regular::value );
-
-..
-
 A **void** (*a.k.a.*, default or native) mapping is regular and bijective with
 strides increasing from increasing from right most to left most dimension.
 A **layout_right** mapping is regular and injective (may have padding) with
@@ -337,7 +315,7 @@ not be injective or surjective.
   // as follows.  Note that padding is allowed but not required.
 
   template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
-  size_t right_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
+  size_t right_padded_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
     {
       const size_t S3 = // stride of dimension 3
       const size_t P3 = // padding of dimension 3
@@ -350,7 +328,7 @@ not be injective or surjective.
     }
 
   template< size_t N0 , size_t N1 , size_t N2 , size_t N4 >
-  size_t left_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
+  size_t left_padded_mapping( size_t i0 , size_t i1 , size_t i2 , size_t i3 )
     {
       const size_t S0 = // stride of dimension 0
       const size_t P0 = // padding of dimension 0
@@ -408,25 +386,6 @@ A customized layout mapping will have slightly different requirements
 depending on whether the layout is regular or irregular.
 
 
-Flexibility and Extensibility
-------------------------------------------------------------------------------
-
-One or more array properties of **void** are acceptable and have no effect.
-This allows user code to define a template argument list of potential
-array properties and then enable/disable a particular property
-by conditionally setting it to **void**.  For example:
-
-.. code-block:: c++
-
-  using layout = std::conditional<
-      ALLOW_PADDING , array_property::layout_right , void
-  >::type ;
-
-  // If ALLOW_PADDING then use layout_right else use native layout
-  typedef array< int , array_property::dimension<0,0,3> , layout > MyType ;
-
-..
-
 
 Bounds Checking
 ------------------------------------------------------------------------------
@@ -446,11 +405,8 @@ array bounds, multi-index, and traceback of where the array bounds violation occ
 
   // User enables array bounds checking for selected array_ref.
 
-  using x_property = typename std::conditional<
-      ENABLE_ARRAY_BOUNDS_CHECKING , array_property::bounds_checking , void
-  >::type ;
-
-  array_ref< int , array_property::dimension<0,0,3> , x_property >
+  array_ref< int , array_property::dimension<0,0,3>
+           , array_property::check_bounds_if< ENABLE_ARRAY_BOUNDS_CHECKING > >
       x(ptr,N0,N1);
 
 ..
