@@ -44,7 +44,7 @@
 #ifndef STD_EXPERIMENTAL_ARRAY_REF_HEADER
 #define STD_EXPERIMENTAL_ARRAY_REF_HEADER
 
-
+#include <iterator>
 #include <detail/dimension_helper>
 #include <detail/array_ref_property>
 
@@ -372,6 +372,10 @@ public:
 
   using reference  = value_type & ;
   using pointer    = value_type * ;
+  using iterator   = value_type * ;
+  using const_iterator = typename std::add_const<value_type>::type * ;
+  using reverse_iterator = std::reverse_iterator< iterator > ;
+  using const_reverse_iterator = std::reverse_iterator< const_iterator > ;
 
   // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
@@ -386,6 +390,14 @@ public:
     : m_ptr( rhs.m_ptr )
     , m_map( rhs.m_map )
     {}
+
+  template< typename D , typename ... P >
+  array_ref & operator = ( array_ref<D,P...> const & rhs ) noexcept
+    {
+      m_ptr = rhs.m_ptr ;
+      m_map = rhs.m_map ;
+      return *this ;
+    }
 
   template < typename... UnsignedIntegers >
   explicit constexpr array_ref
@@ -429,7 +441,6 @@ public:
   constexpr value_type stride( size_type i ) const noexcept
     { return m_map.stride(i); }
 
-  /////////////////////////////////////////////////////////////////////////// 
   // ELEMENT AND DATA ACCESS 
 
   constexpr pointer data() const noexcept { return m_ptr ; }
@@ -439,10 +450,34 @@ public:
     <( dimension::rank() <= sizeof...(UnsignedIntegers) &&
        array_property::detail::pack_is_integral<UnsignedIntegers...>::value )
     , reference
-    >::type operator()(UnsignedIntegers... indices) const noexcept
+    >::type
+  operator()(UnsignedIntegers... indices) const noexcept
     { return m_ptr[ m_map( indices... ) ]; }
 
-  reference operator[](size_type idx) const noexcept;
+  template < typename IntType >
+  typename std::enable_if
+    <( dimension::rank() == 1 && std::is_integral<IntType>::value )
+    , reference
+    >::type
+  operator[]( IntType idx ) const noexcept
+    { return m_ptr[ m_map( idx ) ]; }
+
+  constexpr iterator begin() const noexcept { return m_ptr ; }
+  constexpr iterator end() const noexcept { return m_ptr + span(); }
+  constexpr const_iterator cbegin() const noexcept { return m_ptr ; }
+  constexpr const_iterator cend() const noexcept { return m_ptr + span(); }
+
+  constexpr reverse_iterator rbegin() const noexcept
+    { return reverse_iterator( m_ptr + span() ); }
+
+  constexpr reverse_iterator rend() const noexcept
+    { return reverse_iterator( m_ptr ); }
+
+  constexpr const_reverse_iterator crbegin() const noexcept
+    { return const_reverse_iterator( m_ptr + span() ); }
+
+  constexpr const_reverse_iterator crend() const noexcept
+    { return const_reverse_iterator( m_ptr ); }
 
 private:
   pointer  m_ptr ;

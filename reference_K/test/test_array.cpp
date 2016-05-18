@@ -58,7 +58,18 @@ void test_array_base()
   assert( & b(0,0,1,0) == buffer + 1*40 );
   assert( & b(0,0,0,1) == buffer + 1 );
 
+  assert( b.begin()  == buffer );
+  assert( b.end()    == buffer + 10*20*30*40 );
+  assert( &* b.rbegin() == buffer + 10*20*30*40 - 1 );
+  assert( &* b.rend()   == buffer - 1 );
+
   const_array_t c( b );
+
+  assert( & c(0,0,0,0) == buffer );
+  assert( & c(1,0,0,0) == buffer + 1*20*30*40 );
+  assert( & c(0,1,0,0) == buffer + 1*30*40 );
+  assert( & c(0,0,1,0) == buffer + 1*40 );
+  assert( & c(0,0,0,1) == buffer + 1 );
 }
 
 
