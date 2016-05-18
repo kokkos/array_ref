@@ -139,7 +139,7 @@ public:
 
   /**\brief  Value of a the static extent */
   template< size_type I >
-  constexpr value_type static_extent() const noexcept
+  static constexpr value_type static_extent() noexcept
     { return base::template extent<I>::value_static ; }
 
   //----------------------------------------
@@ -351,82 +351,80 @@ namespace experimental {
 
 //--------------------------------------------------------------------------
 
-template < typename ArrayType , typename ... Properties >
+template < typename DataType , typename ... Properties >
 struct array_ref
 {
-    ///////////////////////////////////////////////////////////////////////////
-    // TYPES
+  // TYPES
 
-    using layout     = Layout;
-    using dimensions = Dims;
-    using accessor   = Accessor;
+  using layout     = Layout ;
+  using dimensions = Dims ;
+  using accessor   = Accessor;
 
-    using value_type = typename accessor::value_type;
-    using reference  = typename accessor::reference;
-    using pointer    = typename accessor::pointer;
-    using size_type  = typename layout::size_type;
+  using value_type = typename accessor::value_type ;
+  using reference  = typename accessor::reference ;
+  using pointer    = typename accessor::pointer ;
+  using size_type  = typename layout::value_type ;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+  // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
-    constexpr array_ref() noexcept;
+  constexpr array_ref() noexcept;
 
-    constexpr array_ref(array_ref const& b) noexcept = default;
-    constexpr array_ref(array_ref&& b) noexcept = default;
-    array_ref& operator=(array_ref const& b) noexcept = default;
-    array_ref& operator=(array_ref&& b) noexcept = default;
+  constexpr array_ref(array_ref const& b) noexcept = default;
+  constexpr array_ref(array_ref&& b) noexcept = default;
+  array_ref& operator=(array_ref const& b) noexcept = default;
+  array_ref& operator=(array_ref&& b) noexcept = default;
 
-    template < typename... UnsignedIntegers
-             , typename = typename enable_if<
-                   detail::pack_is_unsigned<UnsignedIntegers...>::value
-               >::type
-             >
-    explicit constexpr array_ref(
-        pointer p, UnsignedIntegers... implicit_dims
-        ) noexcept;
+  template < typename... UnsignedIntegers
+           , typename = typename enable_if<
+                 detail::pack_is_unsigned<UnsignedIntegers...>::value
+             >::type
+           >
+  explicit constexpr array_ref(
+      pointer p, UnsignedIntegers... implicit_dims
+      ) noexcept;
 
-    explicit constexpr array_ref(
-        pointer p, dimensions const& d
-      , layout const& l = Layout(), accessor const& a = Accessor()
-        ) noexcept;
+  explicit constexpr array_ref(
+      pointer p, dimensions const& d
+    , layout const& l = Layout(), accessor const& a = Accessor()
+      ) noexcept;
 
-    // TODO: Conversion constructor and assignment operator (omitted due to
-    // incomplete specification).
+  // TODO: Conversion constructor and assignment operator (omitted due to
+  // incomplete specification).
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // RANK, SIZE AND EXTENT 
+  /////////////////////////////////////////////////////////////////////////// 
+  // RANK, SIZE AND EXTENT 
 
-    static constexpr size_type rank() noexcept;
-    static constexpr size_type rank_dynamic() noexcept;
+  static constexpr size_type rank() noexcept;
+  static constexpr size_type rank_dynamic() noexcept;
 
-    constexpr size_type size() const noexcept;
+  constexpr size_type size() const noexcept;
 
-    constexpr size_type extent(size_type rank) const noexcept;
+  constexpr size_type extent(size_type rank) const noexcept;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // LAYOUT INTERFACE 
+  /////////////////////////////////////////////////////////////////////////// 
+  // LAYOUT INTERFACE 
 
-    static constexpr bool is_regular() noexcept;
+  static constexpr bool is_regular() noexcept;
 
-    constexpr size_type stride(size_type rank) noexcept;
+  constexpr size_type stride(size_type rank) noexcept;
 
-    constexpr size_type span() const noexcept;    
+  constexpr size_type span() const noexcept;    
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // ELEMENT AND DATA ACCESS 
+  /////////////////////////////////////////////////////////////////////////// 
+  // ELEMENT AND DATA ACCESS 
 
-    template <typename... UnsignedIntegers>
-    typename std::enable_if<
-        Dims::rank() == sizeof...(UnsignedIntegers)
-        && detail::pack_is_integral<UnsignedIntegers...>::value
-      , reference
-    >::type operator()(UnsignedIntegers... indices) const noexcept;
+  template <typename... UnsignedIntegers>
+  typename std::enable_if<
+      Dims::rank() == sizeof...(UnsignedIntegers)
+      && detail::pack_is_integral<UnsignedIntegers...>::value
+    , reference
+  >::type operator()(UnsignedIntegers... indices) const noexcept;
 
-    reference operator[](size_type idx) const noexcept;
+  reference operator[](size_type idx) const noexcept;
 
-  private:
-    pointer        m_ptr ;
-    layout_mapping m_map ;
+private:
+  pointer        m_ptr ;
+  layout_mapping m_map ;
 };
 
 }} // std::experimental

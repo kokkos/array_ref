@@ -50,6 +50,19 @@ namespace detail {
 
 /**\brief Unpack array property pack */
 
+template< typename DataType , typename ... Properties >
+struct unpack_array_properties {
+
+  using value_type = typename std::remove_all_extents< DataType >::type ;
+
+  enum : bool { data_type_is_array = 0 != std::rank< DataType >::value };
+
+  
+
+};
+
+
+
 
 }}} // std::experimental::detail
 

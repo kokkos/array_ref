@@ -173,9 +173,25 @@ void test_dimension_constexpr()
 
 }
 
+void test_dimension_extraction()
+{
+  using data_type = int[][20][30][40] ;
+  using dim_t = typename std::experimental::array_property::detail::dimension_extraction< data_type , int >::type ;
+
+  static_assert( dim_t::rank() == 4 , "" );
+  static_assert( dim_t::rank_dynamic() == 1 , "" );
+  static_assert( dim_t::static_extent<0>() == 0 , "" );
+  static_assert( dim_t::static_extent<1>() == 20 , "" );
+  static_assert( dim_t::static_extent<2>() == 30 , "" );
+  static_assert( dim_t::static_extent<3>() == 40 , "" );
+  static_assert( dim_t::static_extent<4>() == 1 , "" );
+
+}
+
 int main()
 {
   test_dimension_constexpr();
+  test_dimension_extraction();
   return 0 ;
 }
 

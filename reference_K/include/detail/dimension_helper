@@ -52,6 +52,17 @@
 namespace std {
 namespace experimental {
 namespace array_property {
+
+template< typename ValueType , ValueType ... Dim >
+struct dimension_typed ;
+
+}}} // std::experimental::array_property
+
+//--------------------------------------------------------------------------
+
+namespace std {
+namespace experimental {
+namespace array_property {
 namespace detail {
 
 //--------------------------------------------------------------------------
@@ -144,6 +155,37 @@ struct dimension_extent< I , ValueType , 0 , Tail ... >
   constexpr explicit
   dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next(args...), value(arg0) {}
 };
+
+
+template< typename Dimension , size_t N >
+struct dimension_prepend ;
+
+template< typename ValueType , ValueType ... Dim , size_t N >
+struct dimension_prepend< dimension_typed< ValueType , Dim... > , N >
+{
+  using type = dimension_typed< ValueType , N , Dim ... > ;
+};
+
+template< typename DataType , typename IntegralType >
+struct dimension_extraction
+{
+  using type = dimension_typed< IntegralType > ;
+};
+
+template< typename DataType , size_t N , typename IntegralType >
+struct dimension_extraction< DataType[N] , IntegralType >
+{
+  using nest = typename dimension_extraction< DataType , IntegralType >::type ;
+  using type = typename dimension_prepend< nest , N >::type ;
+};
+
+template< typename DataType , typename IntegralType >
+struct dimension_extraction< DataType[] , IntegralType >
+{
+  using nest = typename dimension_extraction< DataType , IntegralType >::type ;
+  using type = typename dimension_prepend< nest , 0 >::type ;
+};
+
 
 }}}} // std::experimental::array_property::detail
 
