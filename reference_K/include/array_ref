@@ -354,6 +354,8 @@ struct array_ref
 {
 private:
 
+  template< typename , typename ... > friend struct array_ref ;
+
   using unpack = array_property::detail::unpack_array_properties< DataType , Properties... > ;
 
   using dimension    = typename unpack::dimension ;
@@ -379,6 +381,12 @@ public:
   array_ref& operator=(array_ref const& b) noexcept = default;
   array_ref& operator=(array_ref&& b) noexcept = default;
 
+  template< typename D , typename ... P >
+  constexpr array_ref( array_ref<D,P...> const & rhs ) noexcept
+    : m_ptr( rhs.m_ptr )
+    , m_map( rhs.m_map )
+    {}
+
   template < typename... UnsignedIntegers >
   explicit constexpr array_ref
     ( typename std::enable_if
@@ -390,9 +398,6 @@ public:
     : m_ptr(p), m_map( dimension(dynamic_dims...) ) {}
 
   explicit constexpr array_ref( pointer p, layout const& l ) noexcept;
-
-  // TODO: Conversion constructor and assignment operator (omitted due to
-  // incomplete specification).
 
   // Observers for domain dimension
 

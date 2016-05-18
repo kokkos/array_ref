@@ -7,6 +7,7 @@
 void test_array_base()
 {
   using array_t = std::experimental::array_ref<int[][20][30][40]> ;
+  using const_array_t = std::experimental::array_ref<const int[][20][30][40]> ;
 
   static_assert( array_t::is_always_unique , "" );
   static_assert( array_t::is_always_regular , "" );
@@ -57,6 +58,7 @@ void test_array_base()
   assert( & b(0,0,1,0) == buffer + 1*40 );
   assert( & b(0,0,0,1) == buffer + 1 );
 
+  const_array_t c( b );
 }
 
 
