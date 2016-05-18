@@ -46,25 +46,96 @@
 
 namespace std {
 namespace experimental {
+namespace array_property {
+
+struct layout_right ;
+struct layout_left ;
+
+}}} // std::experimental::array_property
+
+namespace std {
+namespace experimental {
+namespace array_property {
 namespace detail {
 
 /**\brief Unpack array property pack */
 
 template< typename DataType , typename ... Properties >
-struct unpack_array_properties {
+struct unpack_array_properties
+{
+  using next = unpack_array_properties< void , Properties... > ;
+
+  enum : bool { data_type_is_array = 0 < std::rank< DataType >::value };
+  enum : bool { properties_has_dimension =
+    ! std::is_same< typename next::dimension , void >::value };
+
+  // Only one dimension:
+
+  static_assert( ! ( data_type_is_array && properties_has_dimension )
+               , "array_ref can only have one dimension" );
+
+  // types:
 
   using value_type = typename std::remove_all_extents< DataType >::type ;
 
-  enum : bool { data_type_is_array = 0 != std::rank< DataType >::value };
+  using dimension =
+    typename std::conditional
+      < data_type_is_array
+      , typename dimension_extraction< DataType , size_t >::type
+      , typename std::conditional
+          < properties_has_dimension
+          , typename next::dimension
+          , dimension_typed<int>
+          >::type
+      >::type ;
 
-  
+  using layout =
+    typename std::conditional
+       < ! std::is_same< typename next::layout , void >::value
+       , typename next::layout
+       , layout_right
+       >::type ;
 
+  using bounds_check = typename next::bounds_check ;
+};
+
+template<>
+struct unpack_array_properties< void >
+{
+  using dimension = void ;
+  using layout    = void ;
+  using bounds_check = void ;
+};
+
+template< typename ValueType , ValueType ... Dim , typename ... Properties >
+struct unpack_array_properties
+  < void , dimension_typed< ValueType , Dim... > , Properties... >
+{
+  using next = unpack_array_properties< void , Properties... > ;
+
+  using dimension    = dimension_typed< ValueType , Dim... > ;
+  using layout       = typename next::layout ;
+  using bounds_check = typename next::bounds_check ;
+};
+
+
+template< typename Layout , typename ... Properties >
+struct unpack_array_properties
+  < typename std::enable_if
+      <( std::is_same< Layout , layout_right >::value ||
+         std::is_same< Layout , layout_left >::value )>::type
+  , Layout , Properties... >
+{
+  using next = unpack_array_properties< void , Properties... > ;
+
+  using dimension    = typename next::dimension ;
+  using layout       = Layout ;
+  using bounds_check = typename next::bounds_check ;
 };
 
 
 
-
-}}} // std::experimental::detail
+}}}} // std::experimental::array_property::detail
 
 #endif // #ifndef STD_EXPERIMENTAL_DETAIL_ARRAY_REF_PROPERTY_HEADER
 

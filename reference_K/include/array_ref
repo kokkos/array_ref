@@ -344,8 +344,6 @@ public:
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 
-#if 0
-
 namespace std {
 namespace experimental {
 
@@ -354,82 +352,99 @@ namespace experimental {
 template < typename DataType , typename ... Properties >
 struct array_ref
 {
+private:
+
+  using unpack = array_property::detail::unpack_array_properties< DataType , Properties... > ;
+
+  using dimension    = typename unpack::dimension ;
+  using mapping      = typename unpack::layout::template mapping< dimension > ;
+  using bounds_check = typename unpack::bounds_check ;
+
+public:
+
   // TYPES
 
-  using layout     = Layout ;
-  using dimensions = Dims ;
-  using accessor   = Accessor;
+  using layout     = typename unpack::layout ;
+  using size_type  = typename dimension::value_type ;
+  using value_type = typename unpack::value_type ;
 
-  using value_type = typename accessor::value_type ;
-  using reference  = typename accessor::reference ;
-  using pointer    = typename accessor::pointer ;
-  using size_type  = typename layout::value_type ;
+  using reference  = value_type & ;
+  using pointer    = value_type * ;
 
   // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
-  constexpr array_ref() noexcept;
-
+  constexpr array_ref() noexcept : m_ptr(0), m_map() {}
   constexpr array_ref(array_ref const& b) noexcept = default;
   constexpr array_ref(array_ref&& b) noexcept = default;
   array_ref& operator=(array_ref const& b) noexcept = default;
   array_ref& operator=(array_ref&& b) noexcept = default;
 
-  template < typename... UnsignedIntegers
-           , typename = typename enable_if<
-                 detail::pack_is_unsigned<UnsignedIntegers...>::value
-             >::type
-           >
-  explicit constexpr array_ref(
-      pointer p, UnsignedIntegers... implicit_dims
-      ) noexcept;
+  template < typename... UnsignedIntegers >
+  explicit constexpr array_ref
+    ( typename std::enable_if
+        < array_property::detail::pack_is_integral< UnsignedIntegers... >::value
+        , pointer
+        >::type p
+    , UnsignedIntegers ... dynamic_dims
+    ) noexcept
+    : m_ptr(p), m_map( dimension(dynamic_dims...) ) {}
 
-  explicit constexpr array_ref(
-      pointer p, dimensions const& d
-    , layout const& l = Layout(), accessor const& a = Accessor()
-      ) noexcept;
+  explicit constexpr array_ref( pointer p, layout const& l ) noexcept;
 
   // TODO: Conversion constructor and assignment operator (omitted due to
   // incomplete specification).
 
-  /////////////////////////////////////////////////////////////////////////// 
-  // RANK, SIZE AND EXTENT 
+  // Observers for domain dimension
 
-  static constexpr size_type rank() noexcept;
-  static constexpr size_type rank_dynamic() noexcept;
+  static constexpr size_type rank() noexcept
+    { return dimension::rank(); }
 
-  constexpr size_type size() const noexcept;
+  static constexpr size_type rank_dynamic() noexcept
+    { return dimension::rank_dynamic(); }
 
-  constexpr size_type extent(size_type rank) const noexcept;
+  constexpr size_type size() const noexcept
+    { return m_map.size(); }
 
-  /////////////////////////////////////////////////////////////////////////// 
-  // LAYOUT INTERFACE 
+  constexpr size_type extent( size_type coord ) const noexcept
+    { return m_map.extent( coord ); }
 
-  static constexpr bool is_regular() noexcept;
+  // Observers for mapping
 
-  constexpr size_type stride(size_type rank) noexcept;
+  static constexpr bool is_always_unique = mapping::is_always_unique ;
+  static constexpr bool is_always_regular = mapping::is_always_regular ;
+  static constexpr bool is_always_contiguous = mapping::is_always_contiguous ;
 
-  constexpr size_type span() const noexcept;    
+  constexpr bool is_unique() const noexcept  { return m_map.is_unique(); }
+  constexpr bool is_regular() const noexcept { return m_map.is_regular(); }
+  constexpr bool is_contiguous() const noexcept {return m_map.is_contiguous();}
+
+  constexpr value_type span() const noexcept
+    { return m_map.span(); }
+
+  constexpr value_type stride( size_type i ) const noexcept
+    { return m_map.stride(i); }
 
   /////////////////////////////////////////////////////////////////////////// 
   // ELEMENT AND DATA ACCESS 
 
+  constexpr pointer data() const noexcept { return m_ptr ; }
+
   template <typename... UnsignedIntegers>
-  typename std::enable_if<
-      Dims::rank() == sizeof...(UnsignedIntegers)
-      && detail::pack_is_integral<UnsignedIntegers...>::value
+  typename std::enable_if
+    <( dimension::rank() <= sizeof...(UnsignedIntegers) &&
+       array_property::detail::pack_is_integral<UnsignedIntegers...>::value )
     , reference
-  >::type operator()(UnsignedIntegers... indices) const noexcept;
+    >::type operator()(UnsignedIntegers... indices) const noexcept
+    { return m_ptr[ m_map( indices... ) ]; }
 
   reference operator[](size_type idx) const noexcept;
 
 private:
-  pointer        m_ptr ;
-  layout_mapping m_map ;
+  pointer  m_ptr ;
+  mapping  m_map ;
 };
 
 }} // std::experimental
-
-#endif
 
 #endif // #ifndef STD_EXPERIMENTAL_ARRAY_REF_HEADER
 
