@@ -46,6 +46,7 @@
 
 #include <initializer_list>
 #include <iterator>
+#include <algorithm>
 #include <detail/dimension_helper>
 #include <detail/array_helper>
 
@@ -150,6 +151,11 @@ public:
   constexpr dimension_typed( dimension_typed const & ) = default ;
   dimension_typed & operator = ( dimension_typed const & ) = default ;
 
+  template< value_type ... T >
+  explicit dimension_typed( dimension_typed<value_type,T...> const & D ) noexcept
+    : base( D )
+    { static_assert( D.rank() == rank() , "" ); }
+
   template< typename ... IntegralType >
   constexpr explicit dimension_typed( IntegralType ... dyn_dims ) noexcept
     : base( dyn_dims... )
@@ -191,6 +197,18 @@ public:
   using value_type = typename Dimension::value_type ;
 
 private:
+
+  template< unsigned I , typename iType >
+  void get_stride( iType * const s ) const noexcept
+    {
+      if ( I + 1 < Dimension::rank() ) {
+        mapping::template get_stride<(I+1<Dimension::rank()?I+1:I)>(s);
+        s[I] = s[I+1] * Dimension::template extent<I>::value ;
+      }
+      else {
+        s[I] = 1 ;
+      }
+    }
 
   template< unsigned I >
   constexpr value_type get_stride( size_type i ) const noexcept
@@ -239,6 +257,10 @@ public:
   constexpr value_type stride( size_type i ) const noexcept
     { return mapping::template get_stride<0>(i); }
 
+  template< typename iType >
+  void stride( iType * const s ) const noexcept
+    { mapping::template get_stride<0>(s); }
+
   // CTOR
 
   constexpr mapping() noexcept = default ;
@@ -280,6 +302,15 @@ public:
   using value_type = typename Dimension::value_type ;
 
 private:
+
+  template< unsigned I , typename iType >
+  void get_stride( iType * const s ) const noexcept
+    {
+      if ( I < Dimension::rank() ) {
+        s[I] = I ? s[I-1] * Dimension::template extent<I?I-1:I>::value : 1 ;
+        mapping::template get_stride<(I+1<Dimension::rank()?I+1:I)>(s);
+      }
+    }
 
   template< unsigned I >
   constexpr value_type get_stride( size_type const i ) const noexcept
@@ -324,6 +355,10 @@ public:
   constexpr value_type stride( size_type i ) const noexcept
     { return mapping::template get_stride<0>(i); }
 
+  template< typename iType >
+  void stride( iType * const s ) const noexcept
+    { mapping::template get_stride<0>(s); }
+
   // CTOR
 
   constexpr mapping() noexcept = default ;
@@ -360,6 +395,8 @@ public:
 private:
 
   value_type m_stride[ Dimension::rank() ];
+  int        m_unique ;
+  int        m_contig ;
 
   template< unsigned I >
   constexpr value_type get_stride( size_type const i ) const noexcept
@@ -384,18 +421,18 @@ public:
 
   // OBSERVERS
 
-  static constexpr bool is_always_unique = true ;
+  static constexpr bool is_always_unique = false ;
   static constexpr bool is_always_regular = true ;
-  static constexpr bool is_always_contiguous = true ;
+  static constexpr bool is_always_contiguous = false ;
 
-  constexpr bool is_unique() const noexcept
-    { return is_always_unique ; }
+  // Only unique if { dimension , stride } pairs
+  // do not overlap
+  constexpr bool is_unique() const noexcept { return m_unique ; }
 
   constexpr bool is_regular() const noexcept
     { return is_always_regular ; }
 
-  constexpr bool is_contiguous() const noexcept
-    { return is_always_contiguous ; }
+  constexpr bool is_contiguous() const noexcept { return m_contig ; }
 
   constexpr value_type span() const noexcept
     { return Dimension::size(); }
@@ -403,16 +440,64 @@ public:
   constexpr value_type stride( size_type i ) const noexcept
     { return mapping::template get_stride<0>(i); }
 
+  template< typename iType >
+  void stride( iType * const s ) const noexcept
+    {
+      for ( size_type i = 0 ; i < Dimension::rank() ; ++i ) {
+        s[i] = m_stride[i] ;
+      }
+    }
+
   // CTOR
 
-  constexpr mapping() noexcept = default ;
+  constexpr mapping() noexcept
+    : Dimension()
+    , m_stride{0}
+    , m_unique{0}
+    , m_contig{0}
+    {}
+
+  template< typename D >
+  explicit mapping( layout_left::template mapping<D> const & M ) noexcept
+    : Dimension( static_cast<D const &>(M) )
+    , m_stride{0}
+    , m_unique{1}
+    , m_contig{1}
+    { M.stride( m_stride ); }
+
+  template< typename D >
+  explicit mapping( layout_right::template mapping<D> const & M ) noexcept
+    : Dimension( static_cast<D const &>(M) )
+    , m_stride{0}
+    , m_unique{1}
+    , m_contig{1}
+    { M.stride( m_stride ); }
 
   template < typename IntType >
   explicit mapping( IntType const * const E
                   , IntType const * const S ) noexcept
     : Dimension(E)
+    , m_stride{0}
+    , m_unique{0}
+    , m_contig{0}
     {
-      for ( size_type i = 0 ; i < Dimension::rank() ; ++i ) m_stride[i] = S[i] ;
+      std::pair<value_type,value_type> tmp[ Dimension::rank() ];
+
+      for ( size_type i = 0 ; i < Dimension::rank() ; ++i ) {
+        m_stride[i] = S[i] ;
+        tmp[i].first = S[i];
+        tmp[i].second = E[i];
+      }
+
+      std::sort( tmp , tmp + Dimension::rank() );
+
+      m_unique = 1 ;
+      m_contig = 1 ;
+      for ( size_type i = 1 ; i < Dimension::rank() ; ++i ) {
+        const value_type prev = tmp[i-1].first * tmp[i-1].second ;
+        if ( tmp[i].first != prev ) { m_contig = 0 ; }
+        if ( tmp[i].first <  prev ) { m_unique = 0 ; }
+      }
     }
 
   // OPERATOR

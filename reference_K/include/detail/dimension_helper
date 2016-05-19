@@ -131,13 +131,19 @@ struct dimension_extent< I , ValueType , Head , Tail ... >
   constexpr dimension_extent( dimension_extent const & ) = default ;
   dimension_extent & operator = ( dimension_extent const & ) = default ;
 
-  template< typename Arg0 , typename ... Args >
+  template< typename ... Args >
   constexpr explicit
-  dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next( arg0 , args... ) {}
+  dimension_extent( size_t const & arg0 , Args const & ... args ) : next( arg0 , args... ) {}
 
   template< typename Arg >
   constexpr explicit
   dimension_extent( Arg const * const arg ) : next( arg ) {}
+
+  template< size_t H , size_t ... T >
+  explicit
+  dimension_extent( dimension_extent<I,ValueType,H,T...> const & D )
+    : next( D )
+    { assert( value == D.value ); }
 };
 
 template< unsigned I , typename ValueType , size_t ... Tail >
@@ -161,13 +167,19 @@ struct dimension_extent< I , ValueType , 0 , Tail ... >
   constexpr dimension_extent( dimension_extent const & ) = default ;
   dimension_extent & operator = ( dimension_extent const & ) = default ;
 
-  template< typename Arg0 , typename ... Args >
+  template< typename ... Args >
   constexpr explicit
-  dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next(args...), value(arg0) {}
+  dimension_extent( size_t const & arg0 , Args const & ... args )
+    : next(args...), value(arg0) {}
 
   template< typename Arg >
   constexpr explicit
   dimension_extent( Arg const * const arg ) : next( arg+1 ), value(*arg) {}
+
+  template< size_t H , size_t ... T >
+  constexpr explicit
+  dimension_extent( dimension_extent<I,ValueType,H,T...> const & D )
+    : next( D ), value( D.value ) {}
 };
 
 

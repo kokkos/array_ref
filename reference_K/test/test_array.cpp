@@ -72,6 +72,32 @@ void test_array_base()
   assert( & c(0,0,0,1) == buffer + 1 );
 }
 
+void test_array_strided()
+{
+  using array_t = std::experimental::array_ref<int[][20][30][40]> ;
+  using array_strided_t = std::experimental::array_ref<int, std::experimental::array_property::dimension<0,0,0,0> , std::experimental::array_property::layout_stride > ;
+
+  int buffer[10*20*30*40];
+
+  array_t b(buffer,10);
+
+  array_strided_t s( b );
+
+  assert( s.is_regular() == true );
+  assert( s.is_unique() == true );
+  assert( s.is_contiguous() == true );
+  assert( s.extent(0) == b.extent(0) );
+  assert( s.extent(1) == b.extent(1) );
+  assert( s.extent(2) == b.extent(2) );
+  assert( s.extent(3) == b.extent(3) );
+  assert( s.stride(0) == b.stride(0) );
+  assert( s.stride(1) == b.stride(1) );
+  assert( s.stride(2) == b.stride(2) );
+  assert( s.stride(3) == b.stride(3) );
+
+  assert( & s(1,1,1,1) == & b(1,1,1,1) );
+}
+
 void test_array_subarray()
 {
   using array_t = std::experimental::array_ref<int[][20][30][40]> ;
@@ -80,7 +106,6 @@ void test_array_subarray()
   int buffer[10*20*30*40];
 
   array_t b(buffer,10);
-
 
   auto c = std::experimental::subarray( b , 1 , 1 , 1 , 1 );
   auto d = std::experimental::subarray( b , range_t(1,2), range_t(1,3), range_t(1,4), range_t(1,5) );
@@ -97,10 +122,15 @@ void test_array_subarray()
   assert( & b(1,1,1,1) == & d(0,0,0,0) );
   assert( & b(1,2,3,4) == & d(0,1,2,3) );
 
+  assert( d.is_regular() == true );
+  assert( d.is_unique() == true );
+  assert( d.is_contiguous() == false );
+
   // bug in gcc does not produce initializer list for template arguments
   //
   // auto e = std::experimental::subarray( b , {1,2} , {1,3} , {1,4} , {1,5} );
 }
+
 
 int main()
 {
