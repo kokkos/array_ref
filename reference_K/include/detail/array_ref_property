@@ -133,7 +133,17 @@ struct unpack_array_properties
   using bounds_check = typename next::bounds_check ;
 };
 
+//----------------------------------------------------------------------------
 
+template < typename ArrayRefType , typename ... SliceSpecs >
+struct subarray_generator ;
+
+template < typename ArrayRefType , typename ... SliceSpecs >
+struct subarray_generator 
+{
+  // generate dimension
+
+};
 
 }}}} // std::experimental::array_property::detail
 

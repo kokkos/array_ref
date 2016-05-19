@@ -336,8 +336,11 @@ public:
 
 };
 
-
 //--------------------------------------------------------------------------
+
+struct all_type {};
+
+constexpr all_type all ;
 
 }}} // std::experimental::array_property
 
@@ -483,6 +486,27 @@ private:
   pointer  m_ptr ;
   mapping  m_map ;
 };
+
+//--------------------------------------------------------------------------
+
+template< typename DataType , typename ... Properties
+        , typename ... SliceSpecs >
+typename array_property::detail
+  ::subarray_generator< array_ref< DataType , Properties ... > , SliceSpecs ... >
+    ::type
+subarray( array_ref< DataType , Properties... > const & a
+        , SliceSpecs ... slice_specs
+        )
+{
+  using ArrayRefType = array_ref< DataType , Properties ... > ;
+
+  static_assert( ArrayRefType::rank() == sizeof...(SliceSpecs) , "" );
+
+  return array_property::detail
+    ::subarray_generator< ArrayRefType , SliceSpecs ... >
+      ::apply( a , slice_specs... );
+}
+
 
 }} // std::experimental
 

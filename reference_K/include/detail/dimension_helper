@@ -56,6 +56,8 @@ namespace array_property {
 template< typename ValueType , ValueType ... Dim >
 struct dimension_typed ;
 
+struct all_type ;
+
 }}} // std::experimental::array_property
 
 //--------------------------------------------------------------------------
@@ -186,6 +188,64 @@ struct dimension_extraction< DataType[] , IntegralType >
   using type = typename dimension_prepend< nest , 0 >::type ;
 };
 
+//--------------------------------------------------------------------------
+
+template < typename T >
+struct is_integral_range : std::false_type {};
+
+template < typename T >
+struct is_integral_range< std::initializer_list<T> >
+  : std::is_integral<T>
+{
+  static constexpr T begin( std::initializer_list<T> const & r ) noexcept
+    { return r[0]; }
+  static constexpr T end( size_t , std::initializer_list<T> const & r ) noexcept
+    { return r[1]; }
+};
+
+template < typename T >
+struct is_integral_range< std::pair<T,T> >
+  : std::is_integral<T>
+{
+  static constexpr T begin( std::pair<T,T> const & r ) noexcept
+    { return r.first ; }
+  static constexpr T end( size_t , std::pair<T,T> const & r ) noexcept
+    { return r.second ; }
+};
+
+template<>
+struct is_integral_range< all_type >
+{
+  static constexpr size_t begin( all_type const & ) noexcept
+    { return 0 ; }
+  static constexpr size_t end( size_t N , all_type const & ) noexcept
+    { return N ; }
+};
+
+template< typename ... SliceSpecs >
+struct rank_of_slices ;
+
+template<>
+struct rank_of_slices<> { enum : unsigned { value = 0 }; };
+
+template< typename Spec , typename ... SliceSpecs >
+struct rank_of_slices< Spec , SliceSpecs... >
+{
+  static_assert( std::is_integral<Spec>::value ||
+                 is_integral_range<Spec>::value
+               , "" );
+
+  enum : unsigned { value = is_integral_range<Spec>::value +
+                            rank_of_slices< SliceSpecs... >::value };
+};
+
+
+template< typename Dimension , typename ... SliceSpecs >
+struct generate_dimension
+{
+  
+
+};
 
 }}}} // std::experimental::array_property::detail
 
