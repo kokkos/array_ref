@@ -47,6 +47,9 @@
 #include <initializer_list>
 #include <iterator>
 #include <algorithm>
+
+#include <iostream>
+
 #include <detail/dimension_helper>
 #include <detail/array_helper>
 
@@ -399,14 +402,6 @@ private:
   int        m_contig ;
 
   template< unsigned I >
-  constexpr value_type get_stride( size_type const i ) const noexcept
-    {
-      return ( I < i ? Dimension::template extent<I>::value *
-                       mapping::template get_stride<(I+1<Dimension::rank()?I+1:I)>(i)
-                     : 1 );
-    }
-
-  template< unsigned I >
   constexpr value_type offset() const noexcept
     { return 0 ; }
 
@@ -438,7 +433,7 @@ public:
     { return Dimension::size(); }
 
   constexpr value_type stride( size_type i ) const noexcept
-    { return mapping::template get_stride<0>(i); }
+    { return i < Dimension::rank() ? m_stride[i] : 0 ; }
 
   template< typename iType >
   void stride( iType * const s ) const noexcept
@@ -473,6 +468,14 @@ public:
     , m_contig{1}
     { M.stride( m_stride ); }
 
+  template< typename D >
+  explicit mapping( layout_stride::template mapping<D> const & M ) noexcept
+    : Dimension( static_cast<D const &>(M) )
+    , m_stride{0}
+    , m_unique( M.is_unique() )
+    , m_contig( M.is_contiguous() )
+    { M.stride( m_stride ); }
+
   template < typename IntType >
   explicit mapping( IntType const * const E
                   , IntType const * const S ) noexcept
@@ -481,22 +484,30 @@ public:
     , m_unique{0}
     , m_contig{0}
     {
-      std::pair<value_type,value_type> tmp[ Dimension::rank() ];
+      size_type index[ Dimension::rank() ];
 
+      // Copy strides and fill permutation such that
+      //
+      // S[ index[i] ] <= S[ index[i+1] ]
+      //
       for ( size_type i = 0 ; i < Dimension::rank() ; ++i ) {
         m_stride[i] = S[i] ;
-        tmp[i].first = S[i];
-        tmp[i].second = E[i];
-      }
 
-      std::sort( tmp , tmp + Dimension::rank() );
+        size_type j = i ;
+
+        for ( ; j && S[i] < S[ index[j-1] ] ; --j ) { index[j] = index[j-1] ; }
+
+        index[j] = i ;
+      }
 
       m_unique = 1 ;
       m_contig = 1 ;
       for ( size_type i = 1 ; i < Dimension::rank() ; ++i ) {
-        const value_type prev = tmp[i-1].first * tmp[i-1].second ;
-        if ( tmp[i].first != prev ) { m_contig = 0 ; }
-        if ( tmp[i].first <  prev ) { m_unique = 0 ; }
+        const size_type j = index[i-1];
+        const size_type k = index[i];
+        const value_type prev = S[j] * E[j] ;
+        if ( S[k] != prev ) { m_contig = 0 ; }
+        if ( S[k] <  prev ) { m_unique = 0 ; }
       }
     }
 
