@@ -44,9 +44,10 @@
 #ifndef STD_EXPERIMENTAL_ARRAY_REF_HEADER
 #define STD_EXPERIMENTAL_ARRAY_REF_HEADER
 
+#include <initializer_list>
 #include <iterator>
 #include <detail/dimension_helper>
-#include <detail/array_ref_property>
+#include <detail/array_helper>
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -155,6 +156,13 @@ public:
     {
       static_assert( detail::pack_is_integral<IntegralType...>::value , "" );
       static_assert( rank_dynamic() == sizeof...(IntegralType) , "" );
+    }
+
+  template< typename IntegralType >
+  constexpr explicit dimension_typed( IntegralType const * const dyn_dims ) noexcept
+    : base( dyn_dims )
+    {
+      static_assert( std::is_integral<IntegralType>::value , "" );
     }
 
   template< typename ... IntegralType >
@@ -338,6 +346,91 @@ public:
 
 //--------------------------------------------------------------------------
 
+struct layout_stride {
+
+template< typename Dimension >
+struct mapping : public Dimension {
+public:
+
+  // TYPES
+
+  using size_type  = typename Dimension::size_type ;
+  using value_type = typename Dimension::value_type ;
+
+private:
+
+  value_type m_stride[ Dimension::rank() ];
+
+  template< unsigned I >
+  constexpr value_type get_stride( size_type const i ) const noexcept
+    {
+      return ( I < i ? Dimension::template extent<I>::value *
+                       mapping::template get_stride<(I+1<Dimension::rank()?I+1:I)>(i)
+                     : 1 );
+    }
+
+  template< unsigned I >
+  constexpr value_type offset() const noexcept
+    { return 0 ; }
+
+  template< unsigned I , typename IR , typename ... Arg >
+  constexpr value_type
+  offset( IR ir , Arg ... arg ) const noexcept
+    {
+      return ir * m_stride[I] + mapping::template offset<I+1>( arg... );
+    }
+
+public:
+
+  // OBSERVERS
+
+  static constexpr bool is_always_unique = true ;
+  static constexpr bool is_always_regular = true ;
+  static constexpr bool is_always_contiguous = true ;
+
+  constexpr bool is_unique() const noexcept
+    { return is_always_unique ; }
+
+  constexpr bool is_regular() const noexcept
+    { return is_always_regular ; }
+
+  constexpr bool is_contiguous() const noexcept
+    { return is_always_contiguous ; }
+
+  constexpr value_type span() const noexcept
+    { return Dimension::size(); }
+
+  constexpr value_type stride( size_type i ) const noexcept
+    { return mapping::template get_stride<0>(i); }
+
+  // CTOR
+
+  constexpr mapping() noexcept = default ;
+
+  template < typename IntType >
+  explicit mapping( IntType const * const E
+                  , IntType const * const S ) noexcept
+    : Dimension(E)
+    {
+      for ( size_type i = 0 ; i < Dimension::rank() ; ++i ) m_stride[i] = S[i] ;
+    }
+
+  // OPERATOR
+
+  template< typename ... Integral >
+  constexpr typename std::enable_if
+    < array_property::detail::pack_is_integral< Integral ... >::value &&
+      0 < Dimension::rank()
+    , typename Dimension::value_type 
+    >::type operator()
+    ( Integral const & ... indices ) const noexcept
+    { return mapping::template offset<0>(indices...); }
+};
+
+};
+
+//--------------------------------------------------------------------------
+
 struct all_type {};
 
 constexpr all_type all ;
@@ -361,8 +454,6 @@ private:
 
   using unpack = array_property::detail::unpack_array_properties< DataType , Properties... > ;
 
-  using dimension    = typename unpack::dimension ;
-  using mapping      = typename unpack::layout::template mapping< dimension > ;
   using bounds_check = typename unpack::bounds_check ;
 
 public:
@@ -370,6 +461,8 @@ public:
   // TYPES
 
   using layout     = typename unpack::layout ;
+  using dimension  = typename unpack::dimension ;
+  using mapping    = typename unpack::layout::template mapping< dimension > ;
   using size_type  = typename dimension::value_type ;
   using value_type = typename unpack::value_type ;
 
@@ -412,7 +505,8 @@ public:
     ) noexcept
     : m_ptr(p), m_map( dimension(dynamic_dims...) ) {}
 
-  explicit constexpr array_ref( pointer p, layout const& l ) noexcept;
+  explicit constexpr array_ref( pointer p, typename layout::template mapping<dimension> const& m ) noexcept
+    : m_ptr(p), m_map(m) {}
 
   // Observers for domain dimension
 
@@ -499,12 +593,12 @@ subarray( array_ref< DataType , Properties... > const & a
         )
 {
   using ArrayRefType = array_ref< DataType , Properties ... > ;
+  using generator = array_property::detail::subarray_generator< ArrayRefType , SliceSpecs ... > ;
+  using layout = typename generator::type::layout ;
 
   static_assert( ArrayRefType::rank() == sizeof...(SliceSpecs) , "" );
 
-  return array_property::detail
-    ::subarray_generator< ArrayRefType , SliceSpecs ... >
-      ::apply( a , slice_specs... );
+  return generator::template apply< layout >( a , slice_specs ... );
 }
 
 

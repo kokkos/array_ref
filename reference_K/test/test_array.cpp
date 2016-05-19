@@ -72,10 +72,41 @@ void test_array_base()
   assert( & c(0,0,0,1) == buffer + 1 );
 }
 
+void test_array_subarray()
+{
+  using array_t = std::experimental::array_ref<int[][20][30][40]> ;
+  using range_t = std::pair<size_t,size_t> ;
+
+  int buffer[10*20*30*40];
+
+  array_t b(buffer,10);
+
+
+  auto c = std::experimental::subarray( b , 1 , 1 , 1 , 1 );
+  auto d = std::experimental::subarray( b , range_t(1,2), range_t(1,3), range_t(1,4), range_t(1,5) );
+
+  static_assert( c.rank() == 0 , "" );
+  static_assert( d.rank() == 4 , "" );
+
+  assert( & b(1,1,1,1) == & c() );
+
+  assert( d.extent(0) == 1 );
+  assert( d.extent(1) == 2 );
+  assert( d.extent(2) == 3 );
+  assert( d.extent(3) == 4 );
+  assert( & b(1,1,1,1) == & d(0,0,0,0) );
+  assert( & b(1,2,3,4) == & d(0,1,2,3) );
+
+  // bug in gcc does not produce initializer list for template arguments
+  //
+  // auto e = std::experimental::subarray( b , {1,2} , {1,3} , {1,4} , {1,5} );
+}
 
 int main()
 {
   test_array_base();
+  test_array_subarray();
+
   return 0 ;
 }
 

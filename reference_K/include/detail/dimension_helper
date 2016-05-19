@@ -41,8 +41,8 @@
 //@HEADER
 */
 
-#ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DIMENSION_HELPER_HEADER
-#define STD_EXPERIMENTAL_ARRAY_PROPERTY_DIMENSION_HELPER_HEADER
+#ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_DIMENSION_HELPER_HEADER
+#define STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_DIMENSION_HELPER_HEADER
 
 #include <utility>
 #include <type_traits>
@@ -103,7 +103,11 @@ struct dimension_extent< I , ValueType >
 
   template< typename ... Args >
   constexpr explicit
-  dimension_extent( Args const & ... args ) {}
+  dimension_extent( Args const & ... ) {}
+
+  template< typename Arg >
+  constexpr explicit
+  dimension_extent( Arg const * const ) {}
 };
 
 template< unsigned I , typename ValueType , size_t Head , size_t ... Tail >
@@ -130,6 +134,10 @@ struct dimension_extent< I , ValueType , Head , Tail ... >
   template< typename Arg0 , typename ... Args >
   constexpr explicit
   dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next( arg0 , args... ) {}
+
+  template< typename Arg >
+  constexpr explicit
+  dimension_extent( Arg const * const arg ) : next( arg ) {}
 };
 
 template< unsigned I , typename ValueType , size_t ... Tail >
@@ -156,6 +164,10 @@ struct dimension_extent< I , ValueType , 0 , Tail ... >
   template< typename Arg0 , typename ... Args >
   constexpr explicit
   dimension_extent( Arg0 const & arg0 , Args const & ... args ) : next(args...), value(arg0) {}
+
+  template< typename Arg >
+  constexpr explicit
+  dimension_extent( Arg const * const arg ) : next( arg+1 ), value(*arg) {}
 };
 
 
@@ -191,35 +203,49 @@ struct dimension_extraction< DataType[] , IntegralType >
 //--------------------------------------------------------------------------
 
 template < typename T >
-struct is_integral_range : std::false_type {};
+struct is_integral_range : std::false_type
+{
+  enum : bool { is_all = false };
+
+  static constexpr T const & begin( T const & val ) noexcept
+    { return val ; }
+  static constexpr T length( T const & ) noexcept
+    { return 0 ; }
+};
 
 template < typename T >
 struct is_integral_range< std::initializer_list<T> >
   : std::is_integral<T>
 {
+  enum : bool { is_all = false };
+
   static constexpr T begin( std::initializer_list<T> const & r ) noexcept
-    { return r[0]; }
-  static constexpr T end( size_t , std::initializer_list<T> const & r ) noexcept
-    { return r[1]; }
+    { return r.begin()[0]; }
+  static constexpr T length( std::initializer_list<T> const & r ) noexcept
+    { return r.begin()[1] - r.begin()[0] ; }
 };
 
 template < typename T >
 struct is_integral_range< std::pair<T,T> >
   : std::is_integral<T>
 {
+  enum : bool { is_all = false };
+
   static constexpr T begin( std::pair<T,T> const & r ) noexcept
     { return r.first ; }
-  static constexpr T end( size_t , std::pair<T,T> const & r ) noexcept
-    { return r.second ; }
+  static constexpr T length( std::pair<T,T> const & r ) noexcept
+    { return r.second - r.first ; }
 };
 
 template<>
-struct is_integral_range< all_type >
+struct is_integral_range< all_type > : std::true_type
 {
+  enum : bool { is_all = true };
+
   static constexpr size_t begin( all_type const & ) noexcept
     { return 0 ; }
-  static constexpr size_t end( size_t N , all_type const & ) noexcept
-    { return N ; }
+  static constexpr size_t length( all_type const & ) noexcept
+    { return 0 ; }
 };
 
 template< typename ... SliceSpecs >
@@ -235,19 +261,38 @@ struct rank_of_slices< Spec , SliceSpecs... >
                  is_integral_range<Spec>::value
                , "" );
 
-  enum : unsigned { value = is_integral_range<Spec>::value +
+  enum : unsigned { value = ( is_integral_range<Spec>::value ? 1 : 0 ) +
                             rank_of_slices< SliceSpecs... >::value };
+};
+
+template< unsigned R , typename D >
+struct generate_dynamic_dimension ;
+
+template< typename T , T ... Dims >
+struct generate_dynamic_dimension< 0 , dimension_typed<T,Dims...> >
+{ using type = dimension_typed<T,Dims...> ; };
+
+template< unsigned R , typename T , T ... Dims >
+struct generate_dynamic_dimension< R , dimension_typed<T,Dims...> >
+{
+  using type = typename
+    generate_dynamic_dimension< R - 1 , dimension_typed<T,0,Dims...> >::type ;
 };
 
 
 template< typename Dimension , typename ... SliceSpecs >
 struct generate_dimension
 {
-  
+  // Simplest possible dimension
+
+  enum : unsigned { rank = rank_of_slices< SliceSpecs... >::value };
+
+  using type = typename
+    generate_dynamic_dimension< rank , dimension_typed< typename Dimension::value_type > >::type ;
 
 };
 
 }}}} // std::experimental::array_property::detail
 
-#endif // #ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DIMENSION_HELPER_HEADER
+#endif // #ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_DIMENSION_HELPER_HEADER
 

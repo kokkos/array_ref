@@ -41,15 +41,20 @@
 //@HEADER
 */
 
-#ifndef STD_EXPERIMENTAL_DETAIL_ARRAY_REF_PROPERTY_HEADER
-#define STD_EXPERIMENTAL_DETAIL_ARRAY_REF_PROPERTY_HEADER
+#ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_ARRAY_HELPER_HEADER
+#define STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_ARRAY_HELPER_HEADER
 
 namespace std {
 namespace experimental {
+
+template< typename , typename ... >
+struct array_ref ;
+
 namespace array_property {
 
 struct layout_right ;
 struct layout_left ;
+struct layout_stride ;
 
 }}} // std::experimental::array_property
 
@@ -123,7 +128,9 @@ template< typename Layout , typename ... Properties >
 struct unpack_array_properties
   < typename std::enable_if
       <( std::is_same< Layout , layout_right >::value ||
-         std::is_same< Layout , layout_left >::value )>::type
+         std::is_same< Layout , layout_left >::value ||
+         std::is_same< Layout , layout_stride >::value 
+       )>::type
   , Layout , Properties... >
 {
   using next = unpack_array_properties< void , Properties... > ;
@@ -143,9 +150,67 @@ struct subarray_generator
 {
   // generate dimension
 
+  using dimension = typename
+    generate_dimension< typename ArrayRefType::dimension , SliceSpecs... >::type ;
+
+  using layout = typename std::conditional
+    <( 0 < dimension::rank() )
+    , array_property::layout_stride
+    , array_property::layout_right
+    >::type ;
+
+  using type = array_ref< typename ArrayRefType::value_type
+                        , dimension
+                        , layout > ;
+
+  template< typename LayoutType >
+  static
+  typename std::enable_if
+    < std::is_same< LayoutType , array_property::layout_stride >::value
+    , type >::type
+  apply( ArrayRefType const & a , SliceSpecs const ... slices )
+    {
+      // offset for beginning of subarray
+
+      typename type::pointer p =
+        & a( array_property::detail::is_integral_range<SliceSpecs>::begin( slices )... );
+
+      constexpr bool is_range[] = { array_property::detail::is_integral_range<SliceSpecs>::value ... };
+      constexpr bool is_all[] = { array_property::detail::is_integral_range<SliceSpecs>::is_all ... };
+
+      typename dimension::value_type extents[] =
+        { array_property::detail::is_integral_range<SliceSpecs>::length( slices )... };
+
+      typename dimension::value_type strides[ dimension::rank() ];
+
+      using mapping = typename LayoutType::template mapping< dimension > ;
+
+      for ( typename dimension::size_type i = 0 , j = 0 ; i < ArrayRefType::rank() ; ++i ) {
+        if ( is_range[i] ) {
+          extents[j] = is_all[i] ? a.extent(i) : extents[i] ;
+          strides[j] = a.stride(i);
+          ++j ;
+        }
+      }
+
+      return type( p , mapping( extents , strides ) );
+    }
+
+  template< typename LayoutType >
+  static
+  typename std::enable_if< ! std::is_same< LayoutType , array_property::layout_stride >::value , type >::type
+  apply( ArrayRefType const & a , SliceSpecs const ... slices )
+    {
+      // offset for beginning of subarray
+
+      typename type::pointer p =
+         & a( array_property::detail::is_integral_range<SliceSpecs>::begin( slices )... );
+
+      return type(p);
+    }
 };
 
 }}}} // std::experimental::array_property::detail
 
-#endif // #ifndef STD_EXPERIMENTAL_DETAIL_ARRAY_REF_PROPERTY_HEADER
+#endif // #ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_ARRAY_HELPER_HEADER
 
