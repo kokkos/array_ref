@@ -505,7 +505,7 @@ public:
     ) noexcept
     : m_ptr(p), m_map( dimension(dynamic_dims...) ) {}
 
-  explicit constexpr array_ref( pointer p, typename layout::template mapping<dimension> const& m ) noexcept
+  explicit constexpr array_ref( pointer p, mapping const& m ) noexcept
     : m_ptr(p), m_map(m) {}
 
   // Observers for domain dimension
