@@ -140,16 +140,16 @@ For example, a one-dimensional array is passed to a function as follows.
 
 ..
 
-The *const-ness* of an **array_ref** is analogous to the *const-ness*
+The *const-ness* of an ``array_ref`` is analogous to the *const-ness*
 of a pointer.
-A **const array_ref<D>** is similar to a const-pointer in that the **array_ref**
+A ``const array_ref<D>`` is similar to a const-pointer in that the ``array_ref``
 may not be modifid but the referenced extent of memory may be modified.
-A **array_ref<const D>** is similar to a pointer-to-const in that the
+A ``array_ref<const D>`` is similar to a pointer-to-const in that the
 referenced extent of memory may not be modified. These are the same *const-ness*
-semantics of **unique_ptr** and **shared_ptr**. 
+semantics of ``unique_ptr`` and ``shared_ptr``. 
 
-The **T[]** syntax has precedence in the standard; **unique_ptr** supports this
-syntax to denote a **unique_ptr** which manages the lifetime of a dynamically
+The ``T[]`` syntax has precedence in the standard; ``unique_ptr`` supports this
+syntax to denote a ``unique_ptr`` which manages the lifetime of a dynamically
 allocated array of objects.
 
 
@@ -181,6 +181,29 @@ A traditional multidimensional array with static dimensions
   }
 
 ..
+
+
+Support for static extents is an essential performance feature
+of the proprosed ``array_ref``.
+First a compiler can optimize the index-to-object mapping computation
+and second the ``array_ref`` implementation can eliminate storage for
+static extents.
+Consider the following example where ``L`` is only known at runtime.
+
+.. code-block: c++
+
+  array_ref< double[][3][3] > A( buffer , L );
+
+  A(i,2,1) = 42 ;
+
+..
+
+The member access mapping can be optimized to a single integer
+multiply-add ``A.ptr[i*9+7]``
+because the implementation of ``A(i,2,1)`` is ``A.ptr[((i)*3+j)*3+k]``
+and ``j=2`` and ``k==1`` are statically determined.
+The ``sizeof(A)`` can be ``sizeof(double*)+sizeof(size_t)``
+because on the pointer and dynamic dimension requires storage.
 
 
 Multidimensional Array with Multiple Dynamic Dimensions
@@ -245,7 +268,7 @@ Array Properties
 Layout Polymorphism
 ------------------------------------------------------------------------------
 
-The **array_ref::operator()** maps the input multi-index from the array's
+The ``array_ref::operator()`` maps the input multi-index from the array's
 cartesian product multi-index *domain* space to a member in the array's *range* space.
 This is the **layout** mapping for the referenced array.
 For natively declared multidimensional arrays the layout mapping
@@ -345,7 +368,7 @@ not be injective or surjective.
 Extensible Layout Polymorphism
 ------------------------------------------------------------------------------
 
-The **array_ref** is intended to be extensible such that a user may supply
+The ``array_ref`` is intended to be extensible such that a user may supply
 a customized layout mapping.
 A user supplied customized layout mapping will be required to conform
 to a specified interface; *a.k.a.*, a C++ Concept.
@@ -415,7 +438,7 @@ array bounds, multi-index, and traceback of where the array bounds violation occ
 Future Possible Extensions
 ------------------------------------------------------------------------------
 
-The **array_ref** abstraction and interface has utility
+The ``array_ref`` abstraction and interface has utility
 well beyond the multidimensional array layout property.
 Other planned and prototyped properties include specification
 of which *memory space* within a heterogeneous memory system

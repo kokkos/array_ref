@@ -380,14 +380,14 @@ class template array_ref
   struct array_ref {
     // types
   
-    using layout     = // deduced
-    using value_type = // deduced
-    using reference  = // deduced
-    using pointer    = // deduced
-    using size_type  = // deduced
+    using layout     = /* deduced from Properties... */ ;
+    using value_type = /* deduced from DataType */ ;
+    using reference  = /* deduced from DataType and Properties... */ ;
+    using pointer    = /* deduced from DataType */ ;
+    using size_type  = /* implementation defined */ ;
 
-    using iterator               = // deduced
-    using const_iterator         = // deduced
+    using iterator               = /* deduced from DataType */ ;
+    using const_iterator         = /* deduced from DataType */ ;
     using reverse_iterator       = reverse_iterator<iterator> ;
     using const_reverse_iterator = reverse_iterator<const_iterator> ;
  
@@ -524,27 +524,27 @@ Array Dimensions
 Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``using layout``
+``using layout = /* deduced from Properties... */ ;``
 
   Layout property of the array.
   If ``Properties...`` does not include a layout property then
   ``layout`` is ``void``.
 
-``using value_type``
+``using value_type = /* deduced from DataType */ ;``
 
   Type of the objects referenced by the array.
 
   Remark: A likely implementation is
   ``using value_type = typename std::remove_all_extents< DataType >::type``.
 
-``using reference``
+``using reference = /* deduced from DataType and Properties... */ ;``
 
   The type returned by the member access operator.
-  Typically this will be ``value_type &``.
+  Typically this will be ``value_type&``.
   The *constness* of the refenced objects is defined by the *constness*
   of ``value_type``.
   For example, references to objects of
-  ``array_ref< const double[][3][8] >``
+  ``array_ref<const double[][3][8]>``
   are const.
   [Note: The reference type may be a proxy depending upon  ``Properties...``.
   For example, if a property indicates that all member references
@@ -553,19 +553,19 @@ Types
   - end note]
 
 
-``using pointer``
+``using pointer = /* deduced from DataType */ ;``
 
   The input type to a wrapping constructor.
-  Typically this will be ``value_type\*``.
+  Typically this will be ``value_type*``.
 
-``using size_type``
+``using size_type = /* implementation defined */ ;``
 
-  The type used to count the number of elements in the referenced array.
+  The type used for extents.
 
-| ``using iterator``
-| ``using const_iterator``
+| ``using iterator = /* deduced from DataType and Properties */ ;``
+| ``using const_iterator = /* deduced from DataType and Properties */ ;``
 
-  The type used to iterate an array with contiguous elements.
+  The type used to iterate elements of a a contiguous array.
 
 
 Constructors, copy, assignment, destructor
