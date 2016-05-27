@@ -1,9 +1,9 @@
 ========================================================================
-D0332r0 : Relaxed Incomplete Multidimensional Array Type Declaration
+P0332r0 : Relaxed Incomplete Multidimensional Array Type Declaration
 ========================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0332r0
+:Number: P0332r0
 :Date: 2016-05-27
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
@@ -19,7 +19,6 @@ D0332r0 : Relaxed Incomplete Multidimensional Array Type Declaration
 :Author: Ben Sander
 :Contact: ben.sander@amd.com
 :Audience: Library Evolution Working Group (LEWG)
-:Audience: Evolution Working Group (EWG) for concise array declaration
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0332.rst
 
 +------------+-------------------------------------------------------------+
@@ -38,7 +37,7 @@ D0332r0 : Relaxed Incomplete Multidimensional Array Type Declaration
 +------------+-------------------------------------------------------------+
 | P0009r2    | Multidimensional array reference specification              |
 +------------+-------------------------------------------------------------+
-| P03310     | Multidimensional array reference motivation and examples    |
+| P0331      | Multidimensional array reference motivation and examples    |
 +------------+-------------------------------------------------------------+
 
 

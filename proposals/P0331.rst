@@ -1,9 +1,9 @@
 ===================================================================
-D0331r0 : Motivation and Examples for Multidimensional Array
+P0331r0 : Motivation and Examples for Multidimensional Array
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0331r0
+:Number: P0331r0
 :Date: 2016-05-27
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
@@ -19,7 +19,6 @@ D0331r0 : Motivation and Examples for Multidimensional Array
 :Author: Ben Sander
 :Contact: ben.sander@amd.com
 :Audience: Library Evolution Working Group (LEWG)
-:Audience: Evolution Working Group (EWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0331.rst
 
 
