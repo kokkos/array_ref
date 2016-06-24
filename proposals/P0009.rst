@@ -314,7 +314,7 @@ Template arguments
   content of the property pack.
 
 
-**(B) Less Desirable Extent Specification Mechanism**
+**(B) Undesirable Extent Specification Mechanism**
 
 ``DataType``
 
@@ -889,7 +889,7 @@ Property: ``bounds_check_if< bool >``
 
 
 ******************************************************************
-Less Desirable Extent Mechanism (B) Proposal
+Undesirable Extent Mechanism (B) Proposal
 ******************************************************************
 
 The ``extents`` struct and ``dyn`` value are only required for the
