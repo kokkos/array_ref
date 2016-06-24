@@ -23,32 +23,6 @@ D0009r3 : Polymorphic Multidimensional Array Reference
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
 
-+------------+-------------------------------------------------------------+
-| **Revision History**                                                     |
-+------------+-------------------------------------------------------------+
-| P0009r0    | Original multidimensional array reference paper with        |
-|            | motivation, specification, and examples.                    |
-+------------+-------------------------------------------------------------+
-| P0009r1    | Revised with renaming from ``view`` to ``array_ref``        |
-|            | and allow unbounded rank through variadic arguments.        |
-+------------+-------------------------------------------------------------+
-| P0009r2    | Adding details for layout mapping.                          |
-| *(current)*| Move motivation, examples, and relaxed array declaration    |
-|            | to separate papers.                                         |
-+------------+-------------------------------------------------------------+
-| **References**                                                           |
-+------------+-------------------------------------------------------------+
-| P0331      | Multidimensional array reference motivation and examples    |
-+------------+-------------------------------------------------------------+
-| P0332      | Relaxed incomplete array type declaration                   |
-+------------+-------------------------------------------------------------+
-| P0122      | span: bounds-safe views for sequences of objects            |
-+------------+-------------------------------------------------------------+
-| P0367      | Accessors                                                   |
-+------------+-------------------------------------------------------------+
-| earlier related papers: N4512, N4355, N4300, N4222                       |
-+------------+-------------------------------------------------------------+
-
 .. sectnum::
 
 
@@ -101,7 +75,7 @@ This trivial language change is proposed in P0332.
 
 ..
 
-**(B)** The **less desirable mechanism** requires an additional ``extents``
+**(B)** The **undesirable mechanism** requires an additional ``extents``
 property class.
 This mechanism is more verbose and requires the introduction of a
 *magic* integral value to denote a dynamic extent.
@@ -152,7 +126,7 @@ within the input ``array_ref`` domain and codomain contained within the input
 ``array_ref`` codomain.
 
 The alias ``detail::subarray_deduction_t`` class is not proposed and only appears for exposition.
-An implementation template class of this form is necessary to deduce the specific
+An implementation metafunction of this form is necessary to deduce the specific
 ``array_ref`` return type of the ``subarray`` function.
 
 
@@ -328,7 +302,7 @@ Template arguments
   dynamic extents is determined from the possibly incomplete array type ``DataType`` .
 
   | ``value_type`` is ``std::remove_all_extents<DataType>::type ;``
-  | ``rank()`` is std::rank<DataType>::value``
+  | ``rank()`` is ``std::rank<DataType>::value``
   | ``static_extent(i)`` is ``std::extent<DataType,i>::value``
   | A dynamic extent is indicated when ``std::extent<DataType,i>::value == 0``
 
@@ -336,7 +310,8 @@ Template arguments
 
   Requires: ``is_array_property_v< Properties >`` for each member of the pack.
 
-  Effects: The domain to codomain reference mapping is determined by the property pack.
+  Effects: The domain to codomain reference mapping is determined by the
+  content of the property pack.
 
 
 **(B) Less Desirable Extent Specification Mechanism**
@@ -426,7 +401,7 @@ be equal to the codomain.
 | ``static constexpr size_type required_span( IntegralExtent ... dynamic_extent ) noexcept``
 | ``static constexpr size_type required_span( layout const & ) noexcept``
 
-  Requires: ``conjunction<is_integral<IntegralExtent>::type...>::value``.
+  Requires: ``conjunction<is_integral<IntegralExtent>::value...>::value``.
   Each ``dynamic_extent`` is non-negative.
 
   Returns: Required length of contiguous span of objects
@@ -477,7 +452,7 @@ Accessing members in the codomain
 | ``template< typename ... IntegralIndex >``
 | ``reference operator()( IntegralIndex ... indices ) const noexcept``
 
-  Requires: ``conjunction<is_integral<IntegralArgs>::type...>::value``.
+  Requires: ``conjunction<is_integral<IntegralArgs>::value...>::value``.
   ``rank() <= sizeof...(IntegralArgs)``.
   The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
   is valid: ``0 <= indices[ith] < extent(ith)``.
@@ -539,14 +514,15 @@ Constructors, assignments, destructor
 
   Requires:
   Given ``using V = array_ref<DataType,Properties...>`` and
-  ``using U = array_ref<UType,UProperties...>`` then requires
+  ``using U = array_ref<UType,UProperties...>`` then
+
   | ``is_assignable<V::value_type,U::value_type>`` ,
   | ``V::rank() == U::rank()`` ,
   | ``V::static_extent(r) == V::static_extent(r)`` or ``V::static_extent(r) == 0`` for ``0 <= r < V::rank()`` ,
   | compatibility of layout mapping, and
   | potentially other property compatibility conditions.
 
-  Effect: *this has equal domain, equal codomain, and
+  Effect: ``* this`` has equal domain, equal codomain, and
   equivalent mapping.
 
   Remark: There may be other ``Properties...`` dependent effects.
@@ -554,7 +530,7 @@ Constructors, assignments, destructor
 | ``template< typename ... IntegralExtent >``
 | ``constexpr array_ref( pointer ptr , IntegralExtent ... dynamic_extent) noexcept``
 
-  Requires: ``conjunction<is_integral<IntegralExtent>::type...>::value``.
+  Requires: ``conjunction<is_integral<IntegralExtent>::value...>::value``.
   ``sizeof...(IntegralExtent) == rank()``.
   Each ``dynamic_extent`` is non-negative.
   The span of objects denoted by ``[ ptr , ptr + required_span(dynamic_extent...) )``,
@@ -837,32 +813,32 @@ codomain member reference generation.
   Constructors, assignment operators, and destructor requires and effects
   correspond to the corresponding members of ``array_ref`` .
 
-| ``static constexpr int rank() noexcept;
-| ``static constexpr int rank_dynamic() noexcept;
-| ``constexpr size_type size() const noexcept;
-| ``constexpr size_type extent(int) const noexcept;
-| ``constexpr size_type static_extent(int) noexcept;
-| ``constexpr size_type span() const noexcept;
+| ``static constexpr int rank() noexcept;``
+| ``static constexpr int rank_dynamic() noexcept;``
+| ``constexpr size_type size() const noexcept;``
+| ``constexpr size_type extent(int) const noexcept;``
+| ``constexpr size_type static_extent(int) noexcept;``
+| ``constexpr size_type span() const noexcept;``
 |
-| ``template <typename... IntegralExtent>
-| ``static constexpr size_type required_span( IntegralExtent ... ) noexcept;
-| ``static constexpr size_type required_span( layout_concept const & ) noexcept;
+| ``template <typename... IntegralExtent>``
+| ``static constexpr size_type required_span( IntegralExtent ... ) noexcept;``
+| ``static constexpr size_type required_span( layout_concept const & ) noexcept;``
 |
-| ``static constexpr bool is_always_unique     = /* deduced */ ;
-| ``static constexpr bool is_always_contiguous = /* deduced */ ;
-| ``static constexpr bool is_always_regular    = /* deduced */ ;
+| ``static constexpr bool is_always_unique     = /* deduced */ ;``
+| ``static constexpr bool is_always_contiguous = /* deduced */ ;``
+| ``static constexpr bool is_always_regular    = /* deduced */ ;``
 |
-| ``constexpr bool is_unique() const noexcept;
-| ``constexpr bool is_contiguous() const noexcept;
-| ``constexpr bool is_regular() noexcept;
+| ``constexpr bool is_unique() const noexcept;``
+| ``constexpr bool is_contiguous() const noexcept;``
+| ``constexpr bool is_regular() noexcept;``
 | 
-| ``constexpr size_type stride(int) const noexcept;
+| ``constexpr size_type stride(int) const noexcept;``
 
   Domain, codomain, and mapping observers requires and effects
   correspond to the corresponding members of ``array_ref`` .
 
-| ``template <typename... IntegralIndex>
-| ``constexpr size_type operator()(IntegralIndex...index) const noexcept;
+| ``template <typename... IntegralIndex>``
+| ``constexpr size_type operator()(IntegralIndex...index) const noexcept;``
   
   Requires: ``rank() == sizeof...(IntegralIndex)`` and
   ``0 <= index[ith] < extent(ith)``.
@@ -917,7 +893,7 @@ Less Desirable Extent Mechanism (B) Proposal
 ******************************************************************
 
 The ``extents`` struct and ``dyn`` value are only required for the
-less desirable extents specification mechanism B.
+undesirable extents specification mechanism B.
 
 .. code-block:: c++
 
@@ -944,5 +920,63 @@ less desirable extents specification mechanism B.
   | ``rank() == sizeof...(IntegralExtent)``
   | ``rank_dynamic()`` is the number of dynamic extents.
   | ``static_extent(r) == IntegralExtent[r]``
+
+
+******************************************************************
+Revision History
+******************************************************************
+
+----------------------------------------------------------------------------
+P0009r0
+----------------------------------------------------------------------------
+
+Original multidimensional array reference paper with
+motivation, specification, and examples.
+
+----------------------------------------------------------------------------
+P0009r1
+----------------------------------------------------------------------------
+
+Revised with renaming from ``view`` to ``array_ref``
+and allow unbounded rank through variadic arguments.
+
+----------------------------------------------------------------------------
+P0009r2
+----------------------------------------------------------------------------
+
+Adding details for extensibility of layout mapping.
+
+Move motivation, examples, and relaxed incomplete array type proposal to separate papers.
+
+  - P0331 : Motivation and Examples for Polymorphic Multidimensional Array
+  - P0332 : Relaxed Incomplete Multidimensional Array Type Declaration
+
+----------------------------------------------------------------------------
+P0009r3
+----------------------------------------------------------------------------
+
+The domain space specification *preferred* and *undesirable* mechanisms
+changed from accepting both to accepting only one.
+
+Tighten up domain, codomain, and domain -> codomain mapping specifications.
+
+Consistently use *extent* and *extents* for the multidimensional index space.
+
+******************************************************************
+References
+******************************************************************
+
+----------------------------------------------------------------------------
+P0122 : span: bounds-safe views for sequences of objects
+----------------------------------------------------------------------------
+
+The ``array_ref`` codomain concept of *span* is well-aligned with this paper.
+
+----------------------------------------------------------------------------
+P0367 : Accessors
+----------------------------------------------------------------------------
+
+The ``array_ref`` intent for *properties* extension in regard to how codomain
+objects are referenced is well-aligned with the proposed *accessor* properties.
 
 
