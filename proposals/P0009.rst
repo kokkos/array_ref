@@ -23,7 +23,6 @@ D0009r3 : Polymorphic Multidimensional Array Reference
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
 
-
 +------------+-------------------------------------------------------------+
 | **Revision History**                                                     |
 +------------+-------------------------------------------------------------+
@@ -57,8 +56,9 @@ D0009r3 : Polymorphic Multidimensional Array Reference
 Description
 ******************************************************************
 
-The header ``<array_ref>`` defines types and functions for
-mapping indices from a multidimensional index space (the domain)
+The proposed polymorphic multidimensional array reference (``array_ref``)
+defines types and functions for mapping indices from a
+multidimensional index space (the domain)
 to members of a contiguous span of objects (the codomain).
 This **layout mapping** is one *property* of the
 ``array_ref`` that may be specified through a template parameter.
@@ -70,30 +70,56 @@ accessing members through an atomic interface.
 The recent Accessors paper (P0367) introduces a rich set of potential access properties.
 
 ----------------------------------------------------------------------------
-Unresolved class name
+To-be-determined class name
 ----------------------------------------------------------------------------
 
 The current ``array_ref`` name for the proposed functionality is
-not entirely satisfactory to the authors; however, a more appropriate
-name has yet to be identified.
+not entirely satisfactory; however, a more appropriate name has yet to be identified.
 The ``accessor`` name in P0367 is a possibility in that it denotes a polymorphic
 mechanism for accessing an object or span of objects.
 
 ----------------------------------------------------------------------------
-Unresolved domain index space specification
+Alternative mechanisms for specifying the domain multi-index space
 ----------------------------------------------------------------------------
 
-Two possible mechanisms for specifying the domain multi-index space are described.
-The preferred mechanism (A) is concise and aligns with native syntax
+Two potential mechanisms for specifying the domain multi-index space are possible.
+
+**(A)** The **preferred mechanism** is concise and aligns with native syntax
 for specifying multidimensional array extents.
 However, the preferred mechanism requires a trivial language change to relax
-the specification for *incomplete* array types (P0332).
-The less desirable mechanism (B) requires an additional ``extents``
-property and associated *dynamic extent* magic value.
+the specification for *incomplete* array types.
+This trivial language change is proposed in P0332.
+
+.. code-block:: c++
+
+  std::array_ref< int[][8][3] > a ;
+
+  static_assert( std::rank<   int[][8][3]     >::value == 3 );
+  static_assert( std::extent< int[][8][3] , 0 >::value == 0 );
+  static_assert( std::extent< int[][8][3] , 1 >::value == 8 );
+  static_assert( std::extent< int[][8][3] , 2 >::value == 3 );
+
+..
+
+**(B)** The **less desirable mechanism** requires an additional ``extents``
+property class.
+This mechanism is more verbose and requires the introduction of a
+*magic* integral value to denote a dynamic extent.
+
+.. code-block:: c++
+
+  std::array_ref< int , std::extents<std::dyn,8,3> > a ;
+
+  // A rank-three array with
+  // extent(0) = dynamic
+  // extent(1) = 8
+  // extent(2) = 3
+
+..
 
 
 ******************************************************************
-Proposal
+Base Proposal
 ******************************************************************
 
 ----------------------------------------------------------------------------
@@ -102,23 +128,16 @@ Header ``<array_ref>`` synopsis
 
 .. code-block:: c++
 
-  // For exposition only:
-  namespace std {
-  namespace experimental {
-  namespace detail {
-    template< typename ArrayRef , typename ... SliceSpecifiers >
-    class subarray_deduction ;
-  }}}
-
   namespace std {
   namespace experimental {
 
     template< typename DataType , typename ... Properties >
     class array_ref ;
 
-    // return type of subarray is an array_ref
     template< typename DataType , typename ... Properties , typename ... SliceSpecifiers >
-    typename detail::subarray_deduction< array_ref< DataType , Properties... > , SliceSpecifiers ... >::type /* exposition only */
+      // for exposition only:
+      detail::subarray_deduction_t< array_ref<DataType,Properties...>,SliceSpecifiers...>
+    // return type of subarray is an array_ref
     subarray( array_ref< DataType, Properties ... > const & , SliceSpecifiers ... ) noexcept;
 
   }}
@@ -132,7 +151,7 @@ The ``subarray`` free function generates an ``array_ref`` with a domain containe
 within the input ``array_ref`` domain and codomain contained within the input
 ``array_ref`` codomain.
 
-The ``detail::subarray_deduction`` class is not required and only appears for exposition.
+The alias ``detail::subarray_deduction_t`` class is not proposed and only appears for exposition.
 An implementation template class of this form is necessary to deduce the specific
 ``array_ref`` return type of the ``subarray`` function.
 
@@ -149,6 +168,9 @@ An implementation template class of this form is necessary to deduce the specifi
 
     template <typename T> struct is_layout ;
     template <typename T> constexpr bool is_layout_v = is_layout<T>::value;
+
+    // extent size_type property
+    template< typename T > struct extent_size_type ;
 
     // bounds checking property
     template< bool Enable >
@@ -170,7 +192,6 @@ An implementation template class of this form is necessary to deduce the specifi
 
 ..
 
-Three pre-defined layout mappings are as follows.
 The ``layout_right`` property denotes the C/C++ standard multidimensional array index mapping 
 where the right-most extent is stride one and strides increase right-to-left
 as the product of extents.
@@ -181,25 +202,8 @@ The ``layout_stride`` property denotes a multidimensional array index mapping wi
 arbitrary regular strides for each extent.
 
 
-.. code-block:: c++
-
-  namespace std {
-  namespace experimental {
-
-    template< size_t ... IntegralExtent >
-    struct extents ;
-
-    constexpr size_t dyn = /* implementation defined */ ;
-
-  }}
-
-..
-
-The ``extents`` struct and ``dyn`` value are only required for the
-less desirable extents specification mechanism B.
-
 ----------------------------------------------------------------------------
-class template ``array_ref``
+template class ``array_ref``
 ----------------------------------------------------------------------------
 
 .. code-block:: c++
@@ -218,14 +222,9 @@ class template ``array_ref``
     using size_type  = /* deduced from Properties... */ ;
     using layout     = /* deduced from Properties... */ ;
 
-    // iteration types
-
-    using iterator               = /* deduced from DataType */ ;
-    using const_iterator         = /* deduced from DataType */ ;
-    using reverse_iterator       = reverse_iterator<iterator> ;
-    using const_reverse_iterator = reverse_iterator<const_iterator> ;
- 
-    // constructors, copy, assignment, and destructor
+    // Constructors, assignments, and destructor
+  
+    ~array_ref() noexcept ;
   
     constexpr array_ref() noexcept;
     constexpr array_ref(array_ref&&) noexcept ;
@@ -233,29 +232,29 @@ class template ``array_ref``
     array_ref& operator=(array_ref&&) noexcept ;
     array_ref& operator=(array_ref const&) noexcept ;
   
-    template <typename... IntegralExtent>
-    explicit constexpr array_ref(pointer, IntegralExtent... ) noexcept;
-
-    explicit constexpr array_ref(pointer, layout const&) noexcept;
-
     template <typename UType, typename ... UProperties>
     constexpr array_ref( array_ref<UType, UProperties...> const& ) noexcept;
 
     template <typename UType, typename ... UProperties>
     array_ref& operator=( array_ref<UType, UProperties...> const& ) noexcept;
 
-    ~array_ref() noexcept ;
-  
+    // Wrapping constructors
+
+    template <typename... IntegralExtent>
+    explicit constexpr array_ref(pointer, IntegralExtent... ) noexcept;
+
+    explicit constexpr array_ref(pointer, layout const&) noexcept;
+
     // observers of domain: [0..extent(0)) X [0..extent(1)) X ... X [0..extent(rank()-1))
   
     static constexpr int rank() noexcept;
     static constexpr int rank_dynamic() noexcept;
-  
-    constexpr size_type size() const noexcept;
+
+    static constexpr size_type static_extent(int) noexcept;
   
     constexpr size_type extent(int) const noexcept;
 
-    constexpr size_type static_extent(int) noexcept;
+    constexpr size_type size() const noexcept;
 
     // observers of the codomain: [ data() .. data() + span() )
 
@@ -268,7 +267,7 @@ class template ``array_ref``
   
     static constexpr size_type required_span( layout const & ) noexcept;
 
-    // observers of the mapping from domain to codomain
+    // observers of the mapping : domain -> codomain
 
     static constexpr bool is_always_unique     = /* deduced */ ;
     static constexpr bool is_always_contiguous = /* deduced */ ;
@@ -288,7 +287,14 @@ class template ``array_ref``
     template <typename IntegralIndex>
     reference operator[]( IntegralIndex ) const noexcept; // requires rank() == 1
 
-    // iterator support
+    // iteration types
+
+    using iterator               = /* deduced */ ;
+    using const_iterator         = /* deduced */ ;
+    using reverse_iterator       = reverse_iterator<iterator> ;
+    using const_reverse_iterator = reverse_iterator<const_iterator> ;
+ 
+    // iterator functions
 
     constexpr iterator begin() const noexcept ;
     constexpr iterator end()   const noexcept ;
@@ -305,42 +311,41 @@ class template ``array_ref``
 ..
 
 
-Template arguments for preferred mechanism (A)
+Template arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``template <typename DataType, typename... Properties> class array_ref``
 
+**(A) Preferred Extent Specification Mechanism**
+
 ``DataType``
 
-  ``DataType`` declares a complete or incomplete array type (8.3.4.p3).
+  Requires: Is a complete or incomplete array type (8.3.4.p3).
   Each omitted static extent in the incomplete array type, ``[]``,
   denotes a *dynamic* extent.
 
   Effects:  The value type, domain index space rank, static extents, and identification of
-  dynamic extents is determined from the ``extents`` member of the property pack.
+  dynamic extents is determined from the possibly incomplete array type ``DataType`` .
+
+  | ``value_type`` is ``std::remove_all_extents<DataType>::type ;``
+  | ``rank()`` is std::rank<DataType>::value``
+  | ``static_extent(i)`` is ``std::extent<DataType,i>::value``
+  | A dynamic extent is indicated when ``std::extent<DataType,i>::value == 0``
 
 ``Properties...``
-
-  The ``Properties...`` argument is a pack of array properties. 
 
   Requires: ``is_array_property_v< Properties >`` for each member of the pack.
 
-  Effects: The domain to codomain mapping is determined by the property pack.
+  Effects: The domain to codomain reference mapping is determined by the property pack.
 
 
-Template arguments for less desired mechanism (B)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``template <typename DataType, typename... Properties> class array_ref``
+**(B) Less Desirable Extent Specification Mechanism**
 
 ``DataType``
 
-  ``DataType`` denotes the value type of the array.
-
+  Requires: Is a non-array type denoting the value type of the array.
 
 ``Properties...``
-
-  The ``Properties...`` argument is a pack of array properties. 
 
   Requires: ``is_array_property_v< Properties >`` for each member of the pack.
 
@@ -349,7 +354,7 @@ Template arguments for less desired mechanism (B)
   The domain to codomain mapping is determined by the remaining members of the property pack
 
 
-Domain and codomain types
+Domain, codomain, and mapping types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | ``using value_type = typename remove_all_extents<DataType::type ;``
@@ -374,50 +379,48 @@ Domain and codomain types
   ``layout`` is ``layout_right`` denoting the traditional C/C++ mapping.
 
 
-The Domain
+Domain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The domain is the Cartesian product of the extents,
-``[0..extent(0)) X [0..extent(1)) X ... X [0..extent(rank()-1))``.
-
-
-``static constexpr int rank() noexcept``
-
-  Returns: rank of the domain.
-
-``static constexpr int rank_dynamic() noexcept``
-
-  Returns: number of extents that are dynamic.
-
-``static constexpr size_type static_extent(int r) const noexcept``
+| ``static constexpr int rank() noexcept ;``
+| ``constexpr size_type extent(int r) const noexcept ;``
 
   Requires: ``0 <= r``
 
-  Returns: If ``0 <= r < rank()`` static extent or 0 if a dynamic extent of rank ``r``,
-  otherwise 1.
+  Returns: Rank and extents of the domain where the domain is
+  is the Cartesian product of the extents:
+  ``[0..extent(0)) X [0..extent(1)) X ... X [0..extent(rank()-1))``.
+  If ``rank() <= r`` then ``extent(r) == 1``.
 
-``constexpr size_type extent(int) const noexcept``
+``static constexpr size_type static_extent(int r) const noexcept ;``
 
   Requires: ``0 <= r``
 
-  Returns: If ``0 <= r < rank()`` extent of rank ``r``, otherwise 1.
+  Returns: If ``0 <= r < rank()`` the statically declared extent.
+  A statically declared extent of 0 denotes that the extent is dynamic.
+  If ``rank() <= r`` then ``static_extent(r) == 1``.
 
-``constexpr size_type size() const noexcept``
+``constexpr size_type size() const noexcept ;``
 
   Returns: product of extents.
 
+``static constexpr int rank_dynamic() noexcept ;``
 
-The Codomain
+  Returns: number of extents that are dynamic.
+
+
+Codomain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The codomain is ``[data()..data()+span())``.
-Note that not all members of the codomain are accessible through the layout mapping.
+Not all members of the codomain may be accessible through the layout mapping;
+i.e., the range of the mapping is contained within the codomain but may not
+be equal to the codomain.
 
 
 | ``constexpr pointer data() const noexcept ;``
 | ``constexpr size_type span() const noexcept ;``
 
-  Returns: codomain is ``[ data() .. data() + span() )``
+  Returns: The codomain is ``[ data() .. data() + span() )``
 
 | ``template< typename ... IntegralExtent >``
 | ``static constexpr size_type required_span( IntegralExtent ... dynamic_extent ) noexcept``
@@ -430,7 +433,7 @@ Note that not all members of the codomain are accessible through the layout mapp
   input the *wrapping constructor* with the corresponding extent argument.
 
 
-The Layout Mapping
+Mapping : domain -> codomain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | ``static constexpr bool is_always_unique =``
@@ -445,11 +448,11 @@ The Layout Mapping
   A layout mapping is *contiguous* if the layout mapping
   can access every member of the codomain.
 
-  A layout mapping that is unique and contiguous is *bijective*
+  A layout mapping that is both unique and contiguous is *bijective*
   and has ``size() == span()``.
 
 | ``static constexpr bool is_always_regular =``
-| ``constexpr bool:is_regular() const noexcept ;``
+| ``constexpr bool is_regular() const noexcept ;``
 
   A *regular* layout mapping has constant striding
   between multi-index coordinates.
@@ -499,7 +502,7 @@ Accessing members in the codomain
   Requires: ``0 <= index < extent(0)``
 
 
-Constructors, copy, assignment, destructor
+Constructors, assignments, destructor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``constexpr array_ref() noexcept``
@@ -507,7 +510,7 @@ Constructors, copy, assignment, destructor
   Effect: Construct a *null* ``array_ref`` with ``data() == nullptr``
   and ``extent(i) == 0`` for all dynamic dimensions.
 
-``constexpr array_ref( const array_ref & rhs ) noexcept``
+``constexpr array_ref( array_ref const & rhs ) noexcept``
 
   Effect: Construct an ``array_ref`` of the same span of objects
   referenced by ``rhs``.
@@ -557,7 +560,7 @@ Constructors, copy, assignment, destructor
   The span of objects denoted by ``[ ptr , ptr + required_span(dynamic_extent...) )``,
   shall be a valid contiguous span of objects.
 
-  Effects: The *wrapping constructor* constructs ``* this``
+  Effects: This *wrapping constructor* constructs ``* this``
   with domain's dynamic extents equal to the input ``dynamic_extent...``
   and codomain equal to ``[ ptr .. ptr + required_span(dynamic_extent...) )``
 
@@ -568,7 +571,7 @@ Constructors, copy, assignment, destructor
   The span of objects denoted by ``[ ptr , ptr + required_span(lay) )``,
   shall be a valid contiguous span of objects.
 
-  Effects: The *wrapping constructor* constructs ``* this``
+  Effects: This *wrapping constructor* constructs ``* this``
   with domain's dynamic extents extracted from ``lay``
   and codomain equal to ``[ ptr .. ptr + required_span(dynamic_extent...) )``
 
@@ -623,22 +626,33 @@ members of the codomain and then iterating that array.
 ----------------------------------------------------------------------------
 
 | ``template< typename DataType , typename ... Properties , typename ... SliceSpecifiers >``
-| ``typename detail::subarray_deduction< array_ref< DataType , Properties... > , SliceSpecifiers ... >::type /* exposition only */``
+| *detail::subarray_deduction_t<array_ref<DataType,Properties...>,SliceSpecifiers...>*
 | ``subarray( array_ref< DataType, Properties ... > const & U , SliceSpecifiers ... S ) noexcept;``
 
+  The *detail::subarray_deduction_t`` is for exposition only to indicate
+  that the implementation will require a metafunction to deduce the resulting
+  ``array_ref`` type from the input ``array_ref`` and slice specifiers.
 
-  Requires: ``U.rank() == sizeof...(SliceSpecifiers)``.
-  The *ith* member of the ``S`` denoted ``S[ith]``
-  is an integral *value* or an integral *range* denoted by
-  one of the following.
+  Let an *integral range* be denoted by any of the following.
 
   - an ``initializer_list<T>`` of integral type ``T`` and size 2
   - a ``pair<T,T>`` of integral type ``T`` 
   - a ``tuple<T,T>``  of integral type ``T``
   - an ``array<T,2>`` of integral type ``T``
   - ``all`` to denote ``[0..extent(ith))``
-  
-  ``0 <= begin(S[ith]) <= end(S[ith]) <= A.extent(ith)``
+
+  Let the *ith* member of ``S`` be denoted by ``S[ith]``.
+
+  Requires:
+  ``U.rank() == sizeof...(SliceSpecifiers)``.
+  ``S[ith]`` is an *integral value* or an *integral range*.
+  If ``S[ith]`` is an integral range then let
+  ``begin(S[ith])`` be the beginning of the integral range
+  ``end(S[ith])`` be the end of the integral range.
+  If ``S[ith]`` is an integral value then let
+  ``begin(S[ith]) == S[ith]`` and
+  ``end(S[ith]) == S[ith]+1``.
+  ``0 <= begin(S[ith]) <= end(S[ith]) <= A.extent(ith)``.
   
   Returns:  An ``array_ref V`` with a domain contained within the domain of ``U`` ,
   codomain contained within the codomain of ``U`` ,
@@ -667,8 +681,9 @@ members of the codomain and then iterating that array.
 Layout Mapping
 ----------------------------------------------------------------------------
 
-An ``array_ref`` maps multi-indices in the domain to objects in the codomain
-by composing a *layout mapping* with a span of objects.
+An ``array_ref`` maps multi-indices from the domain to
+reference objects in the codomain by composing a *layout mapping*
+with a span of objects.
 The layout mapping is an extension point such that an ``array_ref`` may be
 instantiated with non-standard layout mappings.
 
@@ -678,7 +693,7 @@ Standard Layouts
 
 The three standard layouts have the following layout mapping traits.
 
-``layout_right``
+``layout_right`` ; i.e., the C/C++ standard layout
 
   | ``is_always_unique == true``
   | ``is_always_contiguous == true``
@@ -686,7 +701,10 @@ The three standard layouts have the following layout mapping traits.
   | When ``0 < rank()`` then ``stride(rank()-1) == 1`` .
   | When ``1 < rank()`` then ``stride(r-1) = stride(r) * extent(r)`` for ``0 < r < rank()`` ..
 
-``layout_left``
+  For rank-two arrays (a.k.a., matrices) this is also known as *row major* layout.
+
+
+``layout_left`` ; i.e., the FORTRAN standard layout
 
   | ``is_always_unique == true``
   | ``is_always_contiguous == true``
@@ -694,7 +712,10 @@ The three standard layouts have the following layout mapping traits.
   | When ``0 < rank()`` then ``stride(0) == 1`` .
   | When ``1 < rank()`` then ``stride(r) = stride(r-1) * extent(r-1)`` for ``0 < r < rank()`` ..
 
-``layout_stride``
+  For rank-two arrays (a.k.a., matrices) this is also known as *column major* layout.
+
+
+``layout_stride`` ; i.e., an arbitrary **regular** layout
 
   | ``is_always_unique == false``
   | ``is_always_contiguous == false``
@@ -866,8 +887,37 @@ codomain member reference generation.
 
 
 ----------------------------------------------------------------------------
-``extents`` class for less desired extents specification mechanism (B)
+Property: ``extent_size_type<`` *integral* ``>``
 ----------------------------------------------------------------------------
+
+``template< typename`` *integral* ``> struct extent_size_type ;``
+
+  Requires: ``is_integral<`` *integral* ``>``.
+  Specify ``array_ref::size_type`` is *integral* .
+  If unspecified then ``using size_type = size_t ;`` .
+
+
+----------------------------------------------------------------------------
+Property: ``bounds_check_if< bool >``
+----------------------------------------------------------------------------
+
+| ``template< bool Enable > struct bounds_check_if ;``
+| ``using bounds_check = bounds_check<true> ;``
+
+  When ``array_ref`` ``Properties...`` includes
+  ``bounds_check_if<true>`` then the mapping operators
+  ``array_ref::operator()`` and ``array_ref::operator[]``
+  verify that each index is valid,
+  ``0 <= index[ith] < extent(ith)``.
+  Verification failure shall be reported.
+
+
+******************************************************************
+Less Desirable Extent Mechanism (B) Proposal
+******************************************************************
+
+The ``extents`` struct and ``dyn`` value are only required for the
+less desirable extents specification mechanism B.
 
 .. code-block:: c++
 
@@ -894,20 +944,5 @@ codomain member reference generation.
   | ``rank() == sizeof...(IntegralExtent)``
   | ``rank_dynamic()`` is the number of dynamic extents.
   | ``static_extent(r) == IntegralExtent[r]``
-
-
-----------------------------------------------------------------------------
-``bounds_check_if< bool >``
-----------------------------------------------------------------------------
-
-| ``template< bool Enable > struct bounds_check_if ;``
-| ``using bounds_check = bounds_check<true> ;``
-
-  When ``array_ref`` ``Properties...`` includes
-  ``bounds_check_if<true>`` then the mapping operators
-  ``array_ref::operator()`` and ``array_ref::operator[]``
-  verify that each index is valid,
-  ``0 <= indices[ith] < extent(ith)``.
-  Verification failure shall be reported.
 
 
