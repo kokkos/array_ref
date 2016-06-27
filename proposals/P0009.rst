@@ -44,6 +44,11 @@ accessing members through an atomic interface.
 The recent Accessors paper (P0367) introduces a rich set of potential access properties.
 
 ----------------------------------------------------------------------------
+Multidimensional array, not array-of-array-of-array-of-array...
+----------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------
 To-be-determined class name
 ----------------------------------------------------------------------------
 
@@ -51,6 +56,25 @@ The current ``array_ref`` name for the proposed functionality is
 not entirely satisfactory; however, a more appropriate name has yet to be identified.
 The ``accessor`` name in P0367 is a possibility in that it denotes a polymorphic
 mechanism for accessing an object or span of objects.
+
+Brainstorming collection:
+
++--------------+-------------------------+--------------+
+| LEWG         | LEWG                    | other        |
+| 2015-10-22   | 2016-06-25              |              |
++--------------+-------------------------+--------------+
+| view         | sci_span                | mdspan       |
+| span         | numeric_span            | polyspan     |
+| array_ref    | multidimensional_span   | accessor     |
+| slice        | multidim_span           |              |
+| array_view   | md_span                 |              |
+| ref          | vla_span                |              |
+| array_span   | multispan               |              |
+| basic_span   | multi_span              |              |
+| object_span  |                         |              |
+| field        |                         |              |
++--------------+-------------------------+--------------+
+
 
 ----------------------------------------------------------------------------
 Alternative mechanisms for specifying the domain multi-index space
@@ -66,7 +90,9 @@ This trivial language change is proposed in P0332.
 
 .. code-block:: c++
 
-  std::array_ref< int[][8][3] > a ;
+  using A_type = std::array_ref< int[][8][3] > ;
+
+  // standard array traits extracted from data type
 
   static_assert( std::rank<   int[][8][3]     >::value == 3 );
   static_assert( std::extent< int[][8][3] , 0 >::value == 0 );
@@ -82,22 +108,50 @@ This mechanism is more verbose and requires the introduction of a
 
 .. code-block:: c++
 
-  std::array_ref< int , std::extents<std::dyn,8,3> > a ;
+  // array traits given through new array traits types
 
-  // A rank-three array with
-  // extent(0) = dynamic
-  // extent(1) = 8
-  // extent(2) = 3
+  using A_type std::array_ref< int , std::extents<std::dyn,8,3> > ;
+
+..
+
+
+**Common Result**
+
+The ``array_ref`` type resulting from either specification mechanism
+has the same interface.
+
+.. code-block:: c++
+
+  int * buffer = /* buffer to span of integers */ ;
+
+  A_type A( buffer , N );
+
+  // static rank and extents
+
+  static_assert( A_type::rank() == 3 );
+  static_assert( A_type::static_extent(0) = 0 );
+  static_assert( A_type::static_extent(1) = 8 );
+  static_assert( A_type::static_extent(2) = 3 );
+
+  // runtime extents
+
+  assert( A.extent(0) = N );
+  assert( A.extent(1) = 8 );
+  assert( A.extent(2) = 3 );
+
+  // member access through operator()
+
+  assert( & A(0,0,0) == buffer );
 
 ..
 
 
 ******************************************************************
-Base Proposal
+Base Proposal: Multidimensional Array and Subarray
 ******************************************************************
 
 ----------------------------------------------------------------------------
-Header ``<array_ref>`` synopsis
+Header ``<array_ref>`` synopsis: ``array_ref`` and ``subarray``
 ----------------------------------------------------------------------------
 
 .. code-block:: c++
@@ -108,12 +162,15 @@ Header ``<array_ref>`` synopsis
     template< typename DataType , typename ... Properties >
     class array_ref ;
 
+    // return type of subarray free function is an array_ref
     template< typename DataType , typename ... Properties , typename ... SliceSpecifiers >
       // for exposition only:
       detail::subarray_deduction_t< array_ref<DataType,Properties...>,SliceSpecifiers...>
-    // return type of subarray is an array_ref
     subarray( array_ref< DataType, Properties ... > const & , SliceSpecifiers ... ) noexcept;
 
+    // tag supporting subarray
+    struct all_type {};
+    inline constexpr all_type all = all_type{};
   }}
 
 ..
@@ -128,53 +185,6 @@ within the input ``array_ref`` domain and codomain contained within the input
 The alias ``detail::subarray_deduction_t`` class is not proposed and only appears for exposition.
 An implementation metafunction of this form is necessary to deduce the specific
 ``array_ref`` return type of the ``subarray`` function.
-
-
-.. code-block:: c++
-
-  namespace std {
-  namespace experimental {
-
-    // predefined layout mapping property
-    struct layout_right ;
-    struct layout_left ;
-    struct layout_stride ;
-
-    template <typename T> struct is_layout ;
-    template <typename T> constexpr bool is_layout_v = is_layout<T>::value;
-
-    // extent size_type property
-    template< typename T > struct extent_size_type ;
-
-    // bounds checking property
-    template< bool Enable >
-    struct bounds_check_if ;
-
-    using bounds_check = bounds_check_if< true > ;
-
-    template< typename >
-    struct is_array_property /* = std::integral_constant<bool,?> */ ;
-
-    template< typename T >
-    using is_array_property_v = is_array_property<T>::value ;
-
-    // subarray support
-    struct all_type {};
-    constexpr all_type all = all_type{};
-
-  }}
-
-..
-
-The ``layout_right`` property denotes the C/C++ standard multidimensional array index mapping 
-where the right-most extent is stride one and strides increase right-to-left
-as the product of extents.
-The ``layout_left`` property denotes the FORTRAN standard multidimensional array index mapping 
-where the left-most extent is stride one and strides increase left-to-right
-as the product of extents.
-The ``layout_stride`` property denotes a multidimensional array index mapping with
-arbitrary regular strides for each extent.
-
 
 ----------------------------------------------------------------------------
 template class ``array_ref``
@@ -192,11 +202,11 @@ template class ``array_ref``
   
     using value_type = typename remove_all_extents<DataType>::type ;
     using pointer    = value_type * ;
-    using reference  = /* deduced from value_type and Properties... */ ;
-    using size_type  = /* deduced from Properties... */ ;
-    using layout     = /* deduced from Properties... */ ;
+    using reference  = /* implementation deduces from value_type and Properties... */ ;
+    using size_type  = /* implementation deduces from Properties... */ ;
+    using layout     = /* implementation deduces from Properties... */ ;
 
-    // Constructors, assignments, and destructor
+    // Standard constructors, assignments, and destructor
   
     ~array_ref() noexcept ;
   
@@ -205,12 +215,14 @@ template class ``array_ref``
     constexpr array_ref(array_ref const&) noexcept ;
     array_ref& operator=(array_ref&&) noexcept ;
     array_ref& operator=(array_ref const&) noexcept ;
-  
-    template <typename UType, typename ... UProperties>
-    constexpr array_ref( array_ref<UType, UProperties...> const& ) noexcept;
 
-    template <typename UType, typename ... UProperties>
-    array_ref& operator=( array_ref<UType, UProperties...> const& ) noexcept;
+    // Constructor and assignment for assignables
+  
+    template <typename UType, typename ... UProp>
+    constexpr array_ref( array_ref<UType, UProp...> const& ) noexcept;
+
+    template <typename UType, typename ... UProp>
+    array_ref& operator=( array_ref<UType, UProp...> const& ) noexcept;
 
     // Wrapping constructors
 
@@ -219,7 +231,7 @@ template class ``array_ref``
 
     explicit constexpr array_ref(pointer, layout const&) noexcept;
 
-    // observers of domain: [0..extent(0)) X [0..extent(1)) X ... X [0..extent(rank()-1))
+    // observers of domain: [0..extent(0))X[0..extent(1))X...X[0..extent(rank()-1))
   
     static constexpr int rank() noexcept;
     static constexpr int rank_dynamic() noexcept;
@@ -230,7 +242,7 @@ template class ``array_ref``
 
     constexpr size_type size() const noexcept;
 
-    // observers of the codomain: [ data() .. data() + span() )
+    // observers of the codomain: [data()..data()+span())
 
     constexpr pointer data() const noexcept;
   
@@ -245,39 +257,21 @@ template class ``array_ref``
 
     static constexpr bool is_always_unique     = /* deduced */ ;
     static constexpr bool is_always_contiguous = /* deduced */ ;
-    static constexpr bool is_always_regular    = /* deduced */ ;
+    static constexpr bool is_always_strided    = /* deduced */ ;
 
     constexpr bool is_unique() const noexcept;
     constexpr bool is_contiguous() const noexcept;
-    constexpr bool is_regular() noexcept;
+    constexpr bool is_strided() noexcept;
   
     constexpr size_type stride(int) const noexcept;
   
-    // mapping domain index to access codomain element
+    // mapping domain index to access of codomain element
   
     template <typename... IntegralIndex>
     reference operator()(IntegralIndex...) const noexcept;
   
     template <typename IntegralIndex>
     reference operator[]( IntegralIndex ) const noexcept; // requires rank() == 1
-
-    // iteration types
-
-    using iterator               = /* deduced */ ;
-    using const_iterator         = /* deduced */ ;
-    using reverse_iterator       = reverse_iterator<iterator> ;
-    using const_reverse_iterator = reverse_iterator<const_iterator> ;
- 
-    // iterator functions
-
-    constexpr iterator begin() const noexcept ;
-    constexpr iterator end()   const noexcept ;
-    constexpr const_iterator cbegin() const noexcept ;
-    constexpr const_iterator cend()   const noexcept ;
-    constexpr reverse_iterator rbegin() const noexcept ;
-    constexpr reverse_iterator rend()   const noexcept ;
-    constexpr const_reverse_iterator crbegin() const noexcept ;
-    constexpr const_reverse_iterator crend()   const noexcept ;
   };
 
   }}
@@ -329,7 +323,7 @@ Template arguments
   The domain to codomain mapping is determined by the remaining members of the property pack
 
 
-Domain, codomain, and mapping types
+Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 | ``using value_type = typename remove_all_extents<DataType::type ;``
@@ -426,11 +420,10 @@ Mapping : domain -> codomain
   A layout mapping that is both unique and contiguous is *bijective*
   and has ``size() == span()``.
 
-| ``static constexpr bool is_always_regular =``
-| ``constexpr bool is_regular() const noexcept ;``
+| ``static constexpr bool is_always_strided =``
+| ``constexpr bool is_strided() const noexcept ;``
 
-  A *regular* layout mapping has constant striding
-  between multi-index coordinates.
+  A *strided* layout has constant striding between multi-index coordinates.
   Let ``A`` be an ``array_ref`` and ``indices_V...`` and ``indices_U...`` be multi-indices
   in the domain space such that all coordinates are equal except for 
   the *ith* coordinate where ``indices_V[ith] = indices_U[ith] + 1``.
@@ -440,7 +433,7 @@ Mapping : domain -> codomain
 | ``template< typename IntegralType >``
 | ``constexpr size_type stride( IntegralType index ) const noexcept``
 
-  Requires: ``is_regular()``.
+  Requires: ``is_strided()``.
 
   Returns: When ``r < rank()`` the distance between members
   when the index of coordinate ``r`` is incremented by one, otherwise 0.
@@ -570,13 +563,13 @@ complexity of the layout mapping.
 An ``is_always_contiguous`` layout mapping can be expected to have a performant iteration mechanism;
 e.g., the iterator could be a pointer.
 
-A non- ``is_always_contiguous`` that ``is_always_unique`` and ``is_always_regular``
+A non- ``is_always_contiguous`` that ``is_always_unique`` and ``is_always_strided``
 layout mapping may have a *tractable* iteration mechanism
 that iterates the domain space and maps each index to a member.
 Note that such an iterator is necessarily *heavy weight* as it must include the
 bounds of the domain's extents.
 
-A non-contiguous and non-unique or irregular layout mapping may be prohibitively
+A non-contiguous and non-unique or non-strided layout mapping may be prohibitively
 non-performant due to necessarily generating an array of references to
 members of the codomain and then iterating that array.
 
@@ -654,6 +647,53 @@ members of the codomain and then iterating that array.
 ..
 
 ----------------------------------------------------------------------------
+Header ``<array_ref>`` synopsis: Properties
+----------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  namespace std {
+  namespace experimental {
+
+    // predefined layout mapping property
+    struct layout_right ;
+    struct layout_left ;
+    struct layout_stride ;
+
+    template <typename T> struct is_layout ;
+    template <typename T> constexpr bool is_layout_v = is_layout<T>::value;
+
+    // extent size_type property
+    template< typename T > struct extent_size_type ;
+
+    // bounds checking property
+    template< bool Enable >
+    struct bounds_check_if ;
+
+    using bounds_check = bounds_check_if< true > ;
+
+    template< typename >
+    struct is_array_property /* = std::integral_constant<bool,?> */ ;
+
+    template< typename T >
+    using is_array_property_v = is_array_property<T>::value ;
+
+  }}
+
+..
+
+The ``layout_right`` property denotes the C/C++ standard multidimensional array index mapping 
+where the right-most extent is stride one and strides increase right-to-left
+as the product of extents.
+The ``layout_left`` property denotes the FORTRAN standard multidimensional array index mapping 
+where the left-most extent is stride one and strides increase left-to-right
+as the product of extents.
+The ``layout_stride`` property denotes a multidimensional array index mapping with
+arbitrary strides for each extent.
+
+
+
+----------------------------------------------------------------------------
 Layout Mapping
 ----------------------------------------------------------------------------
 
@@ -673,7 +713,7 @@ The three standard layouts have the following layout mapping traits.
 
   | ``is_always_unique == true``
   | ``is_always_contiguous == true``
-  | ``is_always_regular == true``
+  | ``is_always_strided == true``
   | When ``0 < rank()`` then ``stride(rank()-1) == 1`` .
   | When ``1 < rank()`` then ``stride(r-1) = stride(r) * extent(r)`` for ``0 < r < rank()`` ..
 
@@ -684,18 +724,18 @@ The three standard layouts have the following layout mapping traits.
 
   | ``is_always_unique == true``
   | ``is_always_contiguous == true``
-  | ``is_always_regular == true``
+  | ``is_always_strided == true``
   | When ``0 < rank()`` then ``stride(0) == 1`` .
   | When ``1 < rank()`` then ``stride(r) = stride(r-1) * extent(r-1)`` for ``0 < r < rank()`` ..
 
   For rank-two arrays (a.k.a., matrices) this is also known as *column major* layout.
 
 
-``layout_stride`` ; i.e., an arbitrary **regular** layout
+``layout_stride`` ; i.e., an arbitrary **strided** layout
 
   | ``is_always_unique == false``
   | ``is_always_contiguous == false``
-  | ``is_always_regular == true``
+  | ``is_always_strided == true``
 
 
 Concept for Extensible Layout Mapping
@@ -757,11 +797,11 @@ codomain member reference generation.
 
       static constexpr bool is_always_unique     = /* deduced */ ;
       static constexpr bool is_always_contiguous = /* deduced */ ;
-      static constexpr bool is_always_regular    = /* deduced */ ;
+      static constexpr bool is_always_strided    = /* deduced */ ;
 
       constexpr bool is_unique() const noexcept;
       constexpr bool is_contiguous() const noexcept;
-      constexpr bool is_regular() noexcept;
+      constexpr bool is_strided() noexcept;
   
       constexpr size_type stride(int) const noexcept;
   
@@ -803,7 +843,9 @@ codomain member reference generation.
 | ``constexpr mapping(mapping const&) noexcept ;``
 | ``mapping& operator=(mapping&&) noexcept ;``
 | ``mapping& operator=(mapping const&) noexcept ;``
-|  
+
+  Customary constructors and assignment operators.
+  
 | ``template <typename... IntegralExtent>``
 | ``explicit constexpr mapping( IntegralExtent... ) noexcept;``
 | ``explicit constexpr mapping( layout_concept const&) noexcept;``
@@ -826,11 +868,11 @@ codomain member reference generation.
 |
 | ``static constexpr bool is_always_unique     = /* deduced */ ;``
 | ``static constexpr bool is_always_contiguous = /* deduced */ ;``
-| ``static constexpr bool is_always_regular    = /* deduced */ ;``
+| ``static constexpr bool is_always_strided    = /* deduced */ ;``
 |
 | ``constexpr bool is_unique() const noexcept;``
 | ``constexpr bool is_contiguous() const noexcept;``
-| ``constexpr bool is_regular() noexcept;``
+| ``constexpr bool is_strided() noexcept;``
 | 
 | ``constexpr size_type stride(int) const noexcept;``
 
@@ -952,8 +994,18 @@ Move motivation, examples, and relaxed incomplete array type proposal to separat
   - P0332 : Relaxed Incomplete Multidimensional Array Type Declaration
 
 ----------------------------------------------------------------------------
-P0009r3
+P0009r3, post-Oulu2016 mailing
 ----------------------------------------------------------------------------
+
+Oulu-2016 LEWG strawpoll: Move iterator from this paper to a subsequent paper.
+
+Oulu-2016 LEWG feedback: http://wiki.edg.com/bin/view/Wg21oulu/P0009
+
+  - Array extents specification mechanism options are either-or, not both.
+  - List potential bikeshed names.
+  - Clearly & concisely note difference between multidimensional array versus language's array-of-array-of-array...
+  - Actual specification of reference type (and others), not "typically is" vagueness.
+  - Future directions / extensibility section regarding ``Properties...``
 
 The domain space specification *preferred* and *undesirable* mechanisms
 changed from accepting both to accepting only one.
@@ -962,9 +1014,12 @@ Tighten up domain, codomain, and domain -> codomain mapping specifications.
 
 Consistently use *extent* and *extents* for the multidimensional index space.
 
+
 ******************************************************************
 References
 ******************************************************************
+
+ISOCPP issue: https://issues.isocpp.org/show_bug.cgi?id=80
 
 ----------------------------------------------------------------------------
 P0122 : span: bounds-safe views for sequences of objects
