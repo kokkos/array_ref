@@ -47,6 +47,17 @@ The recent Accessors paper (P0367) introduces a rich set of potential access pro
 Multidimensional array, not array-of-array-of-array-of-array...
 ----------------------------------------------------------------------------
 
+The multidimensional array abstraction has been fundamental
+to numerical computations for over five decades.
+However, the C/C++ language provides only a one dimensional array
+abstraction which can be composed into array-of-array-of-array... types.
+While such types have some similarity to multidimensional arrays they
+do not provide adequate multidimensional array functionality
+of this proposal.
+Two critical functionality differences are
+(1) multiple dynamic extents and
+(2) polymorphic mapping of multi-indices to member objects.
+
 
 ----------------------------------------------------------------------------
 To-be-determined class name
@@ -59,21 +70,21 @@ mechanism for accessing an object or span of objects.
 
 Brainstorming collection:
 
-+--------------+-------------------------+--------------+
-| LEWG         | LEWG                    | other        |
-| 2015-10-22   | 2016-06-25              |              |
-+--------------+-------------------------+--------------+
-| view         | sci_span                | mdspan       |
-| span         | numeric_span            | polyspan     |
-| array_ref    | multidimensional_span   | accessor     |
-| slice        | multidim_span           |              |
-| array_view   | md_span                 |              |
-| ref          | vla_span                |              |
-| array_span   | multispan               |              |
-| basic_span   | multi_span              |              |
-| object_span  |                         |              |
-| field        |                         |              |
-+--------------+-------------------------+--------------+
++---------------+-------------------------+--------------+
+| LEWG          | LEWG                    | other        |
+| 2015-10-22    | 2016-06-25              |              |
++---------------+-------------------------+--------------+
+| view ,        | sci_span ,              | mdspan ,     |
+| span ,        | numeric_span ,          | polyspan ,   |
+| array_ref ,   | multidimensional_span , | accessor     |
+| slice ,       | multidim_span ,         |              |
+| array_view ,  | md_span ,               |              |
+| ref ,         | vla_span ,              |              |
+| array_span ,  | multispan ,             |              |
+| basic_span ,  | multi_span              |              |
+| object_span , |                         |              |
+| field         |                         |              |
++---------------+-------------------------+--------------+
 
 
 ----------------------------------------------------------------------------
@@ -82,10 +93,11 @@ Alternative mechanisms for specifying the domain multi-index space
 
 Two potential mechanisms for specifying the domain multi-index space are possible.
 
-**(A)** The **preferred mechanism** is concise and aligns with native syntax
-for specifying multidimensional array extents.
+**(A)** The **preferred mechanism** is concise and aligns with
+language syntax for specifying multidimensional array extents.
 However, the preferred mechanism requires a trivial language change to relax
-the specification for *incomplete* array types.
+the specification for *incomplete* array types to support
+multiple dynamic extents.
 This trivial language change is proposed in P0332.
 
 .. code-block:: c++
@@ -102,7 +114,7 @@ This trivial language change is proposed in P0332.
 ..
 
 **(B)** The **undesirable mechanism** requires an additional ``extents``
-property class.
+and ``dyn`` property symbols.
 This mechanism is more verbose and requires the introduction of a
 *magic* integral value to denote a dynamic extent.
 
@@ -147,7 +159,7 @@ has the same interface.
 
 
 ******************************************************************
-Base Proposal: Multidimensional Array and Subarray
+Multidimensional Array and Subarray
 ******************************************************************
 
 ----------------------------------------------------------------------------
@@ -230,6 +242,14 @@ template class ``array_ref``
     explicit constexpr array_ref(pointer, IntegralExtent... ) noexcept;
 
     explicit constexpr array_ref(pointer, layout const&) noexcept;
+  
+    // mapping domain multi-index to access codomain member
+  
+    template <typename... IntegralIndex>
+    reference operator()(IntegralIndex...) const noexcept;
+  
+    template <typename IntegralIndex>
+    reference operator[]( IntegralIndex ) const noexcept; // requires rank() == 1
 
     // observers of domain: [0..extent(0))X[0..extent(1))X...X[0..extent(rank()-1))
   
@@ -264,14 +284,6 @@ template class ``array_ref``
     constexpr bool is_strided() noexcept;
   
     constexpr size_type stride(int) const noexcept;
-  
-    // mapping domain index to access of codomain element
-  
-    template <typename... IntegralIndex>
-    reference operator()(IntegralIndex...) const noexcept;
-  
-    template <typename IntegralIndex>
-    reference operator[]( IntegralIndex ) const noexcept; // requires rank() == 1
   };
 
   }}
@@ -323,29 +335,66 @@ Template arguments
   The domain to codomain mapping is determined by the remaining members of the property pack
 
 
-Types
+Fundamental Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-| ``using value_type = typename remove_all_extents<DataType::type ;``
-| ``using pointer = value_type * ;``
-
-  Type of the objects referenced by the array.
-
-``using reference = /* deduced from DataType and Properties... */ ;``
-
-  Reference type for member access.
-  For ordinary member access properties this will be ``value_type &``.
-  For extra-ordinary member access properties this may be a proxy type.
 
 ``using size_type = /* implementation defined */ ;``
 
   Return type for extents and storage type for dynamic extents.
 
-``using layout = /* deduced from Properties... */ ;``
+| ``using value_type = typename remove_all_extents<DataType::type ;``
+| ``using pointer = value_type * ;``
 
-  Identification of the layout mapping.
-  If ``Properties...`` does not include a layout property then
-  ``layout`` is ``layout_right`` denoting the traditional C/C++ mapping.
+  Type of the codomain member objects referenced by the array.
+
+``using reference = /* deduced from DataType and Properties... */ ;``
+
+  Reference type for member access.
+  Unless modified to support special access properties 
+  this is ``value_type &``.
+  Special access properties may cause ``reference`` to be a proxy type.
+
+
+Mapping domain multi-index to access members in the codomain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+| ``template< typename ... IntegralIndex >``
+| ``reference operator()( IntegralIndex ... indices ) const noexcept``
+
+  Requires: ``indices`` is a multi-index in the domain:
+
+  - ``conjunction<is_integral<IntegralIndex>::value...>::value``
+  - ``rank() <= sizeof...(IntegralIndex)``
+  - The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
+    is in the domain: ``0 <= indices[ith] < extent(ith)``.
+  - [Note: Because ``extent(ith) == 1`` for ``rank() <= ith``
+    then extra zero-value indices are valid. --end note]
+
+  Returns: A ``reference`` to the member object mapped to by ``indices...``.
+
+  Remark: Optimization of the mapping operator is a critical
+  feature of the multidimensional array implementation.
+  Recommended optimizations include:
+
+  - Rank-specific overloads to better
+    enable optimization of the member access operator.
+  - Inlining of a ``constexpr`` multi-index mapping expression
+    that is **not** included in an optimizer's inlining budget.
+  - Compile-time evaluation statically determined portions of
+    multi-index mapping expression.
+  - Defering promotion of an ``IntegralIndex`` until evaluation
+    of the multi-index mapping expression.
+
+| ``template< typename IntegralIndex >``
+| ``reference operator[]( IntegralIndex index ) const noexcept``
+
+  Requires: ``is_integral<IntegralIndex>::value``.
+  ``rank() == 1``.
+  ``0 <= i < extent(0)``.
+
+  Returns: A reference to the member object referenced by ``index``.
+
+  Requires: ``0 <= index < extent(0)``
 
 
 Domain
@@ -405,6 +454,12 @@ be equal to the codomain.
 Mapping : domain -> codomain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+``using layout = /* deduced from Properties... */ ;``
+
+  Identification of the layout mapping.
+  If ``Properties...`` does not include a layout property then
+  ``layout`` is ``layout_right`` denoting the traditional C/C++ mapping.
+
 | ``static constexpr bool is_always_unique =``
 | ``constexpr bool is_unique() const noexcept ;``
 
@@ -437,37 +492,6 @@ Mapping : domain -> codomain
 
   Returns: When ``r < rank()`` the distance between members
   when the index of coordinate ``r`` is incremented by one, otherwise 0.
-
-
-Accessing members in the codomain
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-| ``template< typename ... IntegralIndex >``
-| ``reference operator()( IntegralIndex ... indices ) const noexcept``
-
-  Requires: ``conjunction<is_integral<IntegralArgs>::value...>::value``.
-  ``rank() <= sizeof...(IntegralArgs)``.
-  The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
-  is valid: ``0 <= indices[ith] < extent(ith)``.
-
-  Returns: A ``reference`` to the member object mapped to by ``indices...``.
-
-  Remark: An implementation may have rank-specific overloads to better
-  enable optimization of the member access operator.
-  Since ``extent(ith) == 1`` for ``rank() <= ith`` then extra zero-value
-  indices are valid.
-  
-
-| ``template< typename IntegralIndex >``
-| ``reference operator[]( IntegralIndex index ) const noexcept``
-
-  Requires: ``is_integral<IntegralIndex>::value``.
-  ``rank() == 1``.
-  ``0 <= i < extent(0)``.
-
-  Returns: A reference to the member object referenced by ``index``.
-
-  Requires: ``0 <= index < extent(0)``
 
 
 Constructors, assignments, destructor
@@ -551,45 +575,6 @@ Constructors, assignments, destructor
   Remark: There may be other ``Properties...`` dependent effects.
 
 
-Iterator types and member functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Iteration occurs over members of the codomain that are accessible
-through the layout mapping.
-Order of iteration is not specified.
-Tractability and performance of the iterator is necessarily dependent upon the
-complexity of the layout mapping.
-
-An ``is_always_contiguous`` layout mapping can be expected to have a performant iteration mechanism;
-e.g., the iterator could be a pointer.
-
-A non- ``is_always_contiguous`` that ``is_always_unique`` and ``is_always_strided``
-layout mapping may have a *tractable* iteration mechanism
-that iterates the domain space and maps each index to a member.
-Note that such an iterator is necessarily *heavy weight* as it must include the
-bounds of the domain's extents.
-
-A non-contiguous and non-unique or non-strided layout mapping may be prohibitively
-non-performant due to necessarily generating an array of references to
-members of the codomain and then iterating that array.
-
-| ``using iterator = /* deduced from DataType and Properties */ ;``
-| ``using const_iterator = /* deduced from DataType and Properties */ ;``
-| ``constexpr iterator begin() const noexecept``
-| ``constexpr iterator end() const noexecept``
-| ``constexpr const_iterator cbegin() const noexecept``
-| ``constexpr const_iterator cend() const noexecept``
-| ``constexpr reverse_iterator rbegin() const noexecept``
-| ``constexpr reverse_iterator rend() const noexecept``
-| ``constexpr reverse_const_iterator crbegin() const noexecept``
-| ``constexpr reverse_const_iterator crend() const noexecept``
-
-  Remark: The order of iteration is unspecified and layout dependent.
-  If the layout mapping **is** unique then iterating the span
-  is equivalent to iterating all indices of the domain
-  multidimensional index space.
-
-
 ----------------------------------------------------------------------------
 ``subarray``
 ----------------------------------------------------------------------------
@@ -646,8 +631,12 @@ members of the codomain and then iterating that array.
 
 ..
 
+******************************************************************
+Multidimensional Array Mapping and Member Access Properties
+******************************************************************
+
 ----------------------------------------------------------------------------
-Header ``<array_ref>`` synopsis: Properties
+Header ``<array_ref>`` synopsis for properties
 ----------------------------------------------------------------------------
 
 .. code-block:: c++
@@ -655,7 +644,7 @@ Header ``<array_ref>`` synopsis: Properties
   namespace std {
   namespace experimental {
 
-    // predefined layout mapping property
+    // predefined layout mapping properties
     struct layout_right ;
     struct layout_left ;
     struct layout_stride ;
@@ -682,17 +671,6 @@ Header ``<array_ref>`` synopsis: Properties
 
 ..
 
-The ``layout_right`` property denotes the C/C++ standard multidimensional array index mapping 
-where the right-most extent is stride one and strides increase right-to-left
-as the product of extents.
-The ``layout_left`` property denotes the FORTRAN standard multidimensional array index mapping 
-where the left-most extent is stride one and strides increase left-to-right
-as the product of extents.
-The ``layout_stride`` property denotes a multidimensional array index mapping with
-arbitrary strides for each extent.
-
-
-
 ----------------------------------------------------------------------------
 Layout Mapping
 ----------------------------------------------------------------------------
@@ -706,6 +684,17 @@ instantiated with non-standard layout mappings.
 
 Standard Layouts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``layout_right`` property denotes the C/C++ standard
+multidimensional array index mapping 
+where the right-most extent is stride one and strides increase right-to-left
+as the product of extents.
+The ``layout_left`` property denotes the FORTRAN standard
+multidimensional array index mapping 
+where the left-most extent is stride one and strides increase left-to-right
+as the product of extents.
+The ``layout_stride`` property denotes a multidimensional array index mapping
+with arbitrary strides for each extent.
 
 The three standard layouts have the following layout mapping traits.
 
@@ -911,8 +900,8 @@ Property: ``extent_size_type<`` *integral* ``>``
 ``template< typename`` *integral* ``> struct extent_size_type ;``
 
   Requires: ``is_integral<`` *integral* ``>``.
-  Specify ``array_ref::size_type`` is *integral* .
-  If unspecified then ``using size_type = size_t ;`` .
+  Specify ``array_ref::size_type`` as *integral* .
+  If unspecified then ``array_ref::size_type`` is ``size_t ;`` .
 
 
 ----------------------------------------------------------------------------
@@ -965,6 +954,12 @@ undesirable extents specification mechanism B.
 
 
 ******************************************************************
+Future Directions and Extensions
+******************************************************************
+
+
+
+******************************************************************
 Revision History
 ******************************************************************
 
@@ -1002,7 +997,7 @@ Oulu-2016 LEWG strawpoll: Move iterator from this paper to a subsequent paper.
 Oulu-2016 LEWG feedback: http://wiki.edg.com/bin/view/Wg21oulu/P0009
 
   - Array extents specification mechanism options are either-or, not both.
-  - List potential bikeshed names.
+  - List potential names for LEWG and/or LWG todo bikeshedding.
   - Clearly & concisely note difference between multidimensional array versus language's array-of-array-of-array...
   - Actual specification of reference type (and others), not "typically is" vagueness.
   - Future directions / extensibility section regarding ``Properties...``
