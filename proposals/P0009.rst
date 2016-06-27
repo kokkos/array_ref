@@ -798,22 +798,6 @@ codomain member reference generation.
   
       template <typename... IntegralIndex>
       constexpr size_type operator()(IntegralIndex...) const noexcept;
-  
-      // iterator support
-
-      using iterator               = /* dereferences to size_type */ ;
-      using const_iterator         = /* dereferences to size_type */ ;
-      using reverse_iterator       = reverse_iterator<iterator> ;
-      using const_reverse_iterator = reverse_iterator<const_iterator> ;
-
-      constexpr iterator begin() const noexcept ;
-      constexpr iterator end()   const noexcept ;
-      constexpr const_iterator cbegin() const noexcept ;
-      constexpr const_iterator cend()   const noexcept ;
-      constexpr reverse_iterator rbegin() const noexcept ;
-      constexpr reverse_iterator rend()   const noexcept ;
-      constexpr const_reverse_iterator crbegin() const noexcept ;
-      constexpr const_reverse_iterator crend()   const noexcept ;
     };
   };
 
@@ -875,22 +859,6 @@ codomain member reference generation.
   ``0 <= index[ith] < extent(ith)``.
 
   Returns: Layout mapping of ``index...`` to codomain.
-
-| ``using iterator               = /* dereferences to size_type */ ;``
-| ``using const_iterator         = /* dereferences to size_type */ ;``
-| ``using reverse_iterator       = reverse_iterator<iterator> ;``
-| ``using const_reverse_iterator = reverse_iterator<const_iterator> ;``
-|
-| ``constexpr iterator begin() const noexcept ;``
-| ``constexpr iterator end()   const noexcept ;``
-| ``constexpr const_iterator cbegin() const noexcept ;``
-| ``constexpr const_iterator cend()   const noexcept ;``
-| ``constexpr reverse_iterator rbegin() const noexcept ;``
-| ``constexpr reverse_iterator rend()   const noexcept ;``
-| ``constexpr const_reverse_iterator crbegin() const noexcept ;``
-| ``constexpr const_reverse_iterator crend()   const noexcept ;``
-
-  Iteration support analoguous to iteration support in ``array_ref`` .
 
 
 ----------------------------------------------------------------------------
