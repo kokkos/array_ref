@@ -223,9 +223,9 @@ basic_layout_left<Striding, Padding>::index_impl_n(
     ) const noexcept
 {
     static_assert(0                           < N
-                , "dimension index is out of bounds in layout");
+                , "dimension index is out of bounds in layout_left");
     static_assert(dimensions<Dims...>::rank() > N
-                , "dimension index is out of bounds in layout");
+                , "dimension index is out of bounds in layout_left");
     return (d[N-1]*stride_[N-1] + pad_[N-1])
          * ( stride_[N]*idx_n
            + index_impl_n<N+1>(d, idx_n_plus_1, idx_tail...));
@@ -242,9 +242,9 @@ basic_layout_left<Striding, Padding>::index_impl_n(
     ) const noexcept
 {
     static_assert(0                           < N
-                , "dimension index is out of bounds in layout");
+                , "dimension index is out of bounds in layout_left");
     static_assert(dimensions<Dims...>::rank() > N
-                , "dimension index is out of bounds in layout");
+                , "dimension index is out of bounds in layout_left");
     return (d[N-1]*stride_[N-1] + pad_[N-1])
          * (stride_[N]*idx_n);
 }

@@ -18,7 +18,8 @@ struct layout_left
 {
     // TYPES 
 
-    using size_type = basic_layout_left<dimensions<>, dimensions<> >;
+    using size_type =
+        typename basic_layout_left<dimensions<>, dimensions<> >::size_type;
 
     // CONSTRUCTORS
 

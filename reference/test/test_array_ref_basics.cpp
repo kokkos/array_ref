@@ -7,8 +7,6 @@
 
 #include <boost/detail/lightweight_test.hpp>
 
-#include <vector>
-
 #include <array_ref>
 
 using std::experimental::dimensions;

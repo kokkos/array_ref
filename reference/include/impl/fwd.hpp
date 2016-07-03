@@ -121,16 +121,20 @@ struct pack_is_integral;
 template <typename... T>
 struct pack_is_unsigned;
 
-// Produces a dimensions<> object from a native array declaration.
-template <typename T, std::size_t... Dims>
-struct extract_dimensions;
+///////////////////////////////////////////////////////////////////////////////
+
+// Function-object recursive implementation of layout_right indexing. N is the
+// rank in the index dimensions<> object.
+template <typename Dimensions, std::size_t N, typename enable = void>
+struct basic_layout_right_indexer;
 
 } // detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename T>
-using extract_dimensions = detail::extract_dimensions<T>;
+// Produces a dimensions<> object from a native array declaration.
+template <typename T, std::size_t... Dims>
+struct extract_dimensions;
 
 template <typename T>
 using extract_dimensions_t = typename extract_dimensions<T>::type;
