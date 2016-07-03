@@ -19,6 +19,10 @@ using std::experimental::dyn;
 using std::experimental::dimensions;
 using std::experimental::basic_layout_left;
 
+// FIXME FIXME FIXME
+#warning Verify size()/span() tests provide sufficient coverage. 
+// FIXME FIXME FIXME
+
 template <std::size_t N, std::size_t X>
 void test_1d_static()
 { // {{{
@@ -127,7 +131,7 @@ void test_1d_dynamic()
     BOOST_TEST_EQ((sub_d.size()),      d[0] / sub_s[0]);
     BOOST_TEST_EQ((sub_l.span(sub_d)), d[0]);
 
-    // Initialize all elements as 42.
+    // Initialize all elements to 42.
     std::vector<int> data(d[0], 42);
     int* dptr = data.data();
 
@@ -300,7 +304,7 @@ void test_2d_dynamic()
     BOOST_TEST_EQ((sub_d.size()),      (d[0] / sub_s[0]) * (d[1] / sub_s[1]));
     BOOST_TEST_EQ((sub_l.span(sub_d)), d[0] * d[1]);
 
-    // Initialize all elements as 42.
+    // Initialize all elements to 42.
     std::vector<int> data(d[0] * d[1], 42);
     int* dptr = data.data();
 
