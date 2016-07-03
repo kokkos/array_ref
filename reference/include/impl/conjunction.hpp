@@ -13,21 +13,21 @@
 namespace std { namespace experimental
 {
 
-template<typename...>
+template <typename...>
 struct conjunction;
 
-template<>
-struct conjunction<> : std::true_type {};
+template <>
+struct conjunction<> : true_type {};
 
 template <typename T>
 struct conjunction<T> : T {};
 
 template <typename T1, typename T2>
-struct conjunction<T1, T2> : std::conditional<T1::value, T2, T1>::type {};
+struct conjunction<T1, T2> : conditional<T1::value, T2, T1>::type {};
 
 template<typename T1, typename T2, typename T3, typename... TN>
 struct conjunction<T1, T2, T3, TN...>
-  : std::conditional<T1::value, conjunction<T2, T3, TN...>, T1>::type
+  : conditional<T1::value, conjunction<T2, T3, TN...>, T1>::type
 {};
 
 }}
