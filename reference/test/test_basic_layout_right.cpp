@@ -107,7 +107,6 @@ void test_2d_static()
 
         BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
 
-/*
         BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
 
         std::get<0>(dptr[l.index(d, i, j)]) = i;
@@ -115,7 +114,6 @@ void test_2d_static()
 
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
-*/
     }
 } // }}}
 
