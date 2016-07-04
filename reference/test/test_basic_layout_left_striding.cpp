@@ -20,7 +20,7 @@ using std::experimental::dimensions;
 using std::experimental::basic_layout_left;
 
 // FIXME FIXME FIXME
-#warning Verify size()/span() tests provide sufficient coverage. 
+#warning Test stride == 0.
 // FIXME FIXME FIXME
 
 template <std::size_t N, std::size_t X>
@@ -63,7 +63,6 @@ void test_1d_static()
 
         dptr[l.index(d, i)] = 42;
 
-        BOOST_TEST_EQ((dptr[i]),             42);
         BOOST_TEST_EQ((dptr[l.index(d, i)]), 42);
     }
 
@@ -78,23 +77,22 @@ void test_1d_static()
 
         dptr[sub_l.index(sub_d, i)] = 17;
 
-        BOOST_TEST_EQ((dptr[true_idx]),              17);
         BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i)]), 17);
     }
 
     // Check final structure. 
     for (auto i = 0; i < d[0]; ++i)
     {
+        BOOST_TEST_EQ((l.index(d, i)), i);
+
         // Element not in the strided sub-box.
         if (0 == (i % sub_s[0]))
         {
-            BOOST_TEST_EQ((dptr[i]),             17);
             BOOST_TEST_EQ((dptr[l.index(d, i)]), 17);
         }
         // Element not in the strided sub-box.
         else
         {
-            BOOST_TEST_EQ((dptr[i]),             42);
             BOOST_TEST_EQ((dptr[l.index(d, i)]), 42);
         }
     }
@@ -146,35 +144,31 @@ void test_1d_dynamic()
 
         dptr[sub_l.index(sub_d, i)] = 17;
 
-        BOOST_TEST_EQ((dptr[true_idx]),              17);
         BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i)]), 17);
 
         // Bounds-checking.
-        BOOST_TEST_EQ((data.at(true_idx)),              17);
         BOOST_TEST_EQ((data.at(sub_l.index(sub_d, i))), 17);
     }
 
     // Check final structure.
     for (auto i = 0; i < d[0]; ++i)
     {
+        BOOST_TEST_EQ((l.index(d, i)), i);
+
         // Element in the strided sub-box.
         if (0 == (i % sub_s[0]))
         {
-            BOOST_TEST_EQ((dptr[i]),             17);
             BOOST_TEST_EQ((dptr[l.index(d, i)]), 17);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(i)),             17);
             BOOST_TEST_EQ((data.at(l.index(d, i))), 17);
         }
         // Element not in the strided sub-box.
         else
         {
-            BOOST_TEST_EQ((dptr[i]),             42);
             BOOST_TEST_EQ((dptr[l.index(d, i)]), 42);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(i)),             42);
             BOOST_TEST_EQ((data.at(l.index(d, i))), 42);
         }
     }
@@ -226,7 +220,6 @@ void test_2d_static()
 
         dptr[l.index(d, i, j)] = 42;
 
-        BOOST_TEST_EQ((dptr[true_idx]),         42);
         BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
     }
 
@@ -243,7 +236,6 @@ void test_2d_static()
 
         dptr[sub_l.index(sub_d, i, j)] = 17;
 
-        BOOST_TEST_EQ((dptr[true_idx]),                 17);
         BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i, j)]), 17);
     }
 
@@ -253,18 +245,18 @@ void test_2d_static()
     {
         auto const true_idx = (i) + (d[0]) * (j);
 
+        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+
         // Element in the strided sub-box.
         if (  (0 == (i % sub_s[0]))
            && (0 == (j % sub_s[1]))
            )
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         17);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
         }
         // Element not in the strided sub-box.
         else
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         42);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
         }
     }
@@ -321,11 +313,9 @@ void test_2d_dynamic()
 
         dptr[sub_l.index(sub_d, i, j)] = 17;
 
-        BOOST_TEST_EQ((dptr[true_idx]),                 17);
         BOOST_TEST_EQ((dptr[sub_l.index(sub_d, i, j)]), 17);
 
         // Bounds-checking.
-        BOOST_TEST_EQ((data.at(true_idx)),                 17);
         BOOST_TEST_EQ((data.at(sub_l.index(sub_d, i, j))), 17);
     }
 
@@ -335,26 +325,24 @@ void test_2d_dynamic()
     {
         auto const true_idx = (i) + (d[0]) * (j);
 
+        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+
         // Element in the strided sub-box.
         if (  (0 == (i % sub_s[0]))
            && (0 == (j % sub_s[1]))
            )
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         17);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(true_idx)),         17);
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 17);
         }
         // Element not in the strided sub-box.
         else
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         42);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(true_idx)),         42);
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 42);
         }
     }
@@ -362,8 +350,6 @@ void test_2d_dynamic()
 
 int main()
 {
-    // TODO: Test stride == 0.
-
     ///////////////////////////////////////////////////////////////////////////
     // 1D Static
 

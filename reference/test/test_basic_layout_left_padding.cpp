@@ -19,10 +19,6 @@ using std::experimental::dyn;
 using std::experimental::dimensions;
 using std::experimental::basic_layout_left;
 
-// FIXME FIXME FIXME
-#warning Verify size()/span() tests provide sufficient coverage. 
-// FIXME FIXME FIXME
-
 template <std::size_t N, std::size_t M, std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
@@ -53,7 +49,6 @@ void test_2d_static()
 
         dptr[l.index(d, i, j)] = 42;
 
-        BOOST_TEST_EQ((dptr[true_idx]),         42);
         BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
     }
 
@@ -72,7 +67,6 @@ void test_2d_static()
         {
             dptr[l.index(d, i, j)] = 17;
             
-            BOOST_TEST_EQ((dptr[true_idx]),         17);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
         }
 
@@ -81,7 +75,6 @@ void test_2d_static()
         {
             dptr[l.index(d, i, j)] = 24;
 
-            BOOST_TEST_EQ((dptr[true_idx]),         24);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
         }
     }
@@ -99,21 +92,18 @@ void test_2d_static()
         // X-pad element.
         if      ((d[0] <= i) && (i < (d[0] + p[0])))
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         17);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
         }
 
         // Y-pad element.
         else if ((d[1] <= j) && (j < (d[1] + p[1])))
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         24);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
         }
 
         // Real element.
         else
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         42);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
         }
     }
@@ -146,16 +136,16 @@ void test_2d_dynamic()
     {
         auto const true_idx = (i) + (d[0] + p[0]) * (j);
 
+        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+
         // X-pad element.
         if      ((d[0] <= i) && (i < (d[0] + p[0])))
         {
             dptr[l.index(d, i, j)] = 17;
             
-            BOOST_TEST_EQ((dptr[true_idx]),         17);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(true_idx)),         17);
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 17);
         }
 
@@ -164,11 +154,9 @@ void test_2d_dynamic()
         {
             dptr[l.index(d, i, j)] = 24;
 
-            BOOST_TEST_EQ((dptr[true_idx]),         24);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(true_idx)),         24);
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 24);
         }
     }
@@ -179,32 +167,29 @@ void test_2d_dynamic()
     {
         auto const true_idx = i + j * (d[0] + N);
 
+        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+
         // X-pad element.
         if      ((d[0] <= i) && (i < (d[0] + p[0])))
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         17);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(true_idx)),         17);
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 17);
         }
 
         // Y-pad element.
         else if ((d[1] <= j) && (j < (d[1] + p[1])))
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         24);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(true_idx)),         24);
             BOOST_TEST_EQ((data.at(l.index(d, i, j))), 24);
         }
 
         // Real element.
         else
         {
-            BOOST_TEST_EQ((dptr[true_idx]),         42);
             BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
         }
     }

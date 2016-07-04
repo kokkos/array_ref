@@ -19,12 +19,6 @@ using std::experimental::dyn;
 using std::experimental::dimensions;
 using std::experimental::basic_layout_left;
 
-// FIXME FIXME FIXME
-#warning I need to be updated with the latest changes from the other layout left unit tests
-#warning Get rid of unneeded vector initializations to 42
-#warning Maybe just remove the redundant true_idx checks?
-// FIXME FIXME FIXME
-
 template <std::size_t X>
 void test_1d_static()
 { // {{{
@@ -69,8 +63,7 @@ void test_1d_dynamic()
     BOOST_TEST_EQ((d.size()),  d[0]);
     BOOST_TEST_EQ((l.span(d)), d[0]);
 
-    // Initialize all elements as 42.
-    vector<int> data(d[0], 42);
+    vector<int> data(d[0]);
     int* dptr = data.data();
 
     // Set all elements to a unique value.
@@ -82,11 +75,9 @@ void test_1d_dynamic()
 
         dptr[l.index(d, i)] = i;
 
-        BOOST_TEST_EQ((dptr[i]),             i); 
         BOOST_TEST_EQ((dptr[l.index(d, i)]), i); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((data.at(i)),             i); 
         BOOST_TEST_EQ((data.at(l.index(d, i))), i); 
     }
 } // }}}
@@ -121,8 +112,6 @@ void test_2d_static()
         std::get<0>(dptr[l.index(d, i, j)]) = i;
         std::get<1>(dptr[l.index(d, i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[true_idx])),         i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[true_idx])),         j); 
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
     }
@@ -143,8 +132,7 @@ void test_2d_dynamic()
     BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
     BOOST_TEST_EQ((l.span(d)), d[0] * d[1]);
 
-    // Initialize all elements to (17, 42).
-    vector<tuple<int, int> > data(d[0] * d[1], tuple<int, int>(17, 42));
+    vector<tuple<int, int> > data(d[0] * d[1]);
     tuple<int, int>* dptr = data.data();
 
     for (auto j = 0; j < d[1]; ++j)
@@ -159,14 +147,10 @@ void test_2d_dynamic()
         std::get<0>(dptr[l.index(d, i, j)]) = i;
         std::get<1>(dptr[l.index(d, i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[true_idx])),         i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[true_idx])),         j); 
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(true_idx))),         i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(true_idx))),         j); 
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j)))), j); 
     }
@@ -187,8 +171,7 @@ void test_2d_mixed()
     BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
     BOOST_TEST_EQ((l.span(d)), d[0] * d[1]);
 
-    // Initialize all elements to (17, 42).
-    vector<tuple<int, int> > data(d[0] * d[1], tuple<int, int>(17, 42));
+    vector<tuple<int, int> > data(d[0] * d[1]);
     tuple<int, int>* dptr = data.data();
 
     for (auto j = 0; j < d[1]; ++j)
@@ -203,14 +186,10 @@ void test_2d_mixed()
         std::get<0>(dptr[l.index(d, i, j)]) = i;
         std::get<1>(dptr[l.index(d, i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[true_idx])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[true_idx])), j); 
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(true_idx))), i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(true_idx))), j); 
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j)))), j); 
     }
@@ -249,9 +228,6 @@ void test_3d_static()
         std::get<1>(dptr[l.index(d, i, j, k)]) = j;
         std::get<2>(dptr[l.index(d, i, j, k)]) = k;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[true_idx])),            i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[true_idx])),            j); 
-        BOOST_TEST_EQ((std::get<2>(dptr[true_idx])),            k); 
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), j); 
         BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), k); 
@@ -273,10 +249,7 @@ void test_3d_dynamic()
     BOOST_TEST_EQ((d.size()),  d[0] * d[1] * d[2]);
     BOOST_TEST_EQ((l.span(d)), d[0] * d[1] * d[2]);
 
-    // Initialize all elements to (17, 42, 73).
-    vector<tuple<int, int, int> > data(
-        d[0] * d[1] * d[2], tuple<int, int, int>(17, 42, 73)
-    );
+    vector<tuple<int, int, int> > data(d[0] * d[1] * d[2]);
     tuple<int, int, int>* dptr = data.data();
 
     for (auto k = 0; k < d[2]; ++k)
@@ -289,25 +262,15 @@ void test_3d_dynamic()
 
         BOOST_TEST_EQ(&(dptr[l.index(d, i, j, k)]), &(dptr[true_idx])); 
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), 17); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), 42); 
-        BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), 73); 
-
         std::get<0>(dptr[l.index(d, i, j, k)]) = i;
         std::get<1>(dptr[l.index(d, i, j, k)]) = j;
         std::get<2>(dptr[l.index(d, i, j, k)]) = k;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[true_idx])),            i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[true_idx])),            j); 
-        BOOST_TEST_EQ((std::get<2>(dptr[true_idx])),            k); 
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), j); 
         BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), k); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(true_idx))),            i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(true_idx))),            j); 
-        BOOST_TEST_EQ((std::get<2>(data.at(true_idx))),            k); 
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j, k)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j, k)))), j); 
         BOOST_TEST_EQ((std::get<2>(data.at(l.index(d, i, j, k)))), k); 
