@@ -125,7 +125,7 @@ basic_layout_right<Striding, Padding>::index(
 
     using dims = dimensions<Dims...>;
 
-    detail::basic_layout_right_indexer<dims, dims::rank() - 1> indexer;
+    detail::basic_layout_right_indexer<dims, 0> indexer;
     auto i = detail::make_filled_dims_t<dims::rank(), dyn>(idx...); 
 
     return indexer(stride_, pad_, d, i);
