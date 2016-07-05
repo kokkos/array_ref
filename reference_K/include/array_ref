@@ -45,7 +45,6 @@
 #define STD_EXPERIMENTAL_ARRAY_REF_HEADER
 
 #include <initializer_list>
-#include <iterator>
 #include <algorithm>
 
 #include <iostream>
@@ -565,10 +564,6 @@ public:
 
   using reference  = value_type & ;
   using pointer    = value_type * ;
-  using iterator   = value_type * ;
-  using const_iterator = typename std::add_const<value_type>::type * ;
-  using reverse_iterator = std::reverse_iterator< iterator > ;
-  using const_reverse_iterator = std::reverse_iterator< const_iterator > ;
 
   // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
@@ -655,23 +650,6 @@ public:
     >::type
   operator[]( IntType idx ) const noexcept
     { return m_ptr[ m_map( idx ) ]; }
-
-  constexpr iterator begin() const noexcept { return m_ptr ; }
-  constexpr iterator end() const noexcept { return m_ptr + span(); }
-  constexpr const_iterator cbegin() const noexcept { return m_ptr ; }
-  constexpr const_iterator cend() const noexcept { return m_ptr + span(); }
-
-  constexpr reverse_iterator rbegin() const noexcept
-    { return reverse_iterator( m_ptr + span() ); }
-
-  constexpr reverse_iterator rend() const noexcept
-    { return reverse_iterator( m_ptr ); }
-
-  constexpr const_reverse_iterator crbegin() const noexcept
-    { return const_reverse_iterator( m_ptr + span() ); }
-
-  constexpr const_reverse_iterator crend() const noexcept
-    { return const_reverse_iterator( m_ptr ); }
 
 private:
   pointer  m_ptr ;
