@@ -5,8 +5,10 @@
 
 void test_layout_right()
 {
-  using dim_t = std::experimental::array_property::dimension<10,20,0,40> ;
-  using map_t = std::experimental::array_property::layout_right::mapping< dim_t > ;
+  using dim_t = std::experimental::detail::extents_impl<0,size_t,10,20,0,40> ;
+  using map_t = typename
+    std::experimental::detail::layout_mapping
+      < std::experimental::layout_right , dim_t >::type ;
 
   constexpr map_t m( dim_t(30) );
 
@@ -27,8 +29,10 @@ void test_layout_right()
 
 void test_layout_left()
 {
-  using dim_t = std::experimental::array_property::dimension<10,20,0,40> ;
-  using map_t = std::experimental::array_property::layout_left::mapping< dim_t > ;
+  using dim_t = std::experimental::detail::extents_impl<0,size_t,10,20,0,40> ;
+  using map_t = typename
+    std::experimental::detail::layout_mapping
+      < std::experimental::layout_left , dim_t >::type ;
 
   constexpr map_t m( dim_t(30) );
 

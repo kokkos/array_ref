@@ -50,77 +50,395 @@ namespace experimental {
 template< typename , typename ... >
 struct array_ref ;
 
-namespace array_property {
-
 struct layout_right ;
 struct layout_left ;
 struct layout_stride ;
 
-}}} // std::experimental::array_property
+}} // std::experimental
 
 namespace std {
 namespace experimental {
-namespace array_property {
 namespace detail {
 
+template< typename ... IntegralTypes >
+struct pack_is_integral ;
+
+template<>
+struct pack_is_integral<> : std::true_type {};
+
+template< typename T , typename ... IntegralTypes >
+struct pack_is_integral<T,IntegralTypes...> :
+  std::integral_constant< bool ,
+    std::is_integral<T>::value &&
+    pack_is_integral< IntegralTypes ... >::value >
+  {};
+
+/*--------------------------------------------------------------------------*/
+
+template< int R , typename ExtentType , size_t ... Extents >
+struct extents_impl ;
+
+template<>
+struct extents_impl< 0 , void >
+{ using size_type = void ; };
+
+template< int R , typename ExtentType >
+struct extents_impl< R , ExtentType >
+{
+  using size_type = ExtentType ;
+
+  enum : int { Rank = 0 };
+  enum : int { RankDynamic = 0 };
+
+  enum : size_type { S = 1 };
+  enum : size_type { N = 1 };
+
+#if 0
+  template< int > using member = extents_impl ;
+#endif
+
+  static constexpr int rank() noexcept { return Rank ; }
+  static constexpr int rank_dynamic() noexcept { return RankDynamic ; }
+
+  template< int >
+  static constexpr size_type static_extent() noexcept { return S ; }
+
+  template< int >
+  constexpr size_type extent() noexcept { return N ; }
+
+  static constexpr size_type static_extent( int ) noexcept { return S ; }
+
+  constexpr size_type extent( int ) const noexcept { return N ; }
+
+  constexpr size_type size() const noexcept { return 1 ; }
+
+  constexpr bool in_bounds() const noexcept { return true ; }
+
+  template< typename IndexType , typename ... Args >
+  constexpr bool in_bounds( IndexType const & i , Args ... args ) const noexcept
+    { return 0 <= i && i < N && in_bounds( args... ); }
+
+  constexpr extents_impl() noexcept {}
+  constexpr extents_impl( extents_impl const & ) noexcept {}
+  extents_impl & operator = ( extents_impl const & ) noexcept { return *this ; }
+
+  template< typename T >
+  constexpr extents_impl( T const * ) noexcept {}
+};
+
+template< int R , typename ExtentType , size_t ... Tail >
+struct extents_impl< R , ExtentType , 0 , Tail... >
+  : extents_impl< R + 1 , ExtentType , Tail... >
+{
+  using size_type = ExtentType ;
+
+  using next = extents_impl< R + 1 , size_type , Tail... > ;
+
+  enum : int { Rank = 1 + next::Rank };
+  enum : int { RankDynamic = 1 + next::RankDynamic };
+  enum : size_type { S = 0 };
+
+  size_type N ;
+
+#if 0
+  // m_extents.template member<J>::N
+
+  template< int J > using member = typename
+    std::conditional< J == R
+                    , extents_impl
+                    , typename next::template member<J>
+                    >::type ;
+#endif
+
+  static constexpr int rank() noexcept { return Rank ; }
+  static constexpr int rank_dynamic() noexcept { return RankDynamic ; }
+
+  template< int J >
+  static constexpr size_type static_extent() noexcept
+    { return J == R ? S : next::template static_extent<J>(); }
+
+  template< int J >
+  constexpr size_type extent() const noexcept
+    { return J == R ? N : next::template extent<J>(); }
+
+  static constexpr size_type static_extent( int j ) noexcept
+    { return j == R ? S : next::static_extent( j ); }
+
+  constexpr size_type extent( int j ) const noexcept
+    { return j == R ? N : next::extent( j ); }
+
+  constexpr size_type size() const noexcept
+    { return N * next::size(); }
+
+  template< typename IndexType , typename ... Args >
+  constexpr bool in_bounds( IndexType const & i , Args ... args ) const noexcept
+    { return 0 <= i && i < N && next::in_bounds( args... ); }
+
+  constexpr extents_impl() noexcept : next(), N(0) {}
+
+  constexpr extents_impl( extents_impl const & rhs ) noexcept
+    : next( (next const &) rhs  )
+    , N( rhs.N )
+    {}
+
+  extents_impl & operator = ( extents_impl const & rhs ) noexcept
+    {
+      next::operator=( (next const &) rhs  );
+      N = rhs.N ;
+      return *this ;
+    }
+
+  template< typename ... Args >
+  constexpr extents_impl( size_type argN , Args ... args ) noexcept
+    : next( args... ) , N( argN ) {}
+
+  template< typename T >
+  constexpr extents_impl( T const * argN ) noexcept
+    : next( argN + 1 ) , N( *argN ) {}
+};
+
+template< int R , typename ExtentType , size_t Head , size_t ... Tail >
+struct extents_impl< R , ExtentType , Head , Tail... >
+  : extents_impl< R + 1 , ExtentType , Tail... >
+{
+  using size_type = ExtentType ;
+
+  using next = extents_impl< R + 1 , size_type , Tail... > ;
+
+  enum : int { Rank = 1 + next::Rank };
+  enum : int { RankDynamic = next::RankDynamic };
+
+  enum : size_type { S = Head };
+  enum : size_type { N = Head };
+
+#if 0
+  template< int J > using member = typename
+    std::conditional< J == R
+                    , extents_impl
+                    , typename next::template member<J>
+                    >::type ;
+#endif
+
+  static constexpr int rank() noexcept { return Rank ; }
+  static constexpr int rank_dynamic() noexcept { return RankDynamic ; }
+
+  template< int J >
+  static constexpr size_type static_extent() noexcept
+    { return J == R ? S : next::template static_extent<J>(); }
+
+  template< int J >
+  constexpr size_type extent() const noexcept
+    { return J == R ? N : next::template extent<J>(); }
+
+  static constexpr int static_extent( int j ) noexcept
+    { return j == R ? S : next::static_extent( j ); }
+
+  constexpr int extent( int j ) const noexcept
+    { return j == R ? N : next::extent( j ); }
+
+  constexpr size_type size() const noexcept
+    { return N * next::size(); }
+
+  template< typename IndexType , typename ... Args >
+  constexpr bool in_bounds( IndexType const & i , Args ... args ) const noexcept
+    { return 0 <= i && i < N && next::in_bounds( args... ); }
+
+  constexpr extents_impl() noexcept : next() {}
+
+  constexpr extents_impl( extents_impl const & rhs ) noexcept
+    : next( (next const &) rhs ) {}
+
+  extents_impl & operator = ( extents_impl const & rhs ) noexcept
+    {
+      next::operator=( (next const &) rhs );
+      return *this ;
+    }
+
+  template< typename ... Args >
+  constexpr extents_impl( Args ... args ) noexcept
+    : next( args... ) {}
+
+  template< typename T >
+  constexpr extents_impl( T const * argN ) noexcept
+    : next( argN ) {}
+};
+
+/*--------------------------------------------------------------------------*/
+
+template< int R , typename ExtentsImpl >
+struct dynamic_extents_impl ;
+
+template< typename ExtentType , size_t ... Extents >
+struct dynamic_extents_impl< 0 , extents_impl<0,ExtentType,Extents...> >
+{
+  using type = extents_impl<0,ExtentType,Extents...> ;
+};
+
+template< int R , typename ExtentType , size_t ... Extents >
+struct dynamic_extents_impl< R , extents_impl<0,ExtentType,Extents...> >
+{
+  using type = typename dynamic_extents_impl< R - 1 , extents_impl<0,ExtentType,0,Extents... > >::type ;
+};
+
+/*--------------------------------------------------------------------------*/
+
+template< typename ExtentImpl , size_t N >
+struct prepend_extents ;
+
+template< typename ExtentType , size_t ... Extents , size_t N >
+struct prepend_extents< extents_impl< 0 , ExtentType , Extents ... > , N >
+{
+  using type = extents_impl< 0 , ExtentType , N , Extents ... > ;
+};
+
+template< typename DataType , typename ExtentType >
+struct extract_extents
+{
+  using type = extents_impl< 0 , ExtentType > ;
+};
+
+template< typename DataType , size_t N , typename ExtentsType >
+struct extract_extents< DataType[N] , ExtentsType >
+{
+  using nest = typename extract_extents< DataType , ExtentsType >::type ;
+  using type = typename prepend_extents< nest , N >::type ;
+};
+
+template< typename DataType , typename ExtentsType >
+struct extract_extents< DataType[] , ExtentsType >
+{
+  using nest = typename extract_extents< DataType , ExtentsType >::type ;
+  using type = typename prepend_extents< nest , 0 >::type ;
+};
+
+
+/*--------------------------------------------------------------------------*/
+
+template< typename Layout , typename ExtentsImpl >
+struct layout_mapping ;
+
+template< typename Layout , typename ExtentType , size_t ... Extents >
+struct layout_mapping< Layout , extents_impl< 0 , ExtentType , Extents... > >
+{
+  using type = typename Layout::template mapping< ExtentType , Extents ... > ;
+};
+
+template< typename SizeType , typename ExtentsImpl >
+struct set_extents_impl_size_type ;
+
+template< typename SizeType
+        , typename ExtentType
+        , size_t ... Extents
+        >
+struct set_extents_impl_size_type
+  < SizeType , extents_impl< 0 , ExtentType , Extents... > >
+{
+  using type = extents_impl< 0 , SizeType , SizeType(Extents)... > ;
+};
+
+/*--------------------------------------------------------------------------*/
 /**\brief Unpack array property pack */
 
 template< typename DataType , typename ... Properties >
 struct unpack_array_properties
 {
-  using next = unpack_array_properties< void , Properties... > ;
+  using prop = unpack_array_properties< void , Properties... > ;
 
-  enum : bool { data_type_is_array = 0 < std::rank< DataType >::value };
-  enum : bool { properties_has_dimension =
-    ! std::is_same< typename next::dimension , void >::value };
+  enum : bool { data_type_has_extents = 0 < std::rank< DataType >::value };
+  enum : bool { properties_has_extents =
+    ! std::is_same< typename prop::extents_type::size_type , void >::value };
 
-  // Only one dimension:
+  // Only one extents
 
-  static_assert( ! ( data_type_is_array && properties_has_dimension )
+  static_assert( ! ( data_type_has_extents && properties_has_extents )
                , "array_ref can only have one dimension" );
 
   // types:
 
   using value_type = typename std::remove_all_extents< DataType >::type ;
 
-  using dimension =
-    typename std::conditional
-      < data_type_is_array
-      , typename dimension_extraction< DataType , size_t >::type
-      , typename std::conditional
-          < properties_has_dimension
-          , typename next::dimension
-          , dimension_typed<int>
+  using size_type = typename
+    std::conditional
+      < ! std::is_same< typename prop::size_type , void >::value
+      , typename prop::size_type // extent_size_type<T> given
+      , typename
+        std::conditional
+          < data_type_has_extents
+          , size_t
+          , typename
+            std::conditional
+              < properties_has_extents
+              , typename prop::extents_type::size_type
+              , size_t
+              >::type
+          >::type
+      >::type ;
+
+  using extents_type = typename
+    std::conditional
+      < data_type_has_extents
+      , typename extract_extents< DataType , size_type >::type
+      , typename 
+        std::conditional
+          < properties_has_extents
+          , typename set_extents_impl_size_type< size_type , typename prop::extents_type >::type
+          , extents_impl< 0 , size_type >
           >::type
       >::type ;
 
   using layout =
     typename std::conditional
-       < ! std::is_same< typename next::layout , void >::value
-       , typename next::layout
+       < ! std::is_same< typename prop::layout , void >::value
+       , typename prop::layout
        , layout_right
        >::type ;
 
-  using bounds_check = typename next::bounds_check ;
+  using mapping =
+    typename layout_mapping< layout , extents_type >::type ;
+
+  using bounds_check = typename prop::bounds_check ;
 };
 
 template<>
 struct unpack_array_properties< void >
 {
-  using dimension = void ;
-  using layout    = void ;
+  using size_type    = void ;
+  using extents_type = extents_impl<0,void> ;
+  using layout       = void ;
   using bounds_check = void ;
 };
 
-template< typename ValueType , ValueType ... Dim , typename ... Properties >
+template< typename SizeType , typename ... Properties >
 struct unpack_array_properties
-  < void , dimension_typed< ValueType , Dim... > , Properties... >
+  < void , extent_size_type< SizeType > , Properties ... >
 {
   using next = unpack_array_properties< void , Properties... > ;
 
-  using dimension    = dimension_typed< ValueType , Dim... > ;
+  using size_type    = SizeType ;
+  using extents_type = typename next::extents_type ;
   using layout       = typename next::layout ;
   using bounds_check = typename next::bounds_check ;
+
+  static_assert( std::is_same< typename next::size_type , void >::value
+               , "array_ref allows only one extent_size_type specification" );
+};
+
+template< typename ExtentType
+        , size_t ... Extents
+        , typename ... Properties >
+struct unpack_array_properties
+  < void , extents_impl< 0 , ExtentType , Extents... > , Properties... >
+{
+  using next = unpack_array_properties< void , Properties... > ;
+
+  using extents_type = extents_impl< 0 , ExtentType , Extents... > ;
+  using size_type    = typename next::size_type ;
+  using layout       = typename next::layout ;
+  using bounds_check = typename next::bounds_check ;
+
+  static_assert
+    ( std::is_same< typename next::extents_type::size_type , void >::value
+    , "array_ref allows only one extents specification" );
 };
 
 
@@ -135,9 +453,93 @@ struct unpack_array_properties
 {
   using next = unpack_array_properties< void , Properties... > ;
 
-  using dimension    = typename next::dimension ;
+  using extents_type = typename next::extents_type ;
+  using size_type    = typename next::size_type ;
   using layout       = Layout ;
   using bounds_check = typename next::bounds_check ;
+
+  static_assert( std::is_same< typename next::layout , void >::value
+               , "array_ref allows only one layout specification" );
+};
+
+//----------------------------------------------------------------------------
+
+template < typename T >
+struct is_integral_range : std::false_type
+{
+  enum : bool { is_all = false };
+
+  static constexpr T const & begin( T const & val ) noexcept
+    { return val ; }
+  static constexpr T length( T const & ) noexcept
+    { return 0 ; }
+};
+
+template < typename T >
+struct is_integral_range< std::initializer_list<T> >
+  : std::is_integral<T>
+{
+  enum : bool { is_all = false };
+
+  static constexpr T begin( std::initializer_list<T> const & r ) noexcept
+    { return r.begin()[0]; }
+  static constexpr T length( std::initializer_list<T> const & r ) noexcept
+    { return r.begin()[1] - r.begin()[0] ; }
+};
+
+template < typename T >
+struct is_integral_range< std::pair<T,T> >
+  : std::is_integral<T>
+{
+  enum : bool { is_all = false };
+
+  static constexpr T begin( std::pair<T,T> const & r ) noexcept
+    { return r.first ; }
+  static constexpr T length( std::pair<T,T> const & r ) noexcept
+    { return r.second - r.first ; }
+};
+
+template<>
+struct is_integral_range< all_type > : std::true_type
+{
+  enum : bool { is_all = true };
+
+  static constexpr size_t begin( all_type const & ) noexcept
+    { return 0 ; }
+  static constexpr size_t length( all_type const & ) noexcept
+    { return 0 ; }
+};
+
+template< typename ... SliceSpecs >
+struct rank_of_slices ;
+
+template<>
+struct rank_of_slices<> { enum : unsigned { value = 0 }; };
+
+template< typename Spec , typename ... SliceSpecs >
+struct rank_of_slices< Spec , SliceSpecs... >
+{
+  static_assert( std::is_integral<Spec>::value ||
+                 is_integral_range<Spec>::value
+               , "" );
+
+  enum : unsigned { value = ( is_integral_range<Spec>::value ? 1 : 0 ) +
+                            rank_of_slices< SliceSpecs... >::value };
+};
+
+//----------------------------------------------------------------------------
+
+template< typename ExtentsImpl , typename ... SliceSpecs >
+struct subextents {
+
+  // Simplistic subextents are all dynamic and ignore static extents
+
+  enum : int { rank = rank_of_slices< SliceSpecs ... >::value };
+
+  using type = typename
+    dynamic_extents_impl< rank
+                        , extents_impl<0, typename ExtentsImpl::size_type >
+                        >::type ;
 };
 
 //----------------------------------------------------------------------------
@@ -148,44 +550,46 @@ struct subarray_generator ;
 template < typename ArrayRefType , typename ... SliceSpecs >
 struct subarray_generator 
 {
-  // generate dimension
+  // generate subextents
 
-  using dimension = typename
-    generate_dimension< typename ArrayRefType::dimension , SliceSpecs... >::type ;
+  using extents_type = typename
+    subextents< typename ArrayRefType::mapping::extents_t , SliceSpecs... >::type ;
+
+  using size_type = typename extents_type::size_type ;
 
   using layout = typename std::conditional
-    <( 0 < dimension::rank() )
-    , array_property::layout_stride
-    , array_property::layout_right
+    <( 0 < extents_type::rank() )
+    , layout_stride
+    , layout_right
     >::type ;
 
   using type = array_ref< typename ArrayRefType::value_type
-                        , dimension
+                        , extents_type
                         , layout > ;
 
   template< typename LayoutType >
   static
   typename std::enable_if
-    < std::is_same< LayoutType , array_property::layout_stride >::value
+    < std::is_same< LayoutType , layout_stride >::value
     , type >::type
   apply( ArrayRefType const & a , SliceSpecs const ... slices )
     {
       // offset for beginning of subarray
 
       typename type::pointer p =
-        & a( array_property::detail::is_integral_range<SliceSpecs>::begin( slices )... );
+        & a( detail::is_integral_range<SliceSpecs>::begin( slices )... );
 
-      constexpr bool is_range[] = { array_property::detail::is_integral_range<SliceSpecs>::value ... };
-      constexpr bool is_all[] = { array_property::detail::is_integral_range<SliceSpecs>::is_all ... };
+      constexpr bool is_range[] = { detail::is_integral_range<SliceSpecs>::value ... };
+      constexpr bool is_all[] = { detail::is_integral_range<SliceSpecs>::is_all ... };
 
-      typename dimension::value_type extents[] =
-        { array_property::detail::is_integral_range<SliceSpecs>::length( slices )... };
+      size_type extents[] =
+        { detail::is_integral_range<SliceSpecs>::length( slices )... };
 
-      typename dimension::value_type strides[ dimension::rank() ];
+      size_type strides[ extents_type::rank() ];
 
-      using mapping = typename LayoutType::template mapping< dimension > ;
+      using mapping = typename type::mapping ;
 
-      for ( typename dimension::size_type i = 0 , j = 0 ; i < ArrayRefType::rank() ; ++i ) {
+      for ( int i = 0 , j = 0 ; i < ArrayRefType::rank() ; ++i ) {
         if ( is_range[i] ) {
           extents[j] = is_all[i] ? a.extent(i) : extents[i] ;
           strides[j] = a.stride(i);
@@ -198,19 +602,19 @@ struct subarray_generator
 
   template< typename LayoutType >
   static
-  typename std::enable_if< ! std::is_same< LayoutType , array_property::layout_stride >::value , type >::type
+  typename std::enable_if< ! std::is_same< LayoutType , layout_stride >::value , type >::type
   apply( ArrayRefType const & a , SliceSpecs const ... slices )
     {
       // offset for beginning of subarray
 
       typename type::pointer p =
-         & a( array_property::detail::is_integral_range<SliceSpecs>::begin( slices )... );
+         & a( detail::is_integral_range<SliceSpecs>::begin( slices )... );
 
       return type(p);
     }
 };
 
-}}}} // std::experimental::array_property::detail
+}}} // std::experimental::detail
 
 #endif // #ifndef STD_EXPERIMENTAL_ARRAY_PROPERTY_DETAIL_ARRAY_HELPER_HEADER
 

@@ -2,63 +2,54 @@
 #include <array_ref>
 #include <iostream>
 
-template< typename Dimension , unsigned N >
-struct prepend_dim ;
-
-template< typename ValueType , ValueType ... Dims  , unsigned N >
-struct prepend_dim
-  < std::experimental::array_property::dimension_typed<ValueType, Dims... >
-  , N >
-{
-  using type =
-   std::experimental::array_property::dimension_typed<ValueType, N , Dims... > ;
-};
-
-constexpr size_t generate_dimension_value( unsigned r )
+constexpr size_t generate_extent( unsigned r )
   { return static_cast<size_t>(2) * ( r + 1 ); }
 
-template< typename ValueType , unsigned RankStatic , unsigned RankDynamic , unsigned R = 0 >
-struct generate_dimension {
+template< typename ExtentType
+        , unsigned RankStatic
+        , unsigned RankDynamic
+        , unsigned R = 0 >
+struct generate_extents_impl {
 
   using type = typename std::conditional
     < ( RankStatic < RankDynamic )
-    , typename prepend_dim
-         < typename generate_dimension<ValueType,RankStatic,(RankDynamic?RankDynamic-1:0),R+1>::type , 0 >::type
-    , typename prepend_dim
-         < typename generate_dimension<ValueType,(RankStatic?RankStatic-1:0),RankDynamic,R+1>::type , generate_dimension_value(R) > ::type
+    , typename std::experimental::detail::prepend_extents
+         < typename generate_extents_impl<ExtentType,RankStatic,(RankDynamic?RankDynamic-1:0),R+1>::type , 0 >::type
+    , typename std::experimental::detail::prepend_extents
+         < typename generate_extents_impl<ExtentType,(RankStatic?RankStatic-1:0),RankDynamic,R+1>::type , generate_extent(R) > ::type
     >::type ;
 };
 
-template< typename ValueType , unsigned R >
-struct generate_dimension< ValueType , 0 , 0 , R >
+template< typename ExtentType , unsigned R >
+struct generate_extents_impl< ExtentType , 0 , 0 , R >
 {
-  using type = std::experimental::array_property::dimension_typed<ValueType> ;
+  using type = std::experimental::detail::extents_impl<0,ExtentType> ;
 };
 
-template< typename ValueType , unsigned RankStatic , unsigned R >
-struct generate_dimension< ValueType , RankStatic , 0 , R >
+template< typename ExtentType , unsigned RankStatic , unsigned R >
+struct generate_extents_impl< ExtentType , RankStatic , 0 , R >
 {
-  using nest = typename generate_dimension<ValueType,RankStatic-1,0,R+1>::type ;
-  using type = typename prepend_dim< nest , generate_dimension_value(R) >::type ;
+  using nest = typename generate_extents_impl<ExtentType,RankStatic-1,0,R+1>::type ;
+  using type = typename std::experimental::detail::prepend_extents< nest , generate_extent(R) >::type ;
 };
 
-template< typename ValueType , unsigned RankDynamic , unsigned R >
-struct generate_dimension< ValueType , 0 , RankDynamic , R >
+template< typename ExtentType , unsigned RankDynamic , unsigned R >
+struct generate_extents_impl< ExtentType , 0 , RankDynamic , R >
 {
-  using nest = typename generate_dimension<ValueType,0,RankDynamic-1,R+1>::type ;
-  using type = typename prepend_dim< nest , 0 >::type ;
+  using nest = typename generate_extents_impl<ExtentType,0,RankDynamic-1,R+1>::type ;
+  using type = typename std::experimental::detail::prepend_extents< nest , 0 >::type ;
 };
 
-void test_dimension_constexpr()
+void test_extents_constexpr()
 {
-  using dim_size_t_00_00_t = typename generate_dimension<size_t,0,0>::type ;
-  using dim_int_00_00_t    = typename generate_dimension<int,0,0>::type ;
-  using dim_int_01_00_t    = typename generate_dimension<int,1,0>::type ;
-  using dim_int_00_01_t    = typename generate_dimension<int,0,1>::type ;
-  using dim_int_01_01_t    = typename generate_dimension<int,1,1>::type ;
-  using dim_int_07_00_t    = typename generate_dimension<int,7,0>::type ;
-  using dim_int_00_07_t    = typename generate_dimension<int,0,7>::type ;
-  using dim_int_07_07_t    = typename generate_dimension<int,7,7>::type ;
+  using dim_size_t_00_00_t = typename generate_extents_impl<size_t,0,0>::type ;
+  using dim_int_00_00_t    = typename generate_extents_impl<int,0,0>::type ;
+  using dim_int_01_00_t    = typename generate_extents_impl<int,1,0>::type ;
+  using dim_int_00_01_t    = typename generate_extents_impl<int,0,1>::type ;
+  using dim_int_01_01_t    = typename generate_extents_impl<int,1,1>::type ;
+  using dim_int_07_00_t    = typename generate_extents_impl<int,7,0>::type ;
+  using dim_int_00_07_t    = typename generate_extents_impl<int,0,7>::type ;
+  using dim_int_07_07_t    = typename generate_extents_impl<int,7,7>::type ;
 
   static_assert( dim_size_t_00_00_t::rank() == 0 , "" );
   static_assert( dim_int_00_00_t::rank() == 0 , "" );
@@ -94,6 +85,17 @@ void test_dimension_constexpr()
   constexpr dim_int_07_00_t dim_int_07_00 ;
   constexpr dim_int_00_07_t dim_int_00_07 ;
   constexpr dim_int_07_07_t dim_int_07_07 ;
+
+  static_assert( dim_int_00_00.rank() == 0 , "" );
+  static_assert( dim_int_00_00.rank_dynamic() == 0 , "" );
+  static_assert( dim_int_00_00.static_extent<0>() == 1 , "" );
+  static_assert( dim_int_00_00.static_extent(0) == 1 , "" );
+  static_assert( dim_int_00_00.extent<0>() == 1 , "" );
+  static_assert( dim_int_00_00.extent(0) == 1 , "" );
+  static_assert( dim_int_00_00.static_extent<1>() == 1 , "" );
+  static_assert( dim_int_00_00.static_extent(1) == 1 , "" );
+  static_assert( dim_int_00_00.extent<1>() == 1 , "" );
+  static_assert( dim_int_00_00.extent(1) == 1 , "" );
 
   static_assert( dim_int_01_00.extent(0) == (2*1) , "" );
   static_assert( dim_int_00_01.extent(0) == 0 , "" );
@@ -168,15 +170,15 @@ void test_dimension_constexpr()
   static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<12>() == (2*13) , "" );
   static_assert( dim_int_07_07_value.dim_int_07_07_t::extent<13>() == (2*14) , "" );
 
-  static_assert( dim_int_07_07_value.in_bounds(1,2,3,4,5,6,7,8,9,10,11,12,13) , "" );
-  static_assert( ! dim_int_07_07_value.in_bounds(1,2,3,4,5,6,7,8,9,10,11,12,30) , "" );
+  static_assert( dim_int_07_07_value.in_bounds(0,1,2,3,4,5,6,7,8,9,10,11,12,13) , "" );
+  static_assert( ! dim_int_07_07_value.in_bounds(0,1,2,3,4,5,6,7,8,9,10,11,12,30) , "" );
 
 }
 
-void test_dimension_extraction()
+void test_extents_extraction()
 {
   using data_type = int[][20][30][40] ;
-  using dim_t = typename std::experimental::array_property::detail::dimension_extraction< data_type , int >::type ;
+  using dim_t = typename std::experimental::detail::extract_extents< data_type , int >::type ;
 
   static_assert( dim_t::rank() == 4 , "" );
   static_assert( dim_t::rank_dynamic() == 1 , "" );
@@ -185,13 +187,12 @@ void test_dimension_extraction()
   static_assert( dim_t::static_extent<2>() == 30 , "" );
   static_assert( dim_t::static_extent<3>() == 40 , "" );
   static_assert( dim_t::static_extent<4>() == 1 , "" );
-
 }
 
 int main()
 {
-  test_dimension_constexpr();
-  test_dimension_extraction();
+  test_extents_constexpr();
+  test_extents_extraction();
   return 0 ;
 }
 
