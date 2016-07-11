@@ -15,7 +15,7 @@ void test_array_base()
   static_assert( array_t::rank() == 4 , "" );
   static_assert( array_t::rank_dynamic() == 1 , "" );
 
-  static_assert( std::is_same< array_t::layout , std::experimental::array_property::layout_right >::value , "" );
+  static_assert( std::is_same< array_t::layout , std::experimental::layout_right >::value , "" );
   static_assert( std::is_same< array_t::size_type , size_t >::value , "" );
   static_assert( std::is_same< array_t::value_type , int >::value , "" );
   static_assert( std::is_same< array_t::reference , int & >::value , "" );
@@ -73,7 +73,7 @@ void test_array_base()
 void test_array_strided()
 {
   using array_t = std::experimental::array_ref<int[][20][30][40]> ;
-  using array_strided_t = std::experimental::array_ref<int, std::experimental::array_property::dimension<0,0,0,0> , std::experimental::array_property::layout_stride > ;
+  using array_strided_t = std::experimental::array_ref<int, std::experimental::extents<0,0,0,0> , std::experimental::layout_stride > ;
 
   int buffer[10*20*30*40];
 
@@ -100,7 +100,7 @@ void test_array_subarray()
 {
   using array_t = std::experimental::array_ref<int[][20][30][40]> ;
   using range_t = std::pair<size_t,size_t> ;
-  auto all = std::experimental::array_property::all ;
+  auto all = std::experimental::all ;
 
   int buffer[10*20*30*40];
 
