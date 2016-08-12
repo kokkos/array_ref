@@ -76,7 +76,7 @@ struct array_ref
 
     static constexpr bool is_regular() noexcept;
 
-    constexpr size_type stride(size_type rank) noexcept;
+    constexpr size_type stride(size_type rank) const noexcept;
 
     constexpr size_type span() const noexcept;    
 
@@ -180,6 +180,14 @@ array_ref<ValueType, Dims, Layout, Accessor>::stride(
     ) const noexcept
 {
     return layout_.stride(rank);
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::size_type
+array_ref<ValueType, Dims, Layout, Accessor>::span() const noexcept
+{
+    return layout_.span(dims_);
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
