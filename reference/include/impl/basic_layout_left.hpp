@@ -11,23 +11,30 @@
 #include "impl/fwd.hpp"
 #include "impl/dimensions.hpp"
 
-#warning Why dont layouts own the dimension?
+#warning Rename to layout_left_mapping
 
 namespace std { namespace experimental
 {
 
-template <typename Striding, typename Padding>
-struct basic_layout_left
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+    >
+struct basic_layout_left : Dimensions
 {
-    static_assert(Striding::rank() == Padding::rank() 
-                , "striding and padding have different rank");
+    static_assert(
+           (Dimensions::rank() == Striding::rank())
+        && (Striding::rank()   == Padding::rank())
+      , "The ranks of Dimensions, Striding and Padding are not equal."
+    );
 
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
     using size_type = std::size_t;
 
-    /////////////////////////////////////////////////////////////////////////// 
+    ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
     constexpr basic_layout_left() noexcept;
@@ -38,100 +45,112 @@ struct basic_layout_left
     basic_layout_left& operator=(basic_layout_left&& b) noexcept = default;
 
     constexpr basic_layout_left(
-        Striding const& striding, Padding const& pad
+        Dimensions d
         ) noexcept;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // DOMAIN SPACE 
+    constexpr basic_layout_left(
+        Dimensions d, Striding striding, Padding pad
+        ) noexcept;
 
-    static constexpr bool is_regular() noexcept;    
+    ///////////////////////////////////////////////////////////////////////////
+    // DOMAIN SPACE
+
+    static constexpr bool is_regular() noexcept;
 
     constexpr size_type stride(size_type rank) noexcept;
 
-    template <std::size_t... Dims>
-    constexpr size_type span(dimensions<Dims...> d) const noexcept;    
+    constexpr size_type span() const noexcept;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // INDEXING 
+    ///////////////////////////////////////////////////////////////////////////
+    // INDEXING
 
-    template <std::size_t... Dims, typename... Idx>
-    size_type index(dimensions<Dims...> d, Idx... idx) const noexcept; 
+    template <typename... Idx>
+    size_type index(Idx... idx) const noexcept;
 
   private:
-    Striding stride_; 
-    Padding pad_; 
-};  
+    Striding stride_;
+    Padding pad_;
+};
 
-template <typename Striding, typename Padding>
-constexpr
-basic_layout_left<Striding, Padding>::basic_layout_left()
-    noexcept
-  : stride_()
+template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr
+basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left() noexcept
+  : Dimensions()
+  , stride_()
   , pad_()
 {}
 
-template <typename Striding, typename Padding>
-constexpr
-basic_layout_left<Striding, Padding>::basic_layout_left(
-    Striding const& striding
-  , Padding const& pad
+template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr
+basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left(
+    Dimensions d
     ) noexcept
-  : stride_(striding)
+  : Dimensions(d)
+  , stride_()
+  , pad_()
+{}
+
+template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr
+basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left(
+    Dimensions d, Striding striding, Padding pad
+    ) noexcept
+  : Dimensions(d)
+  , stride_(striding)
   , pad_(pad)
 {}
 
-template <typename Striding, typename Padding>
+template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr bool
-basic_layout_left<Striding, Padding>::is_regular() noexcept
+basic_layout_left<Dimensions, Striding, Padding>::is_regular() noexcept
 {
     return true;
 }
 
-template <typename Striding, typename Padding>
-inline constexpr typename basic_layout_left<Striding, Padding>::size_type
-basic_layout_left<Striding, Padding>::stride(size_type rank) const noexcept
+template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr
+typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+basic_layout_left<Dimensions, Striding, Padding>::stride(
+    size_type rank
+    ) const noexcept
 {
     #warning I think this is wrong, it should be the actual stride, right?
     return stride_[rank];
 }
 
-template <typename Striding, typename Padding>
-template <std::size_t... Dims>
-inline constexpr typename basic_layout_left<Striding, Padding>::size_type
-basic_layout_left<Striding, Padding>::span(dimensions<Dims...> d) const noexcept
+template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr
+typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+basic_layout_left<Dimensions, Striding, Padding>::span() const noexcept
 {
     return detail::dims_ternary_reduction<
         detail::span_by_value
       , detail::multiplies_by_value
       , detail::static_sentinel<1>
       , 0
-      , dimensions<Dims...>::rank()
-    >()(d, stride_, pad_);
+      , Dimensions::rank()
+    >()(*static_cast<Dimensions const*>(this), stride_, pad_);
 }
 
-template <typename Striding, typename Padding>
-template <std::size_t... Dims, typename... Idx>
-inline typename basic_layout_left<Striding, Padding>::size_type
-basic_layout_left<Striding, Padding>::index(
-    dimensions<Dims...> d, Idx... idx
+template <typename Dimensions, typename Striding, typename Padding>
+template <typename... Idx>
+inline typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+basic_layout_left<Dimensions, Striding, Padding>::index(
+    Idx... idx
     ) const noexcept
 {
     // TODO: These static asserts need to actually live in array_ref. The
     // first one is particularly important, otherwise it will silently do the
     // wrong thing.
     static_assert(
-        dimensions<Dims...>::rank() == sizeof...(idx) 
-      , "incorrect number of indices passed to basic_layout_left");
-    static_assert(
-        dimensions<Dims...>::rank() == Striding::rank()
-      , "dimensions<> passed into basic_layout_left has wrong rank");
+        Dimensions::rank() == sizeof...(idx)
+      , "Incorrect number of indices passed to basic_layout_left."
+    );
 
-    using dims = dimensions<Dims...>;
+    detail::basic_layout_left_indexer<Dimensions, Striding, Padding, 0> indexer;
+    auto i = detail::make_filled_dims_t<Dimensions::rank(), dyn>(idx...);
 
-    detail::basic_layout_left_indexer<dims, 0> indexer;
-    auto i = detail::make_filled_dims_t<dims::rank(), dyn>(idx...);
-
-    return indexer(stride_, pad_, d, i);
+    return indexer(*static_cast<Dimensions const*>(this), stride_, pad_, i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -146,93 +165,119 @@ namespace detail
 // * First index, 1 == rank()
 // * 0 == rank()
 //
-// The first case (1 < rank()) recurses, with cases: 
+// The first case (1 < rank()) recurses, with cases:
 // * Nth index
 // * Final index
 
-// Nth index 
-template <typename Dimensions, std::size_t N, typename enable>
+// Nth index
+template <
+    typename Dimensions, typename Striding, typename Padding
+  , std::size_t N
+  , typename enable
+    >
 struct basic_layout_left_indexer
 {
-    template <std::size_t... IdxDims, typename Striding, typename Padding>
-    typename basic_layout_left<Striding, Padding>::size_type
+    template <std::size_t... IdxDims>
+    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
     operator()(
-        Striding stride
+        Dimensions d
+      , Striding stride
       , Padding pad
-      , Dimensions d
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        static_assert(0                  < N
-                    , "dimension index is out of bounds in layout_left");
-        static_assert(Dimensions::rank() > N
-                    , "dimension index is out of bounds in layout_left");
-        basic_layout_left_indexer<Dimensions, N + 1> const next_indexer;
-        return (d[N-1]*stride[N-1] + pad[N-1])
-             * ( stride[N]*i[N]
-               + next_indexer(stride, pad, d, i)
-               );
+        static_assert(
+            0                  < N
+          , "Dimension index is out of bounds in basic_layout_left."
+        );
+        static_assert(
+            Dimensions::rank() > N
+          , "Dimension index is out of bounds in basic_layout_left."
+        );
+        basic_layout_left_indexer<Dimensions, Striding, Padding, N + 1> const
+            next;
+        return (d[N - 1] * stride[N - 1] + pad[N - 1])
+             * (stride[N] * i[N] + next(d, stride, pad, i));
     }
 };
 
 // First index, 1 < rank()
-template <typename Dimensions>
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+    >
 struct basic_layout_left_indexer<
     Dimensions
+  , Striding
+  , Padding
   , 0                                                // First index
   , typename enable_if<1 < Dimensions::rank()>::type // 1 < rank()
 >
 {
-    template <std::size_t... IdxDims, typename Striding, typename Padding>
-    typename basic_layout_left<Striding, Padding>::size_type
+    template <std::size_t... IdxDims>
+    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
     operator()(
-        Striding stride
+        Dimensions d
+      , Striding stride
       , Padding pad
-      , Dimensions d
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        basic_layout_left_indexer<Dimensions, 1> const next_indexer;
-        return stride[0]*i[0]
-             + next_indexer(stride, pad, d, i);
+        basic_layout_left_indexer<Dimensions, Striding, Padding, 1>
+            const next;
+        return stride[0] * i[0] + next(d, stride, pad, i);
     }
 };
 
 // First index, 1 == rank()
-template <typename Dimensions>
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+    >
 struct basic_layout_left_indexer<
     Dimensions
+  , Striding
+  , Padding
   , 0                                                 // First index
   , typename enable_if<1 == Dimensions::rank()>::type // 1 == rank()
 >
 {
-    template <std::size_t... IdxDims, typename Striding, typename Padding>
-    typename basic_layout_left<Striding, Padding>::size_type
+    template <std::size_t... IdxDims>
+    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
     operator()(
-        Striding stride
+        Dimensions d
+      , Striding stride
       , Padding pad
-      , Dimensions d
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        return stride[0]*i[0];
+        return stride[0] * i[0];
     }
 };
 
-// 0 == rank() 
-template <typename Dimensions, std::size_t N>
+// 0 == rank()
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+  , std::size_t N
+    >
 struct basic_layout_left_indexer<
     Dimensions
+  , Striding
+  , Padding
   , N
   , typename enable_if<0 == Dimensions::rank()>::type // 0 == rank()
 >
 {
-    template <std::size_t... IdxDims, typename Striding, typename Padding>
-    typename basic_layout_left<Striding, Padding>::size_type
+    template <std::size_t... IdxDims>
+    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
     operator()(
-        Striding stride
+        Dimensions d
+      , Striding stride
       , Padding pad
-      , Dimensions d
       , dimensions<IdxDims...> i
         ) const noexcept
     {
@@ -241,30 +286,42 @@ struct basic_layout_left_indexer<
 };
 
 // Final index
-template <typename Dimensions, std::size_t N>
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+  , std::size_t N
+    >
 struct basic_layout_left_indexer<
     Dimensions
+  , Striding
+  , Padding
   , N
   , typename enable_if<
         (1 < Dimensions::rank())
      && (N == (Dimensions::rank() - 1)) // Final index
-    >::type 
+    >::type
 >
 {
-    template <std::size_t... IdxDims, typename Striding, typename Padding>
-    typename basic_layout_left<Striding, Padding>::size_type
+    template <std::size_t... IdxDims>
+    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
     operator()(
-        Striding stride
+        Dimensions d
+      , Striding stride
       , Padding pad
-      , Dimensions d
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        static_assert(0                  < N
-                    , "dimension index is out of bounds in layout_right");
-        static_assert(Dimensions::rank() > N
-                    , "dimension index is out of bounds in layout_right");
-        return (d[N-1]*stride[N-1] + pad[N-1]) * (stride[N]*i[N]);
+        static_assert(
+            0                  < N
+          , "Dimension index is out of bounds in basic_layout_left."
+        );
+        static_assert(
+            Dimensions::rank() > N
+          , "Dimension index is out of bounds in basic_layout_left."
+        );
+        return (d[N - 1] * stride[N - 1] + pad[N - 1])
+             * (stride[N] * i[N]);
     }
 };
 

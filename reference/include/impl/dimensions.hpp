@@ -92,11 +92,11 @@ dimensions<Dims...>::dimensions(DynamicDims... ddims) noexcept
 {
     static_assert(
         detail::pack_is_integral<DynamicDims...>::value
-      , "Non-integral types passed to dimensions<> constructor" 
+      , "Non-integral types passed to dimensions<> constructor."
     );
     static_assert(
         detail::count_dynamic_dims<Dims...>::value == sizeof...(DynamicDims)
-      , "Incorrect number of dynamic dimensions passed to dimensions<>"
+      , "Incorrect number of dynamic dimensions passed to dimensions<>."
         );
 }
 

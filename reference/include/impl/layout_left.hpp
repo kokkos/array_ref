@@ -16,33 +16,62 @@ namespace std { namespace experimental
 
 struct layout_left
 {
-    // TYPES 
+    template <std::size_t... Strides>
+    struct striding
+    {
+        template <std::size_t... Pads>
+        struct padding
+        {
+            // Striding specified, padding specified.
+            template <typename Dims>
+            using mapping = basic_layout_left<
+                Dims
+              , dimensions<Strides...>
+              , dimensions<Pads...> 
+            >;
+        };
 
-    using size_type =
-        typename basic_layout_left<dimensions<>, dimensions<> >::size_type;
+        // Striding specified, padding defaulted.
+        template <typename Dims>
+        using mapping = basic_layout_left<
+            Dims
+          , dimensions<Strides...>
+          , detail::make_filled_dims_t<Dims::rank(), 0>
+        >;
+    };
 
-    // CONSTRUCTORS
+    template <std::size_t... Pads>
+    struct padding
+    {
+        template <std::size_t... Strides>
+        struct striding
+        {
+            // Striding specified, padding specified.
+            template <typename Dims>
+            using mapping = basic_layout_left<
+                Dims
+              , dimensions<Strides...>
+              , dimensions<Pads...> 
+            >;
+        };
 
-    constexpr layout_left() noexcept = default;
+        // Striding defaulted, padding specified.
+        template <typename Dims>
+        using mapping = basic_layout_left<
+            Dims
+          , detail::make_filled_dims_t<Dims::rank(), 1>
+          , dimensions<Pads...>
+        >;
+    };
 
-    // INDEXING 
-
-    template <std::size_t... Dims, typename... Idx>
-    size_type index(dimensions<Dims...> d, Idx... idx) const noexcept; 
+    // Striding defaulted, padding defaulted.
+    template <typename Dims>
+    using mapping = basic_layout_left<
+        Dims
+      , detail::make_filled_dims_t<Dims::rank(), 1>
+      , detail::make_filled_dims_t<Dims::rank(), 0>
+    >;
 };
-
-
-template <std::size_t... Dims, typename... Idx>
-inline layout_left::size_type
-layout_left::index(dimensions<Dims...> d, Idx... idx) const noexcept
-{
-    // basic_layout_left will static_assert when passed an incorrect number
-    // of indices. 
-    using striding = detail::make_filled_dims_t<sizeof...(Dims), 1>;
-    using padding  = detail::make_filled_dims_t<sizeof...(Dims), 0>;
-    using layout = basic_layout_left<striding, padding>;
-    return layout().index(d, idx...);
-}
 
 }} // std::experimental
 

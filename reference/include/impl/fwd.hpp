@@ -125,12 +125,20 @@ struct pack_is_unsigned;
 
 // Function-object recursive implementation of layout_left indexing. N is the
 // rank in the index dimensions<> object.
-template <typename Dimensions, std::size_t N, typename enable = void>
+template <
+    typename Dimensions, typename Striding, typename Padding
+  , std::size_t N
+  , typename enable = void
+    >
 struct basic_layout_left_indexer;
 
 // Function-object recursive implementation of layout_right indexing. N is the
 // rank in the index dimensions<> object.
-template <typename Dimensions, std::size_t N, typename enable = void>
+template <
+    typename Dimensions, typename Striding, typename Padding
+  , std::size_t N
+  , typename enable = void
+    >
 struct basic_layout_right_indexer;
 
 } // detail
@@ -155,15 +163,28 @@ struct dimensions;
 
 // TODO: Specify ArrayRefLayout concept which these classes implement.
 
-template <typename Striding, typename Padding>
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+    >
 struct basic_layout_left;
 
 // TODO
-template <typename Striding, typename Padding>
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+    >
 struct basic_layout_right; 
 
 // TODO
-template <typename Striding, typename Padding, typename Ordering>
+template <
+    typename Dimensions
+  , typename Striding
+  , typename Padding
+  , typename Ordering
+    >
 struct basic_layout_order;
 
 struct layout_left;
