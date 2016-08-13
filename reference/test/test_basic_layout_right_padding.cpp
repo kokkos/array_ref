@@ -22,89 +22,88 @@ using std::experimental::basic_layout_right;
 template <std::size_t N, std::size_t M, std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
-    dimensions<X, Y> d;
-    dimensions<N, M> p;
-
-    basic_layout_right<dimensions<1, 1>, decltype(p)> const l;
+    basic_layout_right<
+        dimensions<X, Y>, dimensions<1, 1>, dimensions<N, M>
+    > const l{};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
     BOOST_TEST_EQ((l.stride(1)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
-    BOOST_TEST_EQ((l.span(d)), (d[0] + p[0]) * (d[1] + p[1]));
+    BOOST_TEST_EQ((l.size()), X * Y);
+    BOOST_TEST_EQ((l.span()), (X + N) * (Y + M));
 
-    int dptr[(d[0] + p[0]) * (d[1] + p[1])];
+    int dptr[(l[0] + l.padding()[0]) * (l[1] + l.padding()[1])];
 
     // Set all real elements to 42.
-    for (auto j = 0; j < d[1]; ++j)
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto j = 0; j < l[1]; ++j)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (d[1] + p[1]) * (i) + (j);
+        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx]));
+        BOOST_TEST_EQ(&(dptr[l.index(i, j)]), &(dptr[true_idx]));
 
-        dptr[l.index(d, i, j)] = 42;
+        dptr[l.index(i, j)] = 42;
 
-        BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
+        BOOST_TEST_EQ((dptr[l.index(i, j)]), 42);
     }
 
     // Set X pad elements to 17 and Y pad elements to 24. 
-    for (auto j = 0; j < d[1] + p[1]; ++j)
-    for (auto i = 0; i < d[0] + p[0]; ++i)
+    for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
+    for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (d[1] + p[1]) * (i) + (j);
+        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j)]), &(dptr[true_idx])); 
 
         // X-pad element.
-        if      ((d[0] <= i) && (i < (d[0] + p[0])))
+        if      ((l[0] <= i) && (i < (l[0] + l.padding()[0])))
         {
-            dptr[l.index(d, i, j)] = 17;
+            dptr[l.index(i, j)] = 17;
             
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 17);
         }
 
         // Y-pad element.
-        else if ((d[1] <= j) && (j < (d[1] + p[1])))
+        else if ((l[1] <= j) && (j < (l[1] + l.padding()[1])))
         {
-            dptr[l.index(d, i, j)] = 24;
+            dptr[l.index(i, j)] = 24;
 
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 24);
         }
     }
 
     // Check final structure. 
-    for (auto j = 0; j < d[1] + p[1]; ++j)
-    for (auto i = 0; i < d[0] + p[0]; ++i)
+    for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
+    for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (d[1] + p[1]) * (i) + (j);
+        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j)]), &(dptr[true_idx])); 
 
         // X-pad element.
-        if      ((d[0] <= i) && (i < (d[0] + p[0])))
+        if      ((l[0] <= i) && (i < (l[0] + l.padding()[0])))
         {
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 17);
         }
 
         // Y-pad element.
-        else if ((d[1] <= j) && (j < (d[1] + p[1])))
+        else if ((l[1] <= j) && (j < (l[1] + l.padding()[1])))
         {
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 24);
         }
 
         // Real element.
         else
         {
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 42);
         }
     }
 } // }}}
@@ -112,85 +111,85 @@ void test_2d_static()
 template <std::size_t N, std::size_t M, std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
-    dimensions<dyn, dyn> d(X, Y);
-    dimensions<dyn, dyn> p(N, M);
-
-    basic_layout_right<dimensions<1, 1>, decltype(p)> const
-        l(dimensions<1, 1>(), p);
+    basic_layout_right<
+        dimensions<dyn, dyn>, dimensions<1, 1>, dimensions<dyn, dyn>
+    > const l{{X, Y}, {}, {N, M}};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
     BOOST_TEST_EQ((l.stride(1)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
-    BOOST_TEST_EQ((l.span(d)), (d[0] + p[0]) * (d[1] + p[1]));
+    BOOST_TEST_EQ((l.size()), X * Y);
+    BOOST_TEST_EQ((l.span()), (X + N) * (Y + M));
 
     // Initialize all elements to 42.
-    std::vector<int> data((d[0] + p[0]) * (d[1] + p[1]), 42);
+    std::vector<int> data(
+        (l[0] + l.padding()[0]) * (l[1] + l.padding()[1]), 42
+    );
     int* dptr = data.data();
 
     // Set X pad elements to 17 and Y pad elements to 24. 
-    for (auto j = 0; j < d[1] + p[1]; ++j)
-    for (auto i = 0; i < d[0] + p[0]; ++i)
+    for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
+    for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (d[1] + p[1]) * (i) + (j);
+        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
         // X-pad element.
-        if      ((d[0] <= i) && (i < (d[0] + p[0])))
+        if      ((l[0] <= i) && (i < (l[0] + l.padding()[0])))
         {
-            dptr[l.index(d, i, j)] = 17;
+            dptr[l.index(i, j)] = 17;
             
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 17);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(l.index(d, i, j))), 17);
+            BOOST_TEST_EQ((data.at(l.index(i, j))), 17);
         }
 
         // Y-pad element.
-        else if ((d[1] <= j) && (j < (d[1] + p[1])))
+        else if ((l[1] <= j) && (j < (l[1] + l.padding()[1])))
         {
-            dptr[l.index(d, i, j)] = 24;
+            dptr[l.index(i, j)] = 24;
 
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 24);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(l.index(d, i, j))), 24);
+            BOOST_TEST_EQ((data.at(l.index(i, j))), 24);
         }
     }
 
     // Check final structure. 
-    for (auto j = 0; j < d[1] + p[1]; ++j)
-    for (auto i = 0; i < d[0] + p[0]; ++i)
+    for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
+    for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (d[1] + p[1]) * (i) + (j);
+        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
         // X-pad element.
-        if      ((d[0] <= i) && (i < (d[0] + p[0])))
+        if      ((l[0] <= i) && (i < (l[0] + l.padding()[0])))
         {
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 17);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 17);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(l.index(d, i, j))), 17);
+            BOOST_TEST_EQ((data.at(l.index(i, j))), 17);
         }
 
         // Y-pad element.
-        else if ((d[1] <= j) && (j < (d[1] + p[1])))
+        else if ((l[1] <= j) && (j < (l[1] + l.padding()[1])))
         {
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 24);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 24);
 
             // Bounds-checking.
-            BOOST_TEST_EQ((data.at(l.index(d, i, j))), 24);
+            BOOST_TEST_EQ((data.at(l.index(i, j))), 24);
         }
 
         // Real element.
         else
         {
-            BOOST_TEST_EQ((dptr[l.index(d, i, j)]), 42);
+            BOOST_TEST_EQ((dptr[l.index(i, j)]), 42);
         }
     }
 } // }}}

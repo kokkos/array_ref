@@ -22,185 +22,185 @@ using std::experimental::basic_layout_left;
 template <std::size_t X>
 void test_1d_static()
 { // {{{
-    dimensions<X> d;
-
-    basic_layout_left<dimensions<1>, dimensions<0> > const l;
+    basic_layout_left<
+        dimensions<X>, dimensions<1>, dimensions<0>
+    > const l{};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0]);
-    BOOST_TEST_EQ((l.span(d)), d[0]);
+    BOOST_TEST_EQ((l.size()), X);
+    BOOST_TEST_EQ((l.span()), X);
 
-    int dptr[d[0]];
+    int dptr[l[0]];
 
     // Set all elements to a unique value.
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        BOOST_TEST_EQ((l.index(d, i)), i);
+        BOOST_TEST_EQ((l.index(i)), i);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i)]), &(dptr[i])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i)]), &(dptr[i])); 
 
-        dptr[l.index(d, i)] = i;
+        dptr[l.index(i)] = i;
 
-        BOOST_TEST_EQ((dptr[i]),             i); 
-        BOOST_TEST_EQ((dptr[l.index(d, i)]), i); 
+        BOOST_TEST_EQ((dptr[i]),          i); 
+        BOOST_TEST_EQ((dptr[l.index(i)]), i); 
     }
 } // }}}
 
 template <std::size_t X>
 void test_1d_dynamic()
 { // {{{
-    dimensions<dyn> d(X);
-
-    basic_layout_left<dimensions<1>, dimensions<0> > const l;
+    basic_layout_left<
+        dimensions<dyn>, dimensions<1>, dimensions<0>
+    > const l{{X}};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0]);
-    BOOST_TEST_EQ((l.span(d)), d[0]);
+    BOOST_TEST_EQ((l.size()), X);
+    BOOST_TEST_EQ((l.span()), X);
 
-    vector<int> data(d[0]);
+    vector<int> data(l[0]);
     int* dptr = data.data();
 
     // Set all elements to a unique value.
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        BOOST_TEST_EQ((l.index(d, i)), i);
+        BOOST_TEST_EQ((l.index(i)), i);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i)]), &(dptr[i])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i)]), &(dptr[i])); 
 
-        dptr[l.index(d, i)] = i;
+        dptr[l.index(i)] = i;
 
-        BOOST_TEST_EQ((dptr[l.index(d, i)]), i); 
+        BOOST_TEST_EQ((dptr[l.index(i)]), i); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((data.at(l.index(d, i))), i); 
+        BOOST_TEST_EQ((data.at(l.index(i))), i); 
     }
 } // }}}
 
 template <std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
-    dimensions<X, Y> d;
-
-    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > const l;
+    basic_layout_left<
+        dimensions<X, Y>, dimensions<1, 1>, dimensions<0, 0>
+    > const l{};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
     BOOST_TEST_EQ((l.stride(1)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
-    BOOST_TEST_EQ((l.span(d)), d[0] * d[1]);
+    BOOST_TEST_EQ((l.size()), X * Y);
+    BOOST_TEST_EQ((l.span()), X * Y);
 
-    tuple<int, int> dptr[d[0] * d[1]];
+    tuple<int, int> dptr[l[0] * l[1]];
 
     // Set all elements to a unique value.
-    for (auto j = 0; j < d[1]; ++j)
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto j = 0; j < l[1]; ++j)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (d[0]) * (j);
+        auto const true_idx = (i) + (l[0]) * (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j)]), &(dptr[true_idx])); 
 
-        std::get<0>(dptr[l.index(d, i, j)]) = i;
-        std::get<1>(dptr[l.index(d, i, j)]) = j;
+        std::get<0>(dptr[l.index(i, j)]) = i;
+        std::get<1>(dptr[l.index(i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j)])), j); 
     }
 } // }}}
 
 template <std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
-    dimensions<dyn, dyn> d(X, Y);
-
-    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > const l;
+    basic_layout_left<
+        dimensions<dyn, dyn>, dimensions<1, 1>, dimensions<0, 0>
+    > const l{{X, Y}};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
     BOOST_TEST_EQ((l.stride(1)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
-    BOOST_TEST_EQ((l.span(d)), d[0] * d[1]);
+    BOOST_TEST_EQ((l.size()), X * Y);
+    BOOST_TEST_EQ((l.span()), X * Y);
 
-    vector<tuple<int, int> > data(d[0] * d[1]);
+    vector<tuple<int, int> > data(l[0] * l[1]);
     tuple<int, int>* dptr = data.data();
 
-    for (auto j = 0; j < d[1]; ++j)
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto j = 0; j < l[1]; ++j)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (d[0]) * (j);
+        auto const true_idx = (i) + (l[0]) * (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j)]), &(dptr[true_idx])); 
 
-        std::get<0>(dptr[l.index(d, i, j)]) = i;
-        std::get<1>(dptr[l.index(d, i, j)]) = j;
+        std::get<0>(dptr[l.index(i, j)]) = i;
+        std::get<1>(dptr[l.index(i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j)])), j); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j)))), j); 
+        BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j)))), i); 
+        BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j)))), j); 
     }
 } // }}}
 
 template <std::size_t X, std::size_t Y>
 void test_2d_mixed()
 { // {{{
-    dimensions<dyn, Y> d(X);
-
-    basic_layout_left<dimensions<1, 1>, dimensions<0, 0> > const l;
+    basic_layout_left<
+        dimensions<dyn, Y>, dimensions<1, 1>, dimensions<0, 0>
+    > const l{{X}};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
     BOOST_TEST_EQ((l.stride(0)), 1);
     BOOST_TEST_EQ((l.stride(1)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1]);
-    BOOST_TEST_EQ((l.span(d)), d[0] * d[1]);
+    BOOST_TEST_EQ((l.size()), X * Y);
+    BOOST_TEST_EQ((l.span()), X * Y);
 
-    vector<tuple<int, int> > data(d[0] * d[1]);
+    vector<tuple<int, int> > data(l[0] * l[1]);
     tuple<int, int>* dptr = data.data();
 
-    for (auto j = 0; j < d[1]; ++j)
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto j = 0; j < l[1]; ++j)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (d[0]) * (j);
+        auto const true_idx = (i) + (l[0]) * (j);
 
-        BOOST_TEST_EQ((l.index(d, i, j)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j)]), &(dptr[true_idx])); 
 
-        std::get<0>(dptr[l.index(d, i, j)]) = i;
-        std::get<1>(dptr[l.index(d, i, j)]) = j;
+        std::get<0>(dptr[l.index(i, j)]) = i;
+        std::get<1>(dptr[l.index(i, j)]) = j;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j)])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j)])), j); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j)])), j); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j)))), i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j)))), j); 
+        BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j)))), i); 
+        BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j)))), j); 
     }
 } // }}}
 
 template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_static()
 { // {{{
-    dimensions<X, Y, Z> d;
-
-    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> >  const l;
+    basic_layout_left<
+        dimensions<X, Y, Z>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
+    >  const l{};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
@@ -208,37 +208,38 @@ void test_3d_static()
     BOOST_TEST_EQ((l.stride(1)), 1);
     BOOST_TEST_EQ((l.stride(2)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1] * d[2]);
-    BOOST_TEST_EQ((l.span(d)), d[0] * d[1] * d[2]);
+    BOOST_TEST_EQ((l.size()), X * Y * Z);
+    BOOST_TEST_EQ((l.span()), X * Y * Z);
 
-    tuple<int, int, int> dptr[d[0] * d[1] * d[2]];
+    tuple<int, int, int> dptr[l[0] * l[1] * l[2]];
 
     // Set all elements to a unique value.
-    for (auto k = 0; k < d[2]; ++k)
-    for (auto j = 0; j < d[1]; ++j)
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto k = 0; k < l[2]; ++k)
+    for (auto j = 0; j < l[1]; ++j)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (d[0]) * (j) + (d[0]) * (d[1]) * (k);
+        auto const true_idx = (i) + (l[0]) * (j) + (l[0]) * (l[1]) * (k);
 
-        BOOST_TEST_EQ((l.index(d, i, j, k)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j, k)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j, k)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j, k)]), &(dptr[true_idx])); 
 
-        std::get<0>(dptr[l.index(d, i, j, k)]) = i;
-        std::get<1>(dptr[l.index(d, i, j, k)]) = j;
-        std::get<2>(dptr[l.index(d, i, j, k)]) = k;
+        std::get<0>(dptr[l.index(i, j, k)]) = i;
+        std::get<1>(dptr[l.index(i, j, k)]) = j;
+        std::get<2>(dptr[l.index(i, j, k)]) = k;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), j); 
-        BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), k); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j, k)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j, k)])), j); 
+        BOOST_TEST_EQ((std::get<2>(dptr[l.index(i, j, k)])), k); 
     }
 } // }}}
 
 template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_dynamic()
 { // {{{
-    dimensions<dyn, dyn, dyn> d(X, Y, Z);
-    basic_layout_left<dimensions<1, 1, 1>, dimensions<0, 0, 0> > const l;
+    basic_layout_left<
+        dimensions<dyn, dyn, dyn>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
+    > const l{{X, Y, Z}};
 
     BOOST_TEST_EQ((l.is_regular()), true);
 
@@ -246,60 +247,60 @@ void test_3d_dynamic()
     BOOST_TEST_EQ((l.stride(1)), 1);
     BOOST_TEST_EQ((l.stride(2)), 1);
 
-    BOOST_TEST_EQ((d.size()),  d[0] * d[1] * d[2]);
-    BOOST_TEST_EQ((l.span(d)), d[0] * d[1] * d[2]);
+    BOOST_TEST_EQ((l.size()), l[0] * l[1] * l[2]);
+    BOOST_TEST_EQ((l.span()), l[0] * l[1] * l[2]);
 
-    vector<tuple<int, int, int> > data(d[0] * d[1] * d[2]);
+    vector<tuple<int, int, int> > data(l[0] * l[1] * l[2]);
     tuple<int, int, int>* dptr = data.data();
 
-    for (auto k = 0; k < d[2]; ++k)
-    for (auto j = 0; j < d[1]; ++j)
-    for (auto i = 0; i < d[0]; ++i)
+    for (auto k = 0; k < l[2]; ++k)
+    for (auto j = 0; j < l[1]; ++j)
+    for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (d[0]) * (j) + (d[0]) * (d[1]) * (k);
+        auto const true_idx = (i) + (l[0]) * (j) + (l[0]) * (l[1]) * (k);
 
-        BOOST_TEST_EQ((l.index(d, i, j, k)), true_idx);
+        BOOST_TEST_EQ((l.index(i, j, k)), true_idx);
 
-        BOOST_TEST_EQ(&(dptr[l.index(d, i, j, k)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(dptr[l.index(i, j, k)]), &(dptr[true_idx])); 
 
-        std::get<0>(dptr[l.index(d, i, j, k)]) = i;
-        std::get<1>(dptr[l.index(d, i, j, k)]) = j;
-        std::get<2>(dptr[l.index(d, i, j, k)]) = k;
+        std::get<0>(dptr[l.index(i, j, k)]) = i;
+        std::get<1>(dptr[l.index(i, j, k)]) = j;
+        std::get<2>(dptr[l.index(i, j, k)]) = k;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(d, i, j, k)])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(d, i, j, k)])), j); 
-        BOOST_TEST_EQ((std::get<2>(dptr[l.index(d, i, j, k)])), k); 
+        BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j, k)])), i); 
+        BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j, k)])), j); 
+        BOOST_TEST_EQ((std::get<2>(dptr[l.index(i, j, k)])), k); 
 
         // Bound-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(l.index(d, i, j, k)))), i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(l.index(d, i, j, k)))), j); 
-        BOOST_TEST_EQ((std::get<2>(data.at(l.index(d, i, j, k)))), k); 
+        BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j, k)))), i); 
+        BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j, k)))), j); 
+        BOOST_TEST_EQ((std::get<2>(data.at(l.index(i, j, k)))), k); 
     }
 } // }}}
 
 int main()
 {
+    // Empty
     {
-        dimensions<> d;
-        basic_layout_left<dimensions<>, dimensions<> >  const l;
+        basic_layout_left<dimensions<>, dimensions<>, dimensions<> > const l;
 
         BOOST_TEST_EQ((l.is_regular()), true);
 
-        BOOST_TEST_EQ((d.size()),  1);
-        BOOST_TEST_EQ((l.span(d)), 1);
+        BOOST_TEST_EQ((l.size()), 1);
+        BOOST_TEST_EQ((l.span()), 1);
 
         int data = 42;
         int* dptr = &data;
 
-        BOOST_TEST_EQ((l.index(d)), 0);
+        BOOST_TEST_EQ((l.index()), 0);
 
-        BOOST_TEST_EQ((dptr[l.index(d)]), 42); 
+        BOOST_TEST_EQ((dptr[l.index()]), 42); 
 
-        BOOST_TEST_EQ(&(dptr[l.index(d)]), dptr); 
+        BOOST_TEST_EQ(&(dptr[l.index()]), dptr); 
 
-        dptr[l.index(d)] = 17;
+        dptr[l.index()] = 17;
 
-        BOOST_TEST_EQ((dptr[l.index(d)]), 17); 
+        BOOST_TEST_EQ((dptr[l.index()]), 17); 
     }
 
     // 1D Static
