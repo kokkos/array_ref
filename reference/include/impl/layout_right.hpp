@@ -9,7 +9,7 @@
 #define STD_68717262_A4A1_41F8_94D6_FF64D30C3903
 
 #include "impl/fwd.hpp"
-#include "impl/basic_layout_right.hpp"
+#include "impl/layout_mapping_right.hpp"
 
 namespace std { namespace experimental
 {
@@ -24,7 +24,7 @@ struct layout_right
         {
             // Striding specified, padding specified.
             template <typename Dims>
-            using mapping = basic_layout_right<
+            using mapping = layout_mapping_right<
                 Dims
               , dimensions<Strides...>
               , dimensions<Pads...> 
@@ -33,7 +33,7 @@ struct layout_right
 
         // Striding specified, padding defaulted.
         template <typename Dims>
-        using mapping = basic_layout_right<
+        using mapping = layout_mapping_right<
             Dims
           , dimensions<Strides...>
           , detail::make_filled_dims_t<Dims::rank(), 0>
@@ -48,7 +48,7 @@ struct layout_right
         {
             // Striding specified, padding specified.
             template <typename Dims>
-            using mapping = basic_layout_right<
+            using mapping = layout_mapping_right<
                 Dims
               , dimensions<Strides...>
               , dimensions<Pads...> 
@@ -57,7 +57,7 @@ struct layout_right
 
         // Striding defaulted, padding specified.
         template <typename Dims>
-        using mapping = basic_layout_right<
+        using mapping = layout_mapping_right<
             Dims
           , detail::make_filled_dims_t<Dims::rank(), 1>
           , dimensions<Pads...>
@@ -66,7 +66,7 @@ struct layout_right
 
     // Striding defaulted, padding defaulted.
     template <typename Dims>
-    using mapping = basic_layout_right<
+    using mapping = layout_mapping_right<
         Dims
       , detail::make_filled_dims_t<Dims::rank(), 1>
       , detail::make_filled_dims_t<Dims::rank(), 0>

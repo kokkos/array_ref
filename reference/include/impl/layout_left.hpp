@@ -9,7 +9,7 @@
 #define STD_1147DB06_B234_4218_9C7F_0E1EAEF9B78E
 
 #include "impl/fwd.hpp"
-#include "impl/basic_layout_left.hpp"
+#include "impl/layout_mapping_left.hpp"
 
 namespace std { namespace experimental
 {
@@ -24,7 +24,7 @@ struct layout_left
         {
             // Striding specified, padding specified.
             template <typename Dims>
-            using mapping = basic_layout_left<
+            using mapping = layout_mapping_left<
                 Dims
               , dimensions<Strides...>
               , dimensions<Pads...> 
@@ -33,7 +33,7 @@ struct layout_left
 
         // Striding specified, padding defaulted.
         template <typename Dims>
-        using mapping = basic_layout_left<
+        using mapping = layout_mapping_left<
             Dims
           , dimensions<Strides...>
           , detail::make_filled_dims_t<Dims::rank(), 0>
@@ -48,7 +48,7 @@ struct layout_left
         {
             // Striding specified, padding specified.
             template <typename Dims>
-            using mapping = basic_layout_left<
+            using mapping = layout_mapping_left<
                 Dims
               , dimensions<Strides...>
               , dimensions<Pads...> 
@@ -57,7 +57,7 @@ struct layout_left
 
         // Striding defaulted, padding specified.
         template <typename Dims>
-        using mapping = basic_layout_left<
+        using mapping = layout_mapping_left<
             Dims
           , detail::make_filled_dims_t<Dims::rank(), 1>
           , dimensions<Pads...>
@@ -66,7 +66,7 @@ struct layout_left
 
     // Striding defaulted, padding defaulted.
     template <typename Dims>
-    using mapping = basic_layout_left<
+    using mapping = layout_mapping_left<
         Dims
       , detail::make_filled_dims_t<Dims::rank(), 1>
       , detail::make_filled_dims_t<Dims::rank(), 0>

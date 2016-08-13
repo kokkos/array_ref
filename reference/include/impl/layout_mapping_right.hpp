@@ -5,13 +5,13 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(STD_0F383687_D414_463B_9C79_74EA4545EEB5)
-#define STD_0F383687_D414_463B_9C79_74EA4545EEB5
+#if !defined(STD_836A92EF_4885_4F3B_A7E1_5395FEDD3125)
+#define STD_836A92EF_4885_4F3B_A7E1_5395FEDD3125
 
 #include "impl/fwd.hpp"
 #include "impl/dimensions.hpp"
 
-#warning Rename to layout_left_mapping
+#warning Rename to layout_right_mapping
 
 namespace std { namespace experimental
 {
@@ -21,7 +21,7 @@ template <
   , typename Striding
   , typename Padding
     >
-struct basic_layout_left : Dimensions
+struct layout_mapping_right : Dimensions
 {
     static_assert(
            (Dimensions::rank() == Striding::rank())
@@ -37,18 +37,18 @@ struct basic_layout_left : Dimensions
     ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
-    constexpr basic_layout_left() noexcept;
+    constexpr layout_mapping_right() noexcept;
 
-    constexpr basic_layout_left(basic_layout_left const& b) noexcept = default;
-    constexpr basic_layout_left(basic_layout_left&& b) noexcept = default;
-    basic_layout_left& operator=(basic_layout_left const& b) noexcept = default;
-    basic_layout_left& operator=(basic_layout_left&& b) noexcept = default;
+    constexpr layout_mapping_right(layout_mapping_right const& b) noexcept = default;
+    constexpr layout_mapping_right(layout_mapping_right&& b) noexcept = default;
+    layout_mapping_right& operator=(layout_mapping_right const& b) noexcept = default;
+    layout_mapping_right& operator=(layout_mapping_right&& b) noexcept = default;
 
-    constexpr basic_layout_left(
+    constexpr layout_mapping_right(
         Dimensions d
         ) noexcept;
 
-    constexpr basic_layout_left(
+    constexpr layout_mapping_right(
         Dimensions d, Striding striding, Padding pad
         ) noexcept;
 
@@ -60,6 +60,10 @@ struct basic_layout_left : Dimensions
     constexpr size_type stride(size_type rank) noexcept;
 
     constexpr size_type span() const noexcept;
+
+    constexpr Striding striding() const noexcept;
+
+    constexpr Padding padding() const noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
     // INDEXING
@@ -74,7 +78,7 @@ struct basic_layout_left : Dimensions
 
 template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr
-basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left() noexcept
+layout_mapping_right<Dimensions, Striding, Padding>::layout_mapping_right() noexcept
   : Dimensions()
   , stride_()
   , pad_()
@@ -82,7 +86,7 @@ basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left() noexcept
 
 template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr
-basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left(
+layout_mapping_right<Dimensions, Striding, Padding>::layout_mapping_right(
     Dimensions d
     ) noexcept
   : Dimensions(d)
@@ -92,7 +96,7 @@ basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left(
 
 template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr
-basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left(
+layout_mapping_right<Dimensions, Striding, Padding>::layout_mapping_right(
     Dimensions d, Striding striding, Padding pad
     ) noexcept
   : Dimensions(d)
@@ -102,15 +106,15 @@ basic_layout_left<Dimensions, Striding, Padding>::basic_layout_left(
 
 template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr bool
-basic_layout_left<Dimensions, Striding, Padding>::is_regular() noexcept
+layout_mapping_right<Dimensions, Striding, Padding>::is_regular() noexcept
 {
     return true;
 }
 
 template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr
-typename basic_layout_left<Dimensions, Striding, Padding>::size_type
-basic_layout_left<Dimensions, Striding, Padding>::stride(
+typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
+layout_mapping_right<Dimensions, Striding, Padding>::stride(
     size_type rank
     ) const noexcept
 {
@@ -120,8 +124,8 @@ basic_layout_left<Dimensions, Striding, Padding>::stride(
 
 template <typename Dimensions, typename Striding, typename Padding>
 inline constexpr
-typename basic_layout_left<Dimensions, Striding, Padding>::size_type
-basic_layout_left<Dimensions, Striding, Padding>::span() const noexcept
+typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
+layout_mapping_right<Dimensions, Striding, Padding>::span() const noexcept
 {
     return detail::dims_ternary_reduction<
         detail::span_by_value
@@ -133,9 +137,23 @@ basic_layout_left<Dimensions, Striding, Padding>::span() const noexcept
 }
 
 template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr Striding
+layout_mapping_right<Dimensions, Striding, Padding>::striding() const noexcept
+{
+    return stride_;
+}
+
+template <typename Dimensions, typename Striding, typename Padding>
+inline constexpr Padding
+layout_mapping_right<Dimensions, Striding, Padding>::padding() const noexcept
+{
+    return pad_;
+}
+
+template <typename Dimensions, typename Striding, typename Padding>
 template <typename... Idx>
-inline typename basic_layout_left<Dimensions, Striding, Padding>::size_type
-basic_layout_left<Dimensions, Striding, Padding>::index(
+inline typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
+layout_mapping_right<Dimensions, Striding, Padding>::index(
     Idx... idx
     ) const noexcept
 {
@@ -144,10 +162,10 @@ basic_layout_left<Dimensions, Striding, Padding>::index(
     // wrong thing.
     static_assert(
         Dimensions::rank() == sizeof...(idx)
-      , "Incorrect number of indices passed to basic_layout_left."
+      , "Incorrect number of indices passed to layout_mapping_right."
     );
 
-    detail::basic_layout_left_indexer<Dimensions, Striding, Padding, 0> indexer;
+    detail::layout_mapping_right_indexer<Dimensions, Striding, Padding, 0> indexer;
     auto i = detail::make_filled_dims_t<Dimensions::rank(), dyn>(idx...);
 
     return indexer(*static_cast<Dimensions const*>(this), stride_, pad_, i);
@@ -158,7 +176,7 @@ basic_layout_left<Dimensions, Striding, Padding>::index(
 namespace detail
 {
 
-// Recursive column-major layout implementation.
+// Recursive row-major layout implementation.
 //
 // Three initial cases:
 // * First index, 1 < rank()
@@ -175,10 +193,10 @@ template <
   , std::size_t N
   , typename enable
     >
-struct basic_layout_left_indexer
+struct layout_mapping_right_indexer
 {
     template <std::size_t... IdxDims>
-    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
     operator()(
         Dimensions d
       , Striding stride
@@ -188,16 +206,17 @@ struct basic_layout_left_indexer
     {
         static_assert(
             0                  < N
-          , "Dimension index is out of bounds in basic_layout_left."
+          , "Dimension index is out of bounds in layout_mapping_right."
         );
         static_assert(
             Dimensions::rank() > N
-          , "Dimension index is out of bounds in basic_layout_left."
+          , "Dimension index is out of bounds in layout_mapping_right."
         );
-        basic_layout_left_indexer<Dimensions, Striding, Padding, N + 1> const
+        layout_mapping_right_indexer<Dimensions, Striding, Padding, N + 1> const
             next;
-        return (d[N - 1] * stride[N - 1] + pad[N - 1])
-             * (stride[N] * i[N] + next(d, stride, pad, i));
+        auto constexpr R = Dimensions::rank();
+        return (d[R - N] * stride[R - N] + pad[R - N])
+             * (stride[(R - 1) - N] * i[(R - 1) - N] + next(d, stride, pad, i));
     }
 };
 
@@ -207,7 +226,7 @@ template <
   , typename Striding
   , typename Padding
     >
-struct basic_layout_left_indexer<
+struct layout_mapping_right_indexer<
     Dimensions
   , Striding
   , Padding
@@ -216,7 +235,7 @@ struct basic_layout_left_indexer<
 >
 {
     template <std::size_t... IdxDims>
-    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
     operator()(
         Dimensions d
       , Striding stride
@@ -224,9 +243,10 @@ struct basic_layout_left_indexer<
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        basic_layout_left_indexer<Dimensions, Striding, Padding, 1>
-            const next;
-        return stride[0] * i[0] + next(d, stride, pad, i);
+        layout_mapping_right_indexer<Dimensions, Striding, Padding, 1> const
+            next;
+        auto constexpr R = Dimensions::rank();
+        return stride[R - 1] * i[R - 1] + next(d, stride, pad, i);
     }
 };
 
@@ -236,7 +256,7 @@ template <
   , typename Striding
   , typename Padding
     >
-struct basic_layout_left_indexer<
+struct layout_mapping_right_indexer<
     Dimensions
   , Striding
   , Padding
@@ -245,7 +265,7 @@ struct basic_layout_left_indexer<
 >
 {
     template <std::size_t... IdxDims>
-    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
     operator()(
         Dimensions d
       , Striding stride
@@ -253,7 +273,8 @@ struct basic_layout_left_indexer<
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        return stride[0] * i[0];
+        auto constexpr R = Dimensions::rank();
+        return stride[R - 1] * i[R - 1];
     }
 };
 
@@ -264,7 +285,7 @@ template <
   , typename Padding
   , std::size_t N
     >
-struct basic_layout_left_indexer<
+struct layout_mapping_right_indexer<
     Dimensions
   , Striding
   , Padding
@@ -273,7 +294,7 @@ struct basic_layout_left_indexer<
 >
 {
     template <std::size_t... IdxDims>
-    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
     operator()(
         Dimensions d
       , Striding stride
@@ -292,7 +313,7 @@ template <
   , typename Padding
   , std::size_t N
     >
-struct basic_layout_left_indexer<
+struct layout_mapping_right_indexer<
     Dimensions
   , Striding
   , Padding
@@ -304,7 +325,7 @@ struct basic_layout_left_indexer<
 >
 {
     template <std::size_t... IdxDims>
-    typename basic_layout_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_right<Dimensions, Striding, Padding>::size_type
     operator()(
         Dimensions d
       , Striding stride
@@ -314,18 +335,19 @@ struct basic_layout_left_indexer<
     {
         static_assert(
             0                  < N
-          , "Dimension index is out of bounds in basic_layout_left."
+          , "Dimension index is out of bounds in layout_mapping_right"
         );
         static_assert(
             Dimensions::rank() > N
-          , "Dimension index is out of bounds in basic_layout_left."
+          , "Dimension index is out of bounds in layout_mapping_right."
         );
-        return (d[N - 1] * stride[N - 1] + pad[N - 1])
-             * (stride[N] * i[N]);
+        auto constexpr R = Dimensions::rank();
+        return (d[R - N] * stride[R - N] + pad[R - N])
+             * (stride[(R - 1) - N] * i[(R - 1) - N]);
     }
 };
 
 }}} // std::experimental::detail
 
-#endif // STD_0F383687_D414_463B_9C79_74EA4545EEB5
+#endif // STD_836A92EF_4885_4F3B_A7E1_5395FEDD3125
 

@@ -130,7 +130,7 @@ template <
   , std::size_t N
   , typename enable = void
     >
-struct basic_layout_left_indexer;
+struct layout_mapping_left_indexer;
 
 // Function-object recursive implementation of layout_right indexing. N is the
 // rank in the index dimensions<> object.
@@ -139,7 +139,7 @@ template <
   , std::size_t N
   , typename enable = void
     >
-struct basic_layout_right_indexer;
+struct layout_mapping_right_indexer;
 
 } // detail
 
@@ -168,7 +168,7 @@ template <
   , typename Striding
   , typename Padding
     >
-struct basic_layout_left;
+struct layout_mapping_left;
 
 // TODO
 template <
@@ -176,7 +176,7 @@ template <
   , typename Striding
   , typename Padding
     >
-struct basic_layout_right; 
+struct layout_mapping_right; 
 
 // TODO
 template <

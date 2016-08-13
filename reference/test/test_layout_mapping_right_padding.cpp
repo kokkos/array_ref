@@ -17,12 +17,12 @@ using std::tuple;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::basic_layout_right;
+using std::experimental::layout_mapping_right;
 
 template <std::size_t N, std::size_t M, std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
-    basic_layout_right<
+    layout_mapping_right<
         dimensions<X, Y>, dimensions<1, 1>, dimensions<N, M>
     > const l{};
 
@@ -111,7 +111,7 @@ void test_2d_static()
 template <std::size_t N, std::size_t M, std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
-    basic_layout_right<
+    layout_mapping_right<
         dimensions<dyn, dyn>, dimensions<1, 1>, dimensions<dyn, dyn>
     > const l{{X, Y}, {}, {N, M}};
 

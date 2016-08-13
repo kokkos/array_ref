@@ -17,7 +17,7 @@ using std::tuple;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::basic_layout_right;
+using std::experimental::layout_mapping_left;
 
 template <
     std::size_t StrideX, std::size_t StrideY 
@@ -29,7 +29,7 @@ void test_2d_static()
     static_assert(0 == (X % StrideX), "X must be divisable by StrideX");
     static_assert(0 == (Y % StrideY), "Y must be divisable by StrideY");
 
-    basic_layout_right<
+    layout_mapping_left<
         dimensions<X, Y>
       , dimensions<1, 1>
       , dimensions<PadX, PadY>
@@ -43,7 +43,7 @@ void test_2d_static()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), (X + PadX) * (Y + PadY));
 
-    basic_layout_right<
+    layout_mapping_left<
         dimensions<X / StrideX, Y / StrideY>
       , dimensions<StrideX, StrideY>
       , dimensions<PadX, PadY>
@@ -63,7 +63,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -78,7 +78,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -107,7 +107,7 @@ void test_2d_static()
     {
         auto const p = l.padding();
         auto const s = sub_l.striding();
-        auto const true_idx = (sub_l[1] * s[1] + p[1]) * (s[0] * i) + (s[1] * j);
+        auto const true_idx = (s[0] * i) + (sub_l[0] * s[0] + p[0]) * (s[1] * j);
 
         BOOST_TEST_EQ((sub_l.index(i, j)), true_idx);
 
@@ -122,7 +122,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -166,7 +166,7 @@ template <
     >
 void test_2d_dynamic()
 { // {{{
-    basic_layout_right<
+    layout_mapping_left<
         dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
@@ -180,7 +180,7 @@ void test_2d_dynamic()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), (X + PadX) * (Y + PadY));
 
-    basic_layout_right<
+    layout_mapping_left<
         dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
@@ -204,7 +204,7 @@ void test_2d_dynamic()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -239,7 +239,7 @@ void test_2d_dynamic()
     {
         auto const p = l.padding();
         auto const s = sub_l.striding();
-        auto const true_idx = (sub_l[1] * s[1] + p[1]) * (s[0] * i) + (s[1] * j);
+        auto const true_idx = (s[0] * i) + (sub_l[0] * s[0] + p[0]) * (s[1] * j);
 
         BOOST_TEST_EQ((sub_l.index(i, j)), true_idx);
 
@@ -257,7 +257,7 @@ void test_2d_dynamic()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 

@@ -16,6 +16,16 @@
 #include "impl/layout_right.hpp"
 #include "impl/accessor_native.hpp"
 
+#warning Unify Dims/Dimensions terminology
+
+#warning Make layout constructors/dimensions constructors work with initializer lists
+
+#warning Mixed layout tests may not give full coverage - they only try 2D with the first parameter as dynamic
+
+#warning Writing dimensions<dyn, Y>(X) is uninitutive. Let's have a make_dimensions() facility that uses compile time numbers
+
+#warning Lift and refactor layout tests
+
 namespace std { namespace experimental 
 {
 
@@ -25,14 +35,15 @@ struct array_ref
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
-    using layout     = Layout;
     using dimensions = Dims;
+    using layout     = Layout;
+    using mapping    = typename Layout::template mapping<Dims>;
     using accessor   = Accessor;
 
     using value_type = typename accessor::value_type;
     using reference  = typename accessor::reference;
     using pointer    = typename accessor::pointer;
-    using size_type  = typename layout::size_type;
+    using size_type  = typename mapping::size_type;
 
     /////////////////////////////////////////////////////////////////////////// 
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
@@ -54,8 +65,11 @@ struct array_ref
         ) noexcept;
 
     explicit constexpr array_ref(
-        pointer p, dimensions const& d
-      , layout const& l = Layout(), accessor const& a = Accessor()
+        pointer p, layout l
+        ) noexcept;
+
+    explicit constexpr array_ref(
+        pointer p, layout l, accessor a
         ) noexcept;
 
     // TODO: Conversion constructor and assignment operator (omitted due to
@@ -94,17 +108,15 @@ struct array_ref
 
   private:
     pointer ptr_;
-    Dims dims_;
-    Layout layout_;
-    Accessor accessor_;
+    mapping mapping_;
+    accessor accessor_;
 };
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
 array_ref<ValueType, Dims, Layout, Accessor>::array_ref() noexcept
   : ptr_(nullptr)
-  , dims_()
-  , layout_()
+  , mapping_()
   , accessor_()
 {}
 
@@ -115,19 +127,27 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
     pointer p, UnsignedIntegers... implicit_dims
     ) noexcept
   : ptr_(p)
-  , dims_(implicit_dims...) // dimensions<> does the relevant static_asserts.
-  , layout_()
+  , mapping_(implicit_dims...) // dimensions<> does the relevant static_asserts.
   , accessor_()
 {}
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
 array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
-    pointer p, dimensions const& d, layout const& l, accessor const& a
+    pointer p, layout l
     ) noexcept
   : ptr_(p)
-  , dims_(d)
-  , layout_(l)
+  , mapping_(l)
+  , accessor_()
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+constexpr
+array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+    pointer p, layout l, accessor a
+    ) noexcept
+  : ptr_(p)
+  , mapping_(l)
   , accessor_(a)
 {}
 
@@ -136,7 +156,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::rank() noexcept
 {
-    return dimensions::rank();
+    return mapping::rank();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -144,7 +164,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
 {
-    return dimensions::rank_dynamic();
+    return mapping::rank_dynamic();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -152,7 +172,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::size() const noexcept
 {
-    return dims_.size();
+    return mapping_.size();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -162,14 +182,14 @@ array_ref<ValueType, Dims, Layout, Accessor>::extent(
     size_type rank
     ) const noexcept
 {
-    return dims_[rank];
+    return mapping_[rank];
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr bool
 array_ref<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
 {
-    return layout::is_regular();
+    return mapping::is_regular();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -179,7 +199,7 @@ array_ref<ValueType, Dims, Layout, Accessor>::stride(
     size_type rank
     ) const noexcept
 {
-    return layout_.stride(rank);
+    return mapping_.stride(rank);
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -187,7 +207,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::span() const noexcept
 {
-    return layout_.span(dims_);
+    return mapping_.span();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -200,7 +220,7 @@ inline typename std::enable_if<
     UnsignedIntegers... indices
     ) const noexcept
 {
-    size_type const raw_idx = layout_.index(dims_, indices...);
+    size_type const raw_idx = mapping_.index(indices...);
     return accessor_.access(ptr_, raw_idx);
 }
 

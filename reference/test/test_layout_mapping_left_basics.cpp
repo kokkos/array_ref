@@ -17,12 +17,12 @@ using std::tuple;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::basic_layout_left;
+using std::experimental::layout_mapping_left;
 
 template <std::size_t X>
 void test_1d_static()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<X>, dimensions<1>, dimensions<0>
     > const l{};
 
@@ -52,7 +52,7 @@ void test_1d_static()
 template <std::size_t X>
 void test_1d_dynamic()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<dyn>, dimensions<1>, dimensions<0>
     > const l{{X}};
 
@@ -85,7 +85,7 @@ void test_1d_dynamic()
 template <std::size_t X, std::size_t Y>
 void test_2d_static()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<X, Y>, dimensions<1, 1>, dimensions<0, 0>
     > const l{};
 
@@ -120,7 +120,7 @@ void test_2d_static()
 template <std::size_t X, std::size_t Y>
 void test_2d_dynamic()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<dyn, dyn>, dimensions<1, 1>, dimensions<0, 0>
     > const l{{X, Y}};
 
@@ -159,7 +159,7 @@ void test_2d_dynamic()
 template <std::size_t X, std::size_t Y>
 void test_2d_mixed()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<dyn, Y>, dimensions<1, 1>, dimensions<0, 0>
     > const l{{X}};
 
@@ -198,7 +198,7 @@ void test_2d_mixed()
 template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_static()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<X, Y, Z>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
     >  const l{};
 
@@ -237,7 +237,7 @@ void test_3d_static()
 template <std::size_t X, std::size_t Y, std::size_t Z>
 void test_3d_dynamic()
 { // {{{
-    basic_layout_left<
+    layout_mapping_left<
         dimensions<dyn, dyn, dyn>, dimensions<1, 1, 1>, dimensions<0, 0, 0>
     > const l{{X, Y, Z}};
 
@@ -282,7 +282,7 @@ int main()
 {
     // Empty
     {
-        basic_layout_left<dimensions<>, dimensions<>, dimensions<> > const l;
+        layout_mapping_left<dimensions<>, dimensions<>, dimensions<> > const l;
 
         BOOST_TEST_EQ((l.is_regular()), true);
 

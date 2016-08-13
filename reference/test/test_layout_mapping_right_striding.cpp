@@ -17,9 +17,7 @@ using std::tuple;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::basic_layout_left;
-
-#warning Fix all tests to use size() to determine buffer allocation size instead of computing it by hand.
+using std::experimental::layout_mapping_right;
 
 // FIXME FIXME FIXME
 #warning Test stride == 0.
@@ -30,7 +28,7 @@ void test_1d_static()
 { // {{{
     static_assert(0 == (X % N), "X must be divisable by N");
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<X>, dimensions<1>, dimensions<0>
     > const l{};
 
@@ -41,7 +39,7 @@ void test_1d_static()
     BOOST_TEST_EQ((l.size()), X);
     BOOST_TEST_EQ((l.span()), X);
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<X / N>, dimensions<N>, dimensions<0>
     > const sub_l{};
 
@@ -104,7 +102,7 @@ void test_1d_dynamic()
 { // {{{
     static_assert(0 == (X % N), "X must be divisable by N");
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<dyn>, dimensions<dyn>, dimensions<0>
     > const l{{X}, {1}, {}};
 
@@ -115,7 +113,7 @@ void test_1d_dynamic()
     BOOST_TEST_EQ((l.size()), X);
     BOOST_TEST_EQ((l.span()), X);
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<dyn>, dimensions<dyn>, dimensions<0>
     > const sub_l{{X / N}, {N}, {}};
 
@@ -178,7 +176,7 @@ void test_2d_static()
     static_assert(0 == (X % N), "X must be divisable by N");
     static_assert(0 == (Y % M), "Y must be divisable by M");
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<X, Y>, dimensions<1, 1>, dimensions<0, 0>
     > const l{};
 
@@ -190,7 +188,7 @@ void test_2d_static()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), X * Y);
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<X / N, Y / M>, dimensions<N, M>, dimensions<0, 0> 
     > const sub_l{};
 
@@ -208,7 +206,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (l[0]) * (j);
+        auto const true_idx = (l[1]) * (i) + (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -224,7 +222,7 @@ void test_2d_static()
     for (auto i = 0; i < sub_l[0]; ++i)
     {
         auto const s = sub_l.striding();
-        auto const true_idx = (s[0] * i) + (sub_l[0] * s[0]) * (s[1] * j);
+        auto const true_idx = (sub_l[1] * s[1]) * (s[0] * i) + (s[1] * j);
 
         BOOST_TEST_EQ((sub_l.index(i, j)), true_idx);
 
@@ -239,7 +237,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (l[0]) * (j);
+        auto const true_idx = (l[1]) * (i) + (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -264,7 +262,7 @@ void test_2d_dynamic()
     static_assert(0 == (X % N), "X must be divisable by N");
     static_assert(0 == (Y % M), "Y must be divisable by M");
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<dyn, dyn>, dimensions<dyn, dyn>, dimensions<0, 0>
     > const l{{X, Y}, {1, 1}, {}};
 
@@ -276,7 +274,7 @@ void test_2d_dynamic()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), X * Y);
 
-    basic_layout_left<
+    layout_mapping_right<
         dimensions<dyn, dyn>, dimensions<dyn, dyn>, dimensions<0, 0> 
     > const sub_l{{X / N, Y / M}, {N, M}, {}};
 
@@ -297,7 +295,7 @@ void test_2d_dynamic()
     for (auto i = 0; i < sub_l[0]; ++i)
     {
         auto const s = sub_l.striding();
-        auto const true_idx = (s[0] * i) + (sub_l[0] * s[0]) * (s[1] * j);
+        auto const true_idx = (sub_l[1] * s[1]) * (s[0] * i) + (s[1] * j);
 
         BOOST_TEST_EQ((sub_l.index(i, j)), true_idx);
 
@@ -315,7 +313,7 @@ void test_2d_dynamic()
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (i) + (l[0]) * (j);
+        auto const true_idx = (l[1]) * (i) + (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
