@@ -123,6 +123,11 @@ struct pack_is_unsigned;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Function-object recursive implementation of layout_left indexing. N is the
+// rank in the index dimensions<> object.
+template <typename Dimensions, std::size_t N, typename enable = void>
+struct basic_layout_left_indexer;
+
 // Function-object recursive implementation of layout_right indexing. N is the
 // rank in the index dimensions<> object.
 template <typename Dimensions, std::size_t N, typename enable = void>
