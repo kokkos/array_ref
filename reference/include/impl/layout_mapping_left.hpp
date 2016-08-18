@@ -11,9 +11,9 @@
 #include "impl/fwd.hpp"
 #include "impl/dimensions.hpp"
 
-#warning Rename to layout_left_mapping
-
 #warning Add and use an embedded dimensions typedef
+
+#warning Better coverage for striding() and padding()
 
 namespace std { namespace experimental
 {

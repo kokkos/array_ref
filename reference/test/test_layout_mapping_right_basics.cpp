@@ -44,7 +44,6 @@ void test_1d_static()
 
         dptr[l.index(i)] = i;
 
-        BOOST_TEST_EQ((dptr[i]),          i); 
         BOOST_TEST_EQ((dptr[l.index(i)]), i); 
     }
 } // }}}
@@ -77,7 +76,7 @@ void test_1d_dynamic()
 
         BOOST_TEST_EQ((dptr[l.index(i)]), i); 
 
-        // Bound-checking.
+        // Bounds-checking.
         BOOST_TEST_EQ((data.at(l.index(i))), i); 
     }
 } // }}}
@@ -135,6 +134,7 @@ void test_2d_dynamic()
     vector<tuple<int, int> > data(l[0] * l[1]);
     tuple<int, int>* dptr = data.data();
 
+    // Set all elements to a unique value.
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
@@ -150,7 +150,7 @@ void test_2d_dynamic()
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j)])), j); 
 
-        // Bound-checking.
+        // Bounds-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j)))), j); 
     }
@@ -174,6 +174,7 @@ void test_2d_mixed()
     vector<tuple<int, int> > data(l[0] * l[1]);
     tuple<int, int>* dptr = data.data();
 
+    // Set all elements to a unique value.
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
@@ -189,7 +190,7 @@ void test_2d_mixed()
         BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j)])), i); 
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j)])), j); 
 
-        // Bound-checking.
+        // Bounds-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j)))), j); 
     }
@@ -253,6 +254,7 @@ void test_3d_dynamic()
     vector<tuple<int, int, int> > data(l[0] * l[1] * l[2]);
     tuple<int, int, int>* dptr = data.data();
 
+    // Set all elements to a unique value.
     for (auto k = 0; k < l[2]; ++k)
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
@@ -271,7 +273,7 @@ void test_3d_dynamic()
         BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j, k)])), j); 
         BOOST_TEST_EQ((std::get<2>(dptr[l.index(i, j, k)])), k); 
 
-        // Bound-checking.
+        // Bounds-checking.
         BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j, k)))), i); 
         BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j, k)))), j); 
         BOOST_TEST_EQ((std::get<2>(data.at(l.index(i, j, k)))), k); 

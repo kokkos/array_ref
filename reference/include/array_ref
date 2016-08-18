@@ -26,6 +26,8 @@
 
 #warning Lift and refactor layout tests
 
+#warning Add rank_static()?
+
 namespace std { namespace experimental 
 {
 
@@ -35,15 +37,14 @@ struct array_ref
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
-    using dimensions = Dims;
-    using layout     = Layout;
-    using mapping    = typename Layout::template mapping<Dims>;
-    using accessor   = Accessor;
+    using layout_type   = Layout;
+    using mapping_type  = typename layout_type::template mapping<Dims>;
+    using accessor_type = Accessor;
 
-    using value_type = typename accessor::value_type;
-    using reference  = typename accessor::reference;
-    using pointer    = typename accessor::pointer;
-    using size_type  = typename mapping::size_type;
+    using value_type    = typename accessor::value_type;
+    using reference     = typename accessor::reference;
+    using pointer       = typename accessor::pointer;
+    using size_type     = typename mapping_type::size_type;
 
     /////////////////////////////////////////////////////////////////////////// 
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
@@ -65,11 +66,11 @@ struct array_ref
         ) noexcept;
 
     explicit constexpr array_ref(
-        pointer p, layout l
+        pointer p, layout_type l
         ) noexcept;
 
     explicit constexpr array_ref(
-        pointer p, layout l, accessor a
+        pointer p, layout_type l, accessor_type a
         ) noexcept;
 
     // TODO: Conversion constructor and assignment operator (omitted due to
@@ -84,6 +85,8 @@ struct array_ref
     constexpr size_type size() const noexcept;
 
     constexpr size_type extent(size_type rank) const noexcept;
+
+    constexpr mapping_type mapping() const noexcept;
 
     /////////////////////////////////////////////////////////////////////////// 
     // LAYOUT INTERFACE 
@@ -108,8 +111,8 @@ struct array_ref
 
   private:
     pointer ptr_;
-    mapping mapping_;
-    accessor accessor_;
+    mapping_type mapping_;
+    accessor_type accessor_;
 };
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -134,7 +137,7 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
 array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
-    pointer p, layout l
+    pointer p, layout_type l
     ) noexcept
   : ptr_(p)
   , mapping_(l)
@@ -144,7 +147,7 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
 array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
-    pointer p, layout l, accessor a
+    pointer p, layout_type l, accessor_type a
     ) noexcept
   : ptr_(p)
   , mapping_(l)
@@ -156,7 +159,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::rank() noexcept
 {
-    return mapping::rank();
+    return mapping_type::rank();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -164,7 +167,7 @@ inline constexpr typename
     array_ref<ValueType, Dims, Layout, Accessor>::size_type
 array_ref<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
 {
-    return mapping::rank_dynamic();
+    return mapping_type::rank_dynamic();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
@@ -186,10 +189,18 @@ array_ref<ValueType, Dims, Layout, Accessor>::extent(
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    array_ref<ValueType, Dims, Layout, Accessor>::mapping_type
+array_ref<ValueType, Dims, Layout, Accessor>::mapping() const noexcept
+{
+    return mapping_;
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr bool
 array_ref<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
 {
-    return mapping::is_regular();
+    return mapping_type::is_regular();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
