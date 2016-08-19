@@ -337,43 +337,34 @@ void test_3d_dynamic()
     BOOST_TEST_EQ((ca.stride(2)),      1);
     BOOST_TEST_EQ((ca.span()),         X * Y * Z);
 
-// FIXME: STOPPED HERE
-
-    BOOST_TEST_EQ((l.is_regular()), true);
-
-    BOOST_TEST_EQ((l.stride(0)), 1);
-    BOOST_TEST_EQ((l.stride(1)), 1);
-    BOOST_TEST_EQ((l.stride(2)), 1);
-
-    BOOST_TEST_EQ((l.size()), l[0] * l[1] * l[2]);
-    BOOST_TEST_EQ((l.span()), l[0] * l[1] * l[2]);
-
-    vector<tuple<int, int, int> > data(l[0] * l[1] * l[2]);
-    tuple<int, int, int>* dptr = data.data();
-
     // Set all elements to a unique value.
-    for (auto k = 0; k < l[2]; ++k)
-    for (auto j = 0; j < l[1]; ++j)
-    for (auto i = 0; i < l[0]; ++i)
+    for (auto k = 0; k < ca.extent(2); ++k)
+    for (auto j = 0; j < ca.extent(1); ++j)
+    for (auto i = 0; i < ca.extent(0); ++i)
     {
-        auto const true_idx = (l[1]) * (l[2]) * (i) + (l[2]) * (j) + (k);
+        auto const m = ca.mapping();
+        auto const true_idx = (m[1]) * (m[2]) * (i) + (m[2]) * (j) + (k);
 
-        BOOST_TEST_EQ((l.index(i, j, k)), true_idx);
+        BOOST_TEST_EQ(&(ca[true_idx]), &(dptr[true_idx])); 
 
-        BOOST_TEST_EQ(&(dptr[l.index(i, j, k)]), &(dptr[true_idx])); 
+        BOOST_TEST_EQ(&(ca(i, j, k)), &(dptr[true_idx])); 
 
-        std::get<0>(dptr[l.index(i, j, k)]) = i;
-        std::get<1>(dptr[l.index(i, j, k)]) = j;
-        std::get<2>(dptr[l.index(i, j, k)]) = k;
+        std::get<0>(a(i, j, k)) = i;
+        std::get<1>(a(i, j, k)) = j;
+        std::get<2>(a(i, j, k)) = k;
 
-        BOOST_TEST_EQ((std::get<0>(dptr[l.index(i, j, k)])), i); 
-        BOOST_TEST_EQ((std::get<1>(dptr[l.index(i, j, k)])), j); 
-        BOOST_TEST_EQ((std::get<2>(dptr[l.index(i, j, k)])), k); 
+        BOOST_TEST_EQ((std::get<0>(ca[true_idx])), i); 
+        BOOST_TEST_EQ((std::get<1>(ca[true_idx])), j); 
+        BOOST_TEST_EQ((std::get<2>(ca[true_idx])), k); 
+
+        BOOST_TEST_EQ((std::get<0>(ca(i, j, k))), i); 
+        BOOST_TEST_EQ((std::get<1>(ca(i, j, k))), j); 
+        BOOST_TEST_EQ((std::get<2>(ca(i, j, k))), k); 
 
         // Bounds-checking.
-        BOOST_TEST_EQ((std::get<0>(data.at(l.index(i, j, k)))), i); 
-        BOOST_TEST_EQ((std::get<1>(data.at(l.index(i, j, k)))), j); 
-        BOOST_TEST_EQ((std::get<2>(data.at(l.index(i, j, k)))), k); 
+        BOOST_TEST_EQ((std::get<0>(data.at(true_idx))), i); 
+        BOOST_TEST_EQ((std::get<1>(data.at(true_idx))), j); 
+        BOOST_TEST_EQ((std::get<2>(data.at(true_idx))), k); 
     }
 } // }}}
 
