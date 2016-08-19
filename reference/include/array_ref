@@ -41,9 +41,9 @@ struct array_ref
     using mapping_type  = typename layout_type::template mapping<Dims>;
     using accessor_type = Accessor;
 
-    using value_type    = typename accessor::value_type;
-    using reference     = typename accessor::reference;
-    using pointer       = typename accessor::pointer;
+    using value_type    = typename accessor_type::value_type;
+    using reference     = typename accessor_type::reference;
+    using pointer       = typename accessor_type::pointer;
     using size_type     = typename mapping_type::size_type;
 
     /////////////////////////////////////////////////////////////////////////// 
