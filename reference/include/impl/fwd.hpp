@@ -116,10 +116,19 @@ using make_filled_dims_t = typename make_filled_dims<N, Value, Dims...>::type;
 template <typename... T>
 struct pack_is_integral;
 
-// Returns true if std::is_unsigned<> is true for all of the types in the
-// parameter pack.
-template <typename... T>
-struct pack_is_unsigned;
+// Returns true if T is an integral range slice specifier, e.g. one of the
+// following, where I0 and I1 are integral types:
+// * initializer_list<I0>
+// * pair<I0, I1>
+// * tuple<I0, I1>
+// * array<I0, 2>
+// * all (denoting the entire dimension)
+template <typename T>
+struct is_integral_range_slice_specifier;
+
+// Returns true if T is a slice specifier.
+template <typename T>
+struct is_slice_specifier;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -151,6 +160,16 @@ struct extract_dimensions;
 
 template <typename T>
 using extract_dimensions_t = typename extract_dimensions<T>::type;
+
+///////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+struct all_tag {};
+
+} // detail 
+
+constexpr detail::all_tag all{};
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -9,10 +9,13 @@
 #define STD_324BD9FF_856B_4DC7_BC6F_2A93F3DF63CD
 
 #include <array>
+#include <initializer_list>
+#include <tuple>
+#include <utility>
 #include <type_traits>
 
 #include "impl/fwd.hpp"
-#include "impl/conjunction.hpp"
+#include "impl/meta_logical_operators.hpp"
 
 namespace std
 {
@@ -93,15 +96,48 @@ struct pack_is_integral<Head, Tail...>
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Base case.
-template <>
-struct pack_is_unsigned<> : std::true_type {};
+template <typename T>
+struct is_integral_range_slice_specifier : std::false_type {};
 
-template <typename Head, typename... Tail>
-struct pack_is_unsigned<Head, Tail...>
-  : experimental::conjunction<is_unsigned<Head>, pack_is_unsigned<Tail...> > {};
+// initializer_list<I0> case
+template <typename I0>
+struct is_integral_range_slice_specifier<initializer_list<I0> >
+  : is_integral<typename decay<I0>::type> {};
+
+// pair<I0, I1> case
+template <typename I0, typename I1>
+struct is_integral_range_slice_specifier<pair<I0, I1> >
+  : experimental::conjunction<
+        is_integral<typename decay<I0>::type>
+      , is_integral<typename decay<I1>::type>
+    > {};
+
+// tuple<I0, I1> case
+template <typename I0, typename I1>
+struct is_integral_range_slice_specifier<tuple<I0, I1> >
+  : experimental::conjunction<
+        is_integral<typename decay<I0>::type>
+      , is_integral<typename decay<I1>::type>
+    > {};
+
+// array<I0, 2> case
+template <typename I0>
+struct is_integral_range_slice_specifier<array<I0, 2> >
+  : is_integral<typename decay<I0>::type> {};
+
+template <>
+struct is_integral_range_slice_specifier<all_tag>
+  : std::true_type {};
 
 ///////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+struct is_slice_specifier
+  : experimental::disjunction<
+        is_integral_range_slice_specifier<T>
+      , is_integral<typename decay<T>::type>
+    >
+ {};
 
 } // std::experimental::detail
 
