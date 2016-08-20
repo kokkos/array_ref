@@ -130,6 +130,15 @@ struct is_integral_range_slice_specifier;
 template <typename T>
 struct is_slice_specifier;
 
+// Returns true if is_slice_specifier<> is true for all of the types in the
+// parameter pack.
+template <typename... T>
+struct pack_is_slice_specifier;
+
+// Counts the number of dynamic dimensions.
+template <typename... Dims>
+struct count_integral_range_slice_specifiers;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 // Function-object recursive implementation of layout_left indexing. N is the

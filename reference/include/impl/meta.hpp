@@ -136,8 +136,35 @@ struct is_slice_specifier
   : experimental::disjunction<
         is_integral_range_slice_specifier<T>
       , is_integral<typename decay<T>::type>
-    >
- {};
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Base case.
+template <>
+struct pack_is_slice_specifier<> : std::true_type {};
+
+template <typename Head, typename... Tail>
+struct pack_is_slice_specifier<Head, Tail...>
+  : experimental::conjunction<
+        is_slice_specifier<Head>
+      , pack_is_slice_specifier<Tail...>
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Base case.
+template <>
+struct count_integral_range_slice_specifiers<>
+  : std::integral_constant<std::size_t, 0> {};
+
+template <typename Head, typename... Tail>
+struct count_integral_range_slice_specifiers<Head, Tail...>
+  : std::integral_constant<std::size_t,
+        ( is_integral_range_slice_specifier<Head>::value
+        ? count_integral_range_slice_specifiers<Tail...>::value + 1
+        : count_integral_range_slice_specifiers<Tail...>::value) 
+    > {};
 
 } // std::experimental::detail
 
