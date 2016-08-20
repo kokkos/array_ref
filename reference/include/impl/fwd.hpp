@@ -133,7 +133,7 @@ struct is_slice_specifier;
 // Returns true if is_slice_specifier<> is true for all of the types in the
 // parameter pack.
 template <typename... T>
-struct pack_is_slice_specifier;
+struct pack_is_slice_specifiers;
 
 // Counts the number of dynamic dimensions.
 template <typename... Dims>

@@ -21,7 +21,7 @@ using std::array;
 using std::experimental::detail::all_tag;
 using std::experimental::detail::is_slice_specifier;
 using std::experimental::detail::is_integral_range_slice_specifier;
-using std::experimental::detail::pack_is_slice_specifier;
+using std::experimental::detail::pack_is_slice_specifiers;
 
 int main()
 {
@@ -143,17 +143,17 @@ int main()
     ///////////////////////////////////////////////////////////////////////////
     
     BOOST_TEST_EQ((is_convertible<
-        pack_is_slice_specifier<>, true_type
+        pack_is_slice_specifiers<>, true_type
     >::value), true);
 
     BOOST_TEST_EQ((is_convertible<
-        pack_is_slice_specifier<int>,   true_type
+        pack_is_slice_specifiers<int>,   true_type
     >::value), true);
     BOOST_TEST_EQ((is_convertible<
-        pack_is_slice_specifier<float>, false_type
+        pack_is_slice_specifiers<float>, false_type
     >::value), true);
 
-    BOOST_TEST_EQ((pack_is_slice_specifier<
+    BOOST_TEST_EQ((pack_is_slice_specifiers<
         initializer_list<int>
       , pair<int, int>
       , tuple<int, int>
@@ -161,7 +161,7 @@ int main()
       , all_tag
     >::value), true);
 
-    BOOST_TEST_EQ((pack_is_slice_specifier<
+    BOOST_TEST_EQ((pack_is_slice_specifiers<
         initializer_list<int>
       , pair<int, int>
       , tuple<int, int>

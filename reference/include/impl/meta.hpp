@@ -142,13 +142,13 @@ struct is_slice_specifier
 
 // Base case.
 template <>
-struct pack_is_slice_specifier<> : std::true_type {};
+struct pack_is_slice_specifiers<> : std::true_type {};
 
 template <typename Head, typename... Tail>
-struct pack_is_slice_specifier<Head, Tail...>
+struct pack_is_slice_specifiers<Head, Tail...>
   : experimental::conjunction<
         is_slice_specifier<Head>
-      , pack_is_slice_specifier<Tail...>
+      , pack_is_slice_specifiers<Tail...>
     > {};
 
 ///////////////////////////////////////////////////////////////////////////////
