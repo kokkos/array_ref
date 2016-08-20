@@ -13,6 +13,8 @@ using std::experimental::detail::pack_is_integral;
 
 int main()
 {
+    BOOST_TEST_EQ((pack_is_integral<>::value), true);
+
     BOOST_TEST_EQ((pack_is_integral<int  >::value), true);
     BOOST_TEST_EQ((pack_is_integral<float>::value), false);
 
