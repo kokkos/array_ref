@@ -56,13 +56,13 @@ struct array_ref
     array_ref& operator=(array_ref const& b) noexcept = default;
     array_ref& operator=(array_ref&& b) noexcept = default;
 
-    template < typename... UnsignedIntegers
+    template < typename... Integers
              , typename = typename enable_if<
-                   detail::pack_is_unsigned<UnsignedIntegers...>::value
+                   detail::pack_is_integral<Integers...>::value
                >::type
              >
     explicit constexpr array_ref(
-        pointer p, UnsignedIntegers... implicit_dims
+        pointer p, Integers... implicit_dims
         ) noexcept;
 
     explicit constexpr array_ref(
@@ -100,12 +100,12 @@ struct array_ref
     /////////////////////////////////////////////////////////////////////////// 
     // ELEMENT AND DATA ACCESS 
 
-    template <typename... UnsignedIntegers>
+    template <typename... Integers>
     typename std::enable_if<
-        Dims::rank() == sizeof...(UnsignedIntegers)
-        && detail::pack_is_integral<UnsignedIntegers...>::value
+        Dims::rank() == sizeof...(Integers)
+        && detail::pack_is_integral<Integers...>::value
       , reference
-    >::type operator()(UnsignedIntegers... indices) const noexcept;
+    >::type operator()(Integers... indices) const noexcept;
 
     reference operator[](size_type idx) const noexcept;
 
@@ -124,10 +124,10 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref() noexcept
 {}
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-template <typename... UnsignedIntegers, typename>
+template <typename... Integers, typename>
 constexpr
 array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
-    pointer p, UnsignedIntegers... implicit_dims
+    pointer p, Integers... implicit_dims
     ) noexcept
   : ptr_(p)
   , mapping_(implicit_dims...) // dimensions<> does the relevant static_asserts.
@@ -222,13 +222,13 @@ array_ref<ValueType, Dims, Layout, Accessor>::span() const noexcept
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-template <typename... UnsignedIntegers>
+template <typename... Integers>
 inline typename std::enable_if<
-       Dims::rank() == sizeof...(UnsignedIntegers)
-    && detail::pack_is_integral<UnsignedIntegers...>::value
+       Dims::rank() == sizeof...(Integers)
+    && detail::pack_is_integral<Integers...>::value
   , typename array_ref<ValueType, Dims, Layout, Accessor>::reference
 >::type array_ref<ValueType, Dims, Layout, Accessor>::operator()(
-    UnsignedIntegers... indices
+    Integers... indices
     ) const noexcept
 {
     size_type const raw_idx = mapping_.index(indices...);
