@@ -956,7 +956,7 @@ Move motivation, examples, and relaxed incomplete array type proposal to separat
   - P0332 : Relaxed Incomplete Multidimensional Array Type Declaration
 
 ----------------------------------------------------------------------------
-P0009r3, post-Oulu2016 mailing
+P0009r3
 ----------------------------------------------------------------------------
 
 Oulu-2016 LEWG strawpoll: Move iterator from this paper to a subsequent paper.
