@@ -1,10 +1,10 @@
 ===================================================================
-P0331r0 : Motivation and Examples for Multidimensional Array
+P0331r1 : Motivation and Examples for Multidimensional Array
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
 :Number: P0331r0
-:Date: 2016-05-27
+:Date: 2017-XX-XX
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -35,6 +35,8 @@ P0331r0 : Motivation and Examples for Multidimensional Array
 | *(current*)| moved from P0009.                                           |
 +------------+-------------------------------------------------------------+
 | **References**                                                           |
++------------+-------------------------------------------------------------+
+| P0454r0    | Wording for a Minimal ``mdspan``                            |
 +------------+-------------------------------------------------------------+
 | P0009r2    | Multidimensional array reference specification              |
 +------------+-------------------------------------------------------------+

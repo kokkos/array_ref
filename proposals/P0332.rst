@@ -1,10 +1,10 @@
 ========================================================================
-P0332r0 : Relaxed Incomplete Multidimensional Array Type Declaration
+P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
 ========================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0332r0
-:Date: 2016-05-27
+:Number: P0332r1
+:Date: 2017-XX-XX
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -34,6 +34,8 @@ P0332r0 : Relaxed Incomplete Multidimensional Array Type Declaration
 | *(current*)|                                                             |
 +------------+-------------------------------------------------------------+
 | **References**                                                           |
++------------+-------------------------------------------------------------+
+| P0454r0    | Wording for a Minimal ``mdspan``                            |
 +------------+-------------------------------------------------------------+
 | P0009r2    | Multidimensional array reference specification              |
 +------------+-------------------------------------------------------------+
