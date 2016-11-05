@@ -1,5 +1,6 @@
 ################################################################################
 # Copyright (c) 2015-2016 Bryce Adelstein Lelbach aka wash
+# Copyright (c) 2014 Thomas Heller (mdspan_option() CMake function)
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,15 +10,52 @@ cmake_minimum_required(VERSION 3.1)
 
 project(mdspan CXX)
 
+################################################################################
+
+include(CMakeParseArguments)
+
+function(mdspan_option _option _type _description _default)
+  set(_named_params ADVANCED)
+  set(_one_value_args CATEGORY)
+  set(_multi_value_args)
+
+  cmake_parse_arguments(_parsed_option_args
+    "${_named_params}" "${_one_value_args}" "${_multi_value_args}" ${ARGN})
+
+  if(NOT DEFINED ${_option})
+    set(${_option} ${_default} CACHE ${_type} "${_description}")
+    if(_parsed_option_args_ADVANCED)
+      mark_as_advanced(${_option})
+    endif()
+  else()
+    set_property(CACHE "${_option}" PROPERTY HELPSTRING "${_description}")
+    set_property(CACHE "${_option}" PROPERTY TYPE "${_type}")
+  endif()
+endfunction()
+
+################################################################################
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS "-Wall")
+mdspan_option(MDSPAN_WARNINGS
+  BOOL
+  "If enabled, mdspan tests and benchmarks will be built with warnings enabled."
+  ON)
+
+if(MDSPAN_WARNINGS)
+  if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W3")
+  endif()
+endif()
 
 include_directories(${mdspan_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE HEADERS include/array_ref include/*.hpp)
 source_group("Headers" FILES ${HEADERS})
+add_custom_target(array_ref SOURCES ${HEADERS})
 
 set(TESTS
     test_array_ref_basics
@@ -41,8 +79,6 @@ set(TESTS
     test_meta_make_filled_dims
     test_meta_pack_is_integral
    )
-
-add_custom_target(array_ref SOURCES ${HEADERS})
 
 foreach(TEST ${TESTS})
   add_executable(${TEST} ${mdspan_SOURCE_DIR}/tests/${TEST}.cpp)
