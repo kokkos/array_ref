@@ -5,7 +5,7 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/detail/lightweight_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 
 #include <vector>
 #include <tuple>
@@ -19,9 +19,9 @@ using std::experimental::dyn;
 using std::experimental::dimensions;
 using std::experimental::array_ref;
 
-#warning Better coverage for different types
+//#warning Better coverage for different types
 
-#warning Need coverage for const conversions/const pointer constructors
+//#warning Need coverage for const conversions/const pointer constructors
 
 template <std::size_t X, typename T>
 void test_empty_1d_static()

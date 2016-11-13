@@ -5,7 +5,7 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/detail/lightweight_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 
 #include <array_ref>
 
@@ -13,42 +13,34 @@ using std::is_same;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::detail::make_filled_dims_t;
+using std::experimental::extract_dimensions_t;
 
 int main()
 {
     BOOST_TEST((is_same<
-        make_filled_dims_t<0, 1>, dimensions<>
+        extract_dimensions_t<int>, dimensions<>
     >::value));
 
     BOOST_TEST((is_same<
-        make_filled_dims_t<1, 1  >, dimensions<1>
-    >::value));
-    BOOST_TEST((is_same<
-        make_filled_dims_t<1, 0  >, dimensions<0>
-    >::value));
-    BOOST_TEST((is_same<
-        make_filled_dims_t<1, dyn>, dimensions<dyn>
+        extract_dimensions_t<int[ ]>, dimensions<dyn>
     >::value));
 
     BOOST_TEST((is_same<
-        make_filled_dims_t<2, 1  >, dimensions<1,   1  >
-    >::value));
-    BOOST_TEST((is_same<
-        make_filled_dims_t<2, 0  >, dimensions<0,   0  >
-    >::value));
-    BOOST_TEST((is_same<
-        make_filled_dims_t<2, dyn>, dimensions<dyn, dyn>
+        extract_dimensions_t<int[3]>, dimensions<3  >
     >::value));
 
     BOOST_TEST((is_same<
-        make_filled_dims_t<3, 1  >, dimensions<1,   1,   1  >
+        extract_dimensions_t<int[ ][5]>, dimensions<dyn, 5>
     >::value));
     BOOST_TEST((is_same<
-        make_filled_dims_t<3, 0  >, dimensions<0,   0,   0  >
+        extract_dimensions_t<int[3][5]>, dimensions<3,   5>
+    >::value));
+
+    BOOST_TEST((is_same<
+        extract_dimensions_t<int[ ][5][9]>, dimensions<dyn, 5, 9>
     >::value));
     BOOST_TEST((is_same<
-        make_filled_dims_t<3, dyn>, dimensions<dyn, dyn, dyn>
+        extract_dimensions_t<int[3][5][9]>, dimensions<3,   5, 9>
     >::value));
 
     return boost::report_errors();

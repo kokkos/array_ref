@@ -5,7 +5,7 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/detail/lightweight_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 
 #include <vector>
 #include <tuple>
@@ -17,19 +17,19 @@ using std::tuple;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::layout_mapping_right;
+using std::experimental::layout_mapping_left;
 
 template <
-    std::size_t StrideX, std::size_t StrideY 
+    std::size_t StepX, std::size_t StepY 
   , std::size_t PadX, std::size_t PadY 
   , std::size_t X, std::size_t Y
     >
 void test_2d_static()
 { // {{{
-    static_assert(0 == (X % StrideX), "X must be divisable by StrideX");
-    static_assert(0 == (Y % StrideY), "Y must be divisable by StrideY");
+    static_assert(0 == (X % StepX), "X must be divisable by StepX");
+    static_assert(0 == (Y % StepY), "Y must be divisable by StepY");
 
-    layout_mapping_right<
+    layout_mapping_left<
         dimensions<X, Y>
       , dimensions<1, 1>
       , dimensions<PadX, PadY>
@@ -43,18 +43,18 @@ void test_2d_static()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), (X + PadX) * (Y + PadY));
 
-    layout_mapping_right<
-        dimensions<X / StrideX, Y / StrideY>
-      , dimensions<StrideX, StrideY>
+    layout_mapping_left<
+        dimensions<X / StepX, Y / StepY>
+      , dimensions<StepX, StepY>
       , dimensions<PadX, PadY>
     > const sub_l{};
 
     BOOST_TEST_EQ((sub_l.is_regular()), true);
 
-    BOOST_TEST_EQ((sub_l.stride(0)), StrideX);
-    BOOST_TEST_EQ((sub_l.stride(1)), StrideY);
+    BOOST_TEST_EQ((sub_l.stride(0)), StepX);
+    BOOST_TEST_EQ((sub_l.stride(1)), StepY);
 
-    BOOST_TEST_EQ((sub_l.size()), (X / StrideX) * (Y / StrideY));
+    BOOST_TEST_EQ((sub_l.size()), (X / StepX) * (Y / StepY));
     BOOST_TEST_EQ((sub_l.span()), (X + PadX) * (Y + PadY));
 
     int dptr[(l[0] + l.padding()[0]) * (l[1] + l.padding()[1])];
@@ -63,7 +63,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1]; ++j)
     for (auto i = 0; i < l[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -78,7 +78,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -101,13 +101,13 @@ void test_2d_static()
         }
     }
 
-    // Set every (StrideXth, StrideYth) element to 71.
+    // Set every (StepXth, StepYth) element to 71.
     for (auto j = 0; j < sub_l[1]; ++j)
     for (auto i = 0; i < sub_l[0]; ++i)
     {
         auto const p = l.padding();
-        auto const s = sub_l.striding();
-        auto const true_idx = (sub_l[1] * s[1] + p[1]) * (s[0] * i) + (s[1] * j);
+        auto const s = sub_l.stepping();
+        auto const true_idx = (s[0] * i) + (sub_l[0] * s[0] + p[0]) * (s[1] * j);
 
         BOOST_TEST_EQ((sub_l.index(i, j)), true_idx);
 
@@ -122,7 +122,7 @@ void test_2d_static()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -144,8 +144,8 @@ void test_2d_static()
         else
         {
             // Real element in the strided sub-box.
-            if (  (0 == (i % sub_l.striding()[0]))
-               && (0 == (j % sub_l.striding()[1]))
+            if (  (0 == (i % sub_l.stepping()[0]))
+               && (0 == (j % sub_l.stepping()[1]))
                )
             {
                 BOOST_TEST_EQ((dptr[l.index(i, j)]), 71);
@@ -160,13 +160,13 @@ void test_2d_static()
 } // }}}
 
 template <
-    std::size_t StrideX, std::size_t StrideY 
+    std::size_t StepX, std::size_t StepY 
   , std::size_t PadX, std::size_t PadY 
   , std::size_t X, std::size_t Y
     >
 void test_2d_dynamic()
 { // {{{
-    layout_mapping_right<
+    layout_mapping_left<
         dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
@@ -180,18 +180,18 @@ void test_2d_dynamic()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), (X + PadX) * (Y + PadY));
 
-    layout_mapping_right<
+    layout_mapping_left<
         dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
       , dimensions<dyn, dyn>
-    > const sub_l{{X / StrideX, Y / StrideY}, {StrideX, StrideY}, {PadX, PadY}};
+    > const sub_l{{X / StepX, Y / StepY}, {StepX, StepY}, {PadX, PadY}};
 
     BOOST_TEST_EQ((sub_l.is_regular()), true);
 
-    BOOST_TEST_EQ((sub_l.stride(0)), StrideX);
-    BOOST_TEST_EQ((sub_l.stride(1)), StrideY);
+    BOOST_TEST_EQ((sub_l.stride(0)), StepX);
+    BOOST_TEST_EQ((sub_l.stride(1)), StepY);
 
-    BOOST_TEST_EQ((sub_l.size()), (X / StrideX) * (Y / StrideY));
+    BOOST_TEST_EQ((sub_l.size()), (X / StepX) * (Y / StepY));
     BOOST_TEST_EQ((sub_l.span()), (X + PadX) * (Y + PadY));
 
     // Initialize all elements to 42.
@@ -204,7 +204,7 @@ void test_2d_dynamic()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -233,13 +233,13 @@ void test_2d_dynamic()
         }
     }
 
-    // Set every (StrideXth, StrideYth) element to 71.
+    // Set every (StepXth, StepYth) element to 71.
     for (auto j = 0; j < sub_l[1]; ++j)
     for (auto i = 0; i < sub_l[0]; ++i)
     {
         auto const p = l.padding();
-        auto const s = sub_l.striding();
-        auto const true_idx = (sub_l[1] * s[1] + p[1]) * (s[0] * i) + (s[1] * j);
+        auto const s = sub_l.stepping();
+        auto const true_idx = (s[0] * i) + (sub_l[0] * s[0] + p[0]) * (s[1] * j);
 
         BOOST_TEST_EQ((sub_l.index(i, j)), true_idx);
 
@@ -257,7 +257,7 @@ void test_2d_dynamic()
     for (auto j = 0; j < l[1] + l.padding()[1]; ++j)
     for (auto i = 0; i < l[0] + l.padding()[0]; ++i)
     {
-        auto const true_idx = (l[1] + l.padding()[1]) * (i) + (j);
+        auto const true_idx = (i) + (l[0] + l.padding()[0]) * (j);
 
         BOOST_TEST_EQ((l.index(i, j)), true_idx);
 
@@ -285,8 +285,8 @@ void test_2d_dynamic()
         else
         {
             // Real element in the strided sub-box.
-            if (  (0 == (i % sub_l.striding()[0]))
-               && (0 == (j % sub_l.striding()[1]))
+            if (  (0 == (i % sub_l.stepping()[0]))
+               && (0 == (j % sub_l.stepping()[1]))
                )
             {
                 BOOST_TEST_EQ((dptr[l.index(i, j)]), 71);
@@ -311,7 +311,7 @@ int main()
     ///////////////////////////////////////////////////////////////////////////
     // 2D Static
 
-    //             Striding   Padding   Dimensions
+    //             Stepping   Padding   Dimensions
     test_2d_static<5, 1,      1, 0,     30, 30>();
     test_2d_static<1, 5,      1, 0,     30, 30>();
     test_2d_static<5, 5,      1, 0,     30, 30>();
@@ -341,7 +341,7 @@ int main()
     ///////////////////////////////////////////////////////////////////////////
     // 2D Dynamic
 
-    //              Striding   Padding   Dimensions
+    //              Stepping   Padding   Dimensions
     test_2d_dynamic<5, 1,      1, 0,     30, 30>();
     test_2d_dynamic<1, 5,      1, 0,     30, 30>();
     test_2d_dynamic<5, 5,      1, 0,     30, 30>();
