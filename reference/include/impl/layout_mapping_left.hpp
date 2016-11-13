@@ -11,24 +11,24 @@
 #include "impl/fwd.hpp"
 #include "impl/dimensions.hpp"
 
-#warning Add and use an embedded dimensions typedef
+//#warning Add and use an embedded dimensions typedef
 
-#warning Better coverage for striding() and padding()
+//#warning Better coverage for stepping() and padding()
 
 namespace std { namespace experimental
 {
 
 template <
     typename Dimensions
-  , typename Striding
+  , typename Stepping
   , typename Padding
     >
 struct layout_mapping_left : Dimensions
 {
     static_assert(
-           (Dimensions::rank() == Striding::rank())
-        && (Striding::rank()   == Padding::rank())
-      , "The ranks of Dimensions, Striding and Padding are not equal."
+           (Dimensions::rank() == Stepping::rank())
+        && (Stepping::rank()   == Padding::rank())
+      , "The ranks of Dimensions, Stepping and Padding are not equal."
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ struct layout_mapping_left : Dimensions
         ) noexcept;
 
     constexpr layout_mapping_left(
-        Dimensions d, Striding striding, Padding pad
+        Dimensions d, Stepping stepping, Padding pad
         ) noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -62,11 +62,11 @@ struct layout_mapping_left : Dimensions
 
     static constexpr bool is_regular() noexcept;
 
-    constexpr size_type stride(size_type rank) noexcept;
+    constexpr size_type stride(size_type rank) const noexcept;
 
     constexpr size_type span() const noexcept;
 
-    constexpr Striding striding() const noexcept;
+    constexpr Stepping stepping() const noexcept;
 
     constexpr Padding padding() const noexcept;
 
@@ -77,71 +77,71 @@ struct layout_mapping_left : Dimensions
     size_type index(Idx... idx) const noexcept;
 
   private:
-    Striding stride_;
+    Stepping step_;
     Padding pad_;
 };
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr
-layout_mapping_left<Dimensions, Striding, Padding>::layout_mapping_left() noexcept
+layout_mapping_left<Dimensions, Stepping, Padding>::layout_mapping_left() noexcept
   : Dimensions()
-  , stride_()
+  , step_()
   , pad_()
 {}
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 template <typename... DynamicDims>
 inline constexpr
-layout_mapping_left<Dimensions, Striding, Padding>::layout_mapping_left(
+layout_mapping_left<Dimensions, Stepping, Padding>::layout_mapping_left(
     DynamicDims... ddims
     ) noexcept
   : Dimensions(ddims...)
-  , stride_()
+  , step_()
   , pad_()
 {}
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr
-layout_mapping_left<Dimensions, Striding, Padding>::layout_mapping_left(
+layout_mapping_left<Dimensions, Stepping, Padding>::layout_mapping_left(
     Dimensions d
     ) noexcept
   : Dimensions(d)
-  , stride_()
+  , step_()
   , pad_()
 {}
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr
-layout_mapping_left<Dimensions, Striding, Padding>::layout_mapping_left(
-    Dimensions d, Striding striding, Padding pad
+layout_mapping_left<Dimensions, Stepping, Padding>::layout_mapping_left(
+    Dimensions d, Stepping step, Padding pad
     ) noexcept
   : Dimensions(d)
-  , stride_(striding)
+  , step_(step)
   , pad_(pad)
 {}
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr bool
-layout_mapping_left<Dimensions, Striding, Padding>::is_regular() noexcept
+layout_mapping_left<Dimensions, Stepping, Padding>::is_regular() noexcept
 {
     return true;
 }
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr
-typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
-layout_mapping_left<Dimensions, Striding, Padding>::stride(
+typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
+layout_mapping_left<Dimensions, Stepping, Padding>::stride(
     size_type rank
     ) const noexcept
 {
-    #warning I think this is wrong, it should be the actual stride, right?
-    return stride_[rank];
+	//#warning I think this is wrong, it should be the actual stride, right?
+    return step_[rank];
 }
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr
-typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
-layout_mapping_left<Dimensions, Striding, Padding>::span() const noexcept
+typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
+layout_mapping_left<Dimensions, Stepping, Padding>::span() const noexcept
 {
     return detail::dims_ternary_reduction<
         detail::span_by_value
@@ -149,27 +149,27 @@ layout_mapping_left<Dimensions, Striding, Padding>::span() const noexcept
       , detail::static_sentinel<1>
       , 0
       , Dimensions::rank()
-    >()(*static_cast<Dimensions const*>(this), stride_, pad_);
+    >()(*static_cast<Dimensions const*>(this), step_, pad_);
 }
 
-template <typename Dimensions, typename Striding, typename Padding>
-inline constexpr Striding
-layout_mapping_left<Dimensions, Striding, Padding>::striding() const noexcept
+template <typename Dimensions, typename Stepping, typename Padding>
+inline constexpr Stepping
+layout_mapping_left<Dimensions, Stepping, Padding>::stepping() const noexcept
 {
-    return stride_;
+    return step_;
 }
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr Padding
-layout_mapping_left<Dimensions, Striding, Padding>::padding() const noexcept
+layout_mapping_left<Dimensions, Stepping, Padding>::padding() const noexcept
 {
     return pad_;
 }
 
-template <typename Dimensions, typename Striding, typename Padding>
+template <typename Dimensions, typename Stepping, typename Padding>
 template <typename... Idx>
-inline typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
-layout_mapping_left<Dimensions, Striding, Padding>::index(
+inline typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
+layout_mapping_left<Dimensions, Stepping, Padding>::index(
     Idx... idx
     ) const noexcept
 {
@@ -181,10 +181,10 @@ layout_mapping_left<Dimensions, Striding, Padding>::index(
       , "Incorrect number of indices passed to layout_mapping_left."
     );
 
-    detail::layout_mapping_left_indexer<Dimensions, Striding, Padding, 0> indexer;
+    detail::layout_mapping_left_indexer<Dimensions, Stepping, Padding, 0> indexer;
     auto i = detail::make_filled_dims_t<Dimensions::rank(), dyn>(idx...);
 
-    return indexer(*static_cast<Dimensions const*>(this), stride_, pad_, i);
+    return indexer(*static_cast<Dimensions const*>(this), step_, pad_, i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -205,17 +205,17 @@ namespace detail
 
 // Nth index
 template <
-    typename Dimensions, typename Striding, typename Padding
+    typename Dimensions, typename Stepping, typename Padding
   , std::size_t N
   , typename enable
     >
 struct layout_mapping_left_indexer
 {
     template <std::size_t... IdxDims>
-    typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
     operator()(
         Dimensions d
-      , Striding stride
+      , Stepping step
       , Padding pad
       , dimensions<IdxDims...> i
         ) const noexcept
@@ -228,89 +228,89 @@ struct layout_mapping_left_indexer
             Dimensions::rank() > N
           , "Dimension index is out of bounds in layout_mapping_left."
         );
-        layout_mapping_left_indexer<Dimensions, Striding, Padding, N + 1> const
+        layout_mapping_left_indexer<Dimensions, Stepping, Padding, N + 1> const
             next;
-        return (d[N - 1] * stride[N - 1] + pad[N - 1])
-             * (stride[N] * i[N] + next(d, stride, pad, i));
+        return (d[N - 1] * step[N - 1] + pad[N - 1])
+             * (step[N] * i[N] + next(d, step, pad, i));
     }
 };
 
 // First index, 1 < rank()
 template <
     typename Dimensions
-  , typename Striding
+  , typename Stepping
   , typename Padding
     >
 struct layout_mapping_left_indexer<
     Dimensions
-  , Striding
+  , Stepping
   , Padding
   , 0                                                // First index
   , typename enable_if<1 < Dimensions::rank()>::type // 1 < rank()
 >
 {
     template <std::size_t... IdxDims>
-    typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
     operator()(
         Dimensions d
-      , Striding stride
+      , Stepping step
       , Padding pad
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        layout_mapping_left_indexer<Dimensions, Striding, Padding, 1>
+        layout_mapping_left_indexer<Dimensions, Stepping, Padding, 1>
             const next;
-        return stride[0] * i[0] + next(d, stride, pad, i);
+        return step[0] * i[0] + next(d, step, pad, i);
     }
 };
 
 // First index, 1 == rank()
 template <
     typename Dimensions
-  , typename Striding
+  , typename Stepping
   , typename Padding
     >
 struct layout_mapping_left_indexer<
     Dimensions
-  , Striding
+  , Stepping
   , Padding
   , 0                                                 // First index
   , typename enable_if<1 == Dimensions::rank()>::type // 1 == rank()
 >
 {
     template <std::size_t... IdxDims>
-    typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
     operator()(
         Dimensions d
-      , Striding stride
+      , Stepping step
       , Padding pad
       , dimensions<IdxDims...> i
         ) const noexcept
     {
-        return stride[0] * i[0];
+        return step[0] * i[0];
     }
 };
 
 // 0 == rank()
 template <
     typename Dimensions
-  , typename Striding
+  , typename Stepping
   , typename Padding
   , std::size_t N
     >
 struct layout_mapping_left_indexer<
     Dimensions
-  , Striding
+  , Stepping
   , Padding
   , N
   , typename enable_if<0 == Dimensions::rank()>::type // 0 == rank()
 >
 {
     template <std::size_t... IdxDims>
-    typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
     operator()(
         Dimensions d
-      , Striding stride
+      , Stepping step
       , Padding pad
       , dimensions<IdxDims...> i
         ) const noexcept
@@ -322,13 +322,13 @@ struct layout_mapping_left_indexer<
 // Final index
 template <
     typename Dimensions
-  , typename Striding
+  , typename Stepping
   , typename Padding
   , std::size_t N
     >
 struct layout_mapping_left_indexer<
     Dimensions
-  , Striding
+  , Stepping
   , Padding
   , N
   , typename enable_if<
@@ -338,10 +338,10 @@ struct layout_mapping_left_indexer<
 >
 {
     template <std::size_t... IdxDims>
-    typename layout_mapping_left<Dimensions, Striding, Padding>::size_type
+    typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
     operator()(
         Dimensions d
-      , Striding stride
+      , Stepping step
       , Padding pad
       , dimensions<IdxDims...> i
         ) const noexcept
@@ -354,8 +354,8 @@ struct layout_mapping_left_indexer<
             Dimensions::rank() > N
           , "Dimension index is out of bounds in layout_mapping_left."
         );
-        return (d[N - 1] * stride[N - 1] + pad[N - 1])
-             * (stride[N] * i[N]);
+        return (d[N - 1] * step[N - 1] + pad[N - 1])
+             * (step[N] * i[N]);
     }
 };
 

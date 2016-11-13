@@ -16,8 +16,8 @@ namespace std { namespace experimental
 
 struct layout_right
 {
-    template <std::size_t... Strides>
-    struct striding
+    template <std::size_t... Steps>
+    struct stepping
     {
         template <std::size_t... Pads>
         struct padding
@@ -26,7 +26,7 @@ struct layout_right
             template <typename Dims>
             using mapping = layout_mapping_right<
                 Dims
-              , dimensions<Strides...>
+              , dimensions<Steps...>
               , dimensions<Pads...> 
             >;
         };
@@ -35,7 +35,7 @@ struct layout_right
         template <typename Dims>
         using mapping = layout_mapping_right<
             Dims
-          , dimensions<Strides...>
+          , dimensions<Steps...>
           , detail::make_filled_dims_t<Dims::rank(), 0>
         >;
     };
@@ -43,14 +43,14 @@ struct layout_right
     template <std::size_t... Pads>
     struct padding
     {
-        template <std::size_t... Strides>
-        struct striding
+        template <std::size_t... Steps>
+        struct stepping
         {
             // Striding specified, padding specified.
             template <typename Dims>
             using mapping = layout_mapping_right<
                 Dims
-              , dimensions<Strides...>
+              , dimensions<Steps...>
               , dimensions<Pads...> 
             >;
         };
