@@ -7,7 +7,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-#include <array_ref>
+#include <mdspan>
 
 using std::experimental::dyn;
 using std::experimental::detail::count_dynamic_dims;

@@ -7,7 +7,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-#include <array_ref>
+#include <mdspan>
 
 using std::true_type;
 using std::false_type;

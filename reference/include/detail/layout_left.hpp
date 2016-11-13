@@ -8,8 +8,8 @@
 #if !defined(STD_1147DB06_B234_4218_9C7F_0E1EAEF9B78E)
 #define STD_1147DB06_B234_4218_9C7F_0E1EAEF9B78E
 
-#include "impl/fwd.hpp"
-#include "impl/layout_mapping_left.hpp"
+#include "detail/fwd.hpp"
+#include "detail/layout_mapping_left.hpp"
 
 namespace std { namespace experimental
 {

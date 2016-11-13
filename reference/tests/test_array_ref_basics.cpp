@@ -10,14 +10,14 @@
 #include <vector>
 #include <tuple>
 
-#include <array_ref>
+#include <mdspan>
 
 using std::vector;
 using std::tuple;
 
 using std::experimental::dyn;
 using std::experimental::dimensions;
-using std::experimental::array_ref;
+using std::experimental::mdspan;
 
 //#warning Better coverage for different types
 
@@ -27,7 +27,7 @@ template <std::size_t X, typename T>
 void test_empty_1d_static()
 { // {{{
     { // Rank 0 default constructed with no dimensions.
-        array_ref<T> a;
+        mdspan<T> a;
 
         BOOST_TEST_EQ((a.rank()),         0);
         BOOST_TEST_EQ((a.rank_dynamic()), 0);
@@ -39,7 +39,7 @@ void test_empty_1d_static()
 
     { // Rank 0 default constructed with explicit dimensions<> template
       // parameter.
-        array_ref<T, dimensions<> > a;
+        mdspan<T, dimensions<> > a;
 
         BOOST_TEST_EQ((a.rank()),         0);
         BOOST_TEST_EQ((a.rank_dynamic()), 0);
@@ -51,7 +51,7 @@ void test_empty_1d_static()
 
     { // Rank 1 default constructed with C-array-style static dimension
       // declaration.
-        array_ref<T[X]> a;
+        mdspan<T[X]> a;
 
         BOOST_TEST_EQ((a.rank()),         1);
         BOOST_TEST_EQ((a.rank_dynamic()), 0);
@@ -63,7 +63,7 @@ void test_empty_1d_static()
     }
 
     { // Rank 1 default constructed with explicit dimensions<> parameter.
-        array_ref<T, dimensions<X> > a;
+        mdspan<T, dimensions<X> > a;
 
         BOOST_TEST_EQ((a.rank()),         1);
         BOOST_TEST_EQ((a.rank_dynamic()), 0);
@@ -80,8 +80,8 @@ void test_1d_static()
 { // {{{
     int dptr[X];
 
-    array_ref<int,       dimensions<X> >  a(dptr);
-    array_ref<int const, dimensions<X> > ca(dptr);
+    mdspan<int,       dimensions<X> >  a(dptr);
+    mdspan<int const, dimensions<X> > ca(dptr);
 
     BOOST_TEST_EQ((ca.rank()),         1);
     BOOST_TEST_EQ((ca.rank_dynamic()), 0);
@@ -112,8 +112,8 @@ void test_1d_dynamic()
     vector<int> data(X);
     int* dptr = data.data();
 
-    array_ref<int,       dimensions<dyn> >  a(dptr, X);
-    array_ref<int const, dimensions<dyn> > ca(dptr, X);
+    mdspan<int,       dimensions<dyn> >  a(dptr, X);
+    mdspan<int const, dimensions<dyn> > ca(dptr, X);
 
     BOOST_TEST_EQ((ca.rank()),         1);
     BOOST_TEST_EQ((ca.rank_dynamic()), 1);
@@ -146,8 +146,8 @@ void test_2d_static()
 { // {{{
     tuple<int, int> dptr[X * Y];
 
-    array_ref<tuple<int, int>,       dimensions<X, Y> >  a(dptr);
-    array_ref<tuple<int, int> const, dimensions<X, Y> > ca(dptr);
+    mdspan<tuple<int, int>,       dimensions<X, Y> >  a(dptr);
+    mdspan<tuple<int, int> const, dimensions<X, Y> > ca(dptr);
 
     BOOST_TEST_EQ((ca.rank()),         2);
     BOOST_TEST_EQ((ca.rank_dynamic()), 0);
@@ -186,8 +186,8 @@ void test_2d_dynamic()
     vector<tuple<int, int> > data(X * Y);
     tuple<int, int>* dptr = data.data();
 
-    array_ref<tuple<int, int>,       dimensions<dyn, dyn> >  a(dptr, X, Y);
-    array_ref<tuple<int, int> const, dimensions<dyn, dyn> > ca(dptr, X, Y);
+    mdspan<tuple<int, int>,       dimensions<dyn, dyn> >  a(dptr, X, Y);
+    mdspan<tuple<int, int> const, dimensions<dyn, dyn> > ca(dptr, X, Y);
 
     BOOST_TEST_EQ((ca.rank()),         2);
     BOOST_TEST_EQ((ca.rank_dynamic()), 2);
@@ -230,8 +230,8 @@ void test_2d_mixed()
     vector<tuple<int, int> > data(X * Y);
     tuple<int, int>* dptr = data.data();
 
-    array_ref<tuple<int, int>,       dimensions<dyn, Y> >  a(dptr, X);
-    array_ref<tuple<int, int> const, dimensions<dyn, Y> > ca(dptr, X);
+    mdspan<tuple<int, int>,       dimensions<dyn, Y> >  a(dptr, X);
+    mdspan<tuple<int, int> const, dimensions<dyn, Y> > ca(dptr, X);
 
     BOOST_TEST_EQ((ca.rank()),         2);
     BOOST_TEST_EQ((ca.rank_dynamic()), 1);
@@ -273,8 +273,8 @@ void test_3d_static()
 { // {{{
     tuple<int, int, int> dptr[X * Y * Z];
 
-    array_ref<tuple<int, int, int>,       dimensions<X, Y, Z> >  a(dptr);
-    array_ref<tuple<int, int, int> const, dimensions<X, Y, Z> > ca(dptr);
+    mdspan<tuple<int, int, int>,       dimensions<X, Y, Z> >  a(dptr);
+    mdspan<tuple<int, int, int> const, dimensions<X, Y, Z> > ca(dptr);
 
     BOOST_TEST_EQ((ca.rank()),         3);
     BOOST_TEST_EQ((ca.rank_dynamic()), 0);
@@ -320,9 +320,9 @@ void test_3d_dynamic()
     vector<tuple<int, int, int> > data(X * Y * Z);
     tuple<int, int, int>* dptr = data.data();
 
-    array_ref<tuple<int, int, int>,       dimensions<dyn, dyn, dyn> >
+    mdspan<tuple<int, int, int>,       dimensions<dyn, dyn, dyn> >
          a(dptr, X, Y, Z);
-    array_ref<tuple<int, int, int> const, dimensions<dyn, dyn, dyn> >
+    mdspan<tuple<int, int, int> const, dimensions<dyn, dyn, dyn> >
         ca(dptr, X, Y, Z);
 
     BOOST_TEST_EQ((ca.rank()),         3);

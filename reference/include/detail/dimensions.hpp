@@ -8,9 +8,9 @@
 #if !defined(STD_AF6B6020_7733_4741_942B_D95071B4FB7B)
 #define STD_AF6B6020_7733_4741_942B_D95071B4FB7B
 
-#include "impl/fwd.hpp"
-#include "impl/meta.hpp"
-#include "impl/dimensions_reductions.hpp"
+#include "detail/fwd.hpp"
+#include "detail/meta.hpp"
+#include "detail/dimensions_reductions.hpp"
 
 namespace std { namespace experimental 
 {

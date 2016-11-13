@@ -10,7 +10,7 @@
 #include <vector>
 #include <tuple>
 
-#include <array_ref>
+#include <mdspan>
 
 using std::vector;
 using std::tuple;

@@ -240,7 +240,7 @@ template <typename ValueType
         , typename Layout    = layout_native
         , typename Accessor  = accessor_native<ValueType>
          >
-struct array_ref;
+struct mdspan;
 
 }} // std::experimental
 

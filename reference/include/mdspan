@@ -8,13 +8,13 @@
 #if !defined(STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0)
 #define STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
 
-#include "impl/fwd.hpp"
-#include "impl/meta.hpp"
-#include "impl/dimensions.hpp"
+#include "detail/fwd.hpp"
+#include "detail/meta.hpp"
+#include "detail/dimensions.hpp"
 
-#include "impl/layout_left.hpp"
-#include "impl/layout_right.hpp"
-#include "impl/accessor_native.hpp"
+#include "detail/layout_left.hpp"
+#include "detail/layout_right.hpp"
+#include "detail/accessor_native.hpp"
 
 //#warning Unify Dims/Dimensions terminology
 
@@ -32,7 +32,7 @@ namespace std { namespace experimental
 {
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-struct array_ref
+struct mdspan
 {
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
@@ -49,27 +49,27 @@ struct array_ref
     /////////////////////////////////////////////////////////////////////////// 
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
 
-    constexpr array_ref() noexcept;
+    constexpr mdspan() noexcept;
 
-    constexpr array_ref(array_ref const& b) noexcept = default;
-    constexpr array_ref(array_ref&& b) noexcept = default;
-    array_ref& operator=(array_ref const& b) noexcept = default;
-    array_ref& operator=(array_ref&& b) noexcept = default;
+    constexpr mdspan(mdspan const& b) noexcept = default;
+    constexpr mdspan(mdspan&& b) noexcept = default;
+    mdspan& operator=(mdspan const& b) noexcept = default;
+    mdspan& operator=(mdspan&& b) noexcept = default;
 
     template < typename... Integers
              , typename = typename enable_if<
                    detail::pack_is_integral<Integers...>::value
                >::type
              >
-    explicit constexpr array_ref(
+    explicit constexpr mdspan(
         pointer p, Integers... implicit_dims
         ) noexcept;
 
-    explicit constexpr array_ref(
+    explicit constexpr mdspan(
         pointer p, layout_type l
         ) noexcept;
 
-    explicit constexpr array_ref(
+    explicit constexpr mdspan(
         pointer p, layout_type l, accessor_type a
         ) noexcept;
 
@@ -117,7 +117,7 @@ struct array_ref
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
-array_ref<ValueType, Dims, Layout, Accessor>::array_ref() noexcept
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan() noexcept
   : ptr_(nullptr)
   , mapping_()
   , accessor_()
@@ -126,7 +126,7 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref() noexcept
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 template <typename... Integers, typename>
 constexpr
-array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
     pointer p, Integers... implicit_dims
     ) noexcept
   : ptr_(p)
@@ -136,7 +136,7 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
-array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
     pointer p, layout_type l
     ) noexcept
   : ptr_(p)
@@ -146,7 +146,7 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 constexpr
-array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
     pointer p, layout_type l, accessor_type a
     ) noexcept
   : ptr_(p)
@@ -156,32 +156,32 @@ array_ref<ValueType, Dims, Layout, Accessor>::array_ref(
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::size_type
-array_ref<ValueType, Dims, Layout, Accessor>::rank() noexcept
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::rank() noexcept
 {
     return mapping_type::rank();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::size_type
-array_ref<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
 {
     return mapping_type::rank_dynamic();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::size_type
-array_ref<ValueType, Dims, Layout, Accessor>::size() const noexcept
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::size() const noexcept
 {
     return mapping_.size();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::size_type
-array_ref<ValueType, Dims, Layout, Accessor>::extent(
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::extent(
     size_type rank
     ) const noexcept
 {
@@ -190,23 +190,23 @@ array_ref<ValueType, Dims, Layout, Accessor>::extent(
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::mapping_type
-array_ref<ValueType, Dims, Layout, Accessor>::mapping() const noexcept
+    mdspan<ValueType, Dims, Layout, Accessor>::mapping_type
+mdspan<ValueType, Dims, Layout, Accessor>::mapping() const noexcept
 {
     return mapping_;
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr bool
-array_ref<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
+mdspan<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
 {
     return mapping_type::is_regular();
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::size_type
-array_ref<ValueType, Dims, Layout, Accessor>::stride(
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::stride(
     size_type rank
     ) const noexcept
 {
@@ -215,8 +215,8 @@ array_ref<ValueType, Dims, Layout, Accessor>::stride(
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 inline constexpr typename
-    array_ref<ValueType, Dims, Layout, Accessor>::size_type
-array_ref<ValueType, Dims, Layout, Accessor>::span() const noexcept
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::span() const noexcept
 {
     return mapping_.span();
 }
@@ -226,8 +226,8 @@ template <typename... Integers>
 inline typename std::enable_if<
        Dims::rank() == sizeof...(Integers)
     && detail::pack_is_integral<Integers...>::value
-  , typename array_ref<ValueType, Dims, Layout, Accessor>::reference
->::type array_ref<ValueType, Dims, Layout, Accessor>::operator()(
+  , typename mdspan<ValueType, Dims, Layout, Accessor>::reference
+>::type mdspan<ValueType, Dims, Layout, Accessor>::operator()(
     Integers... indices
     ) const noexcept
 {
@@ -236,8 +236,8 @@ inline typename std::enable_if<
 }
 
 template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-typename array_ref<ValueType, Dims, Layout, Accessor>::reference
-array_ref<ValueType, Dims, Layout, Accessor>::operator[](
+typename mdspan<ValueType, Dims, Layout, Accessor>::reference
+mdspan<ValueType, Dims, Layout, Accessor>::operator[](
     size_type idx
     ) const noexcept
 {

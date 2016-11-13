@@ -14,8 +14,8 @@
 #include <utility>
 #include <type_traits>
 
-#include "impl/fwd.hpp"
-#include "impl/meta_logical_operators.hpp"
+#include "detail/fwd.hpp"
+#include "detail/meta_logical_operators.hpp"
 
 namespace std
 {
@@ -27,10 +27,10 @@ struct rank<experimental::dimensions<Dims...> >
   : integral_constant<std::size_t, sizeof...(Dims)> {};
 
 template <typename... Params>
-struct rank<experimental::array_ref<Params...> >
+struct rank<experimental::mdspan<Params...> >
   : integral_constant<
         std::size_t
-      , experimental::array_ref<Params...>::rank()
+      , experimental::mdspan<Params...>::rank()
     > {};
 
 template <std::size_t Head, std::size_t... Tail>
@@ -45,8 +45,8 @@ struct extent<experimental::dimensions<Head, Tail...>, ND>
     > {};
 
 template <typename... Params, unsigned ND>
-struct extent<experimental::array_ref<Params...>, ND>
-  : extent<typename experimental::array_ref<Params...>::dimensions, ND> {};
+struct extent<experimental::mdspan<Params...>, ND>
+  : extent<typename experimental::mdspan<Params...>::dimensions, ND> {};
 
 namespace experimental { namespace detail
 {

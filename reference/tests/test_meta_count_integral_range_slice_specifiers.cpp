@@ -7,7 +7,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-#include <array_ref>
+#include <mdspan>
 
 using std::experimental::detail::all_tag;
 using std::experimental::detail::count_integral_range_slice_specifiers;

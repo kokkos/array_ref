@@ -7,7 +7,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-#include <array_ref>
+#include <mdspan>
 
 using std::rank;
 using std::extent;
