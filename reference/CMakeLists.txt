@@ -53,12 +53,12 @@ endif()
 
 include_directories(${mdspan_SOURCE_DIR}/include)
 
-file(GLOB_RECURSE HEADERS include/array_ref include/*.hpp)
+file(GLOB_RECURSE HEADERS include/mdspan include/*.hpp)
 source_group("Headers" FILES ${HEADERS})
-add_custom_target(array_ref SOURCES ${HEADERS})
+add_custom_target(mdspan SOURCES ${HEADERS})
 
 set(TESTS
-    test_array_ref_basics
+    test_mdspan_basics
     test_dims_dynamic_extent
     test_dims_index_into_dynamic_dims
     test_dims_meta_interfaces
