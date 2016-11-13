@@ -16,17 +16,17 @@
 #include "impl/layout_right.hpp"
 #include "impl/accessor_native.hpp"
 
-#warning Unify Dims/Dimensions terminology
+//#warning Unify Dims/Dimensions terminology
 
-#warning Make layout constructors/dimensions constructors work with initializer lists
+//#warning Make layout constructors/dimensions constructors work with initializer lists
 
-#warning Mixed layout tests may not give full coverage - they only try 2D with the first parameter as dynamic
+//#warning Mixed layout tests may not give full coverage - they only try 2D with the first parameter as dynamic
 
-#warning Writing dimensions<dyn, Y>(X) is uninitutive. Let's have a make_dimensions() facility that uses compile time numbers
+//#warning Writing dimensions<dyn, Y>(X) is uninitutive. Let's have a make_dimensions() facility that uses compile time numbers
 
-#warning Lift and refactor layout tests
+//#warning Lift and refactor layout tests
 
-#warning Add rank_static()?
+//#warning Add rank_static()?
 
 namespace std { namespace experimental 
 {
