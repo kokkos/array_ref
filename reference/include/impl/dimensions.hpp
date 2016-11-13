@@ -29,10 +29,10 @@ struct dimensions
 
     constexpr dimensions() noexcept;
 
-    constexpr dimensions(dimensions const&) = default;
-    constexpr dimensions(dimensions&&) = default;
-    dimensions& operator=(dimensions const&) = default;
-    dimensions& operator=(dimensions&&) = default;
+    constexpr dimensions(dimensions const&) noexcept = default;
+    constexpr dimensions(dimensions&&) noexcept = default;
+    dimensions& operator=(dimensions const&) noexcept = default;
+    dimensions& operator=(dimensions&&) noexcept = default;
 
     template <typename... DynamicDims>
     constexpr dimensions(DynamicDims... ddims) noexcept;
@@ -43,7 +43,7 @@ struct dimensions
     static constexpr size_type rank() noexcept;
     static constexpr size_type rank_dynamic() noexcept;
 
-    constexpr size_type size() noexcept;
+    constexpr size_type size() const noexcept;
 
     // NOTE: Spec needs to clarify the return value of this function if idx
     // is out of bound. Currently, you get 0.
@@ -61,12 +61,12 @@ struct dimensions
     template <typename Idx>
     constexpr size_type product_extents(
         Idx idx
-        ) noexcept;
+        ) const noexcept;
 
     template <typename Idx, typename Head, typename... Tail>
     constexpr size_type product_extents(
         Idx idx, Head head, Tail... tail
-        ) noexcept;
+        ) const noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -116,7 +116,7 @@ dimensions<Dims...>::rank_dynamic() noexcept
 
 template <std::size_t... Dims>
 inline constexpr typename dimensions<Dims...>::size_type
-dimensions<Dims...>::size() noexcept
+dimensions<Dims...>::size() const noexcept
 {
     return detail::dims_unary_reduction<
         detail::identity_by_value
@@ -142,7 +142,7 @@ dimensions<Dims...>::operator[](IntegralType idx) const noexcept
 template <std::size_t... Dims>
 template <typename Idx>
 inline constexpr typename dimensions<Dims...>::size_type
-dimensions<Dims...>::product_extents(Idx idx) noexcept
+dimensions<Dims...>::product_extents(Idx idx) const noexcept
 {
     return 1;
 }
@@ -150,7 +150,7 @@ dimensions<Dims...>::product_extents(Idx idx) noexcept
 template <std::size_t... Dims>
 template <typename Idx, typename Head, typename... Tail>
 inline constexpr typename dimensions<Dims...>::size_type
-dimensions<Dims...>::product_extents(Idx idx, Head head, Tail... tail) noexcept
+dimensions<Dims...>::product_extents(Idx idx, Head head, Tail... tail) const noexcept
 {
     return (head == dyn ? (*this)[idx] : head)
          * product_extents(idx + 1, tail...);
