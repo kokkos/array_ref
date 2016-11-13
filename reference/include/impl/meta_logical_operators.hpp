@@ -8,7 +8,7 @@
 #if !defined(STD_F2BEAFA8_F13E_481C_8A36_200DCD59D101)
 #define STD_F2BEAFA8_F13E_481C_8A36_200DCD59D101
 
-#warning Unit test coverage needed
+//#warning Unit test coverage needed
 
 #include <type_traits>
 
