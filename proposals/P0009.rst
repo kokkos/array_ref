@@ -1,10 +1,10 @@
 ===================================================================
-D0009r3 : Polymorphic Multidimensional Array Reference
+P0009r3 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0009r3
-:Date: 2016-06-23
+:Number: P0009r3
+:Date: 2016-10-14
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -59,32 +59,37 @@ Two critical functionality differences are
 
 
 ----------------------------------------------------------------------------
-To-be-determined class name
+Relationship to P0454 : Wording for a Minimal ``mdspan``
 ----------------------------------------------------------------------------
 
-The current ``array_ref`` name for the proposed functionality is
-not entirely satisfactory; however, a more appropriate name has yet to be identified.
-The ``accessor`` name in P0367 is a possibility in that it denotes a polymorphic
-mechanism for accessing an object or span of objects.
+P0454, Wording for a Minimal ``mdspan``, includes a minimal version of the
+polymorphic multidimensional array reference capability that aligns with 
+``span`` as proposed in P0122.
 
-Brainstorming collection:
+Assuming acceptance of P0454 our intent is for a subsequent version of
+this paper to propose extensions to ``mdspan`` for layout extensibility
+and other essential properties.
 
-+---------------+-------------------------+--------------+
-| LEWG          | LEWG                    | other        |
-| 2015-10-22    | 2016-06-25              |              |
-+---------------+-------------------------+--------------+
-| view ,        | sci_span ,              | mdspan ,     |
-| span ,        | numeric_span ,          | polyspan ,   |
-| array_ref ,   | multidimensional_span , | accessor     |
-| slice ,       | multidim_span ,         |              |
-| array_view ,  | md_span ,               |              |
-| ref ,         | vla_span ,              |              |
-| array_span ,  | multispan ,             |              |
-| basic_span ,  | multi_span              |              |
-| object_span , |                         |              |
-| field         |                         |              |
-+---------------+-------------------------+--------------+
+Note that the ``array_ref`` name in this paper is not entirely satisfactory
+and the following alternatives were brainstormed during prior LEWG reviews.
 
++---------------+-------------------------+
+| LEWG          | LEWG                    |
+| 2015-10-22    | 2016-06-25              |
++---------------+-------------------------+
+| view ,        | sci_span ,              |
+| span ,        | numeric_span ,          |
+| array_ref ,   | multidimensional_span , |
+| slice ,       | multidim_span ,         |
+| array_view ,  | md_span ,               |
+| ref ,         | vla_span ,              |
+| array_span ,  | multispan ,             |
+| basic_span ,  | multi_span              |
+| object_span , |                         |
+| field         |                         |
++---------------+-------------------------+
+
+When P0454 is accepted the name will become ``mdspan``.
 
 ----------------------------------------------------------------------------
 Alternative mechanisms for specifying the domain multi-index space
@@ -518,7 +523,7 @@ Constructors, assignments, destructor
 | ``array_ref & operator = ( array_ref const & ) noexcept``
 | ``array_ref & operator = ( array_ref && rhs ) noexcept = default``
 
-  Effect: *this has equal domain, equal codomain, and
+  Effect: ``\*this`` has equal domain, equal codomain, and
   equivalent mapping.
 
   Remark: There may be other ``Properties...`` dependent effects.
@@ -582,7 +587,7 @@ Constructors, assignments, destructor
 | *detail::subarray_deduction_t<array_ref<DataType,Properties...>,SliceSpecifiers...>*
 | ``subarray( array_ref< DataType, Properties ... > const & U , SliceSpecifiers ... S ) noexcept;``
 
-  The *detail::subarray_deduction_t`` is for exposition only to indicate
+  The ``detail::subarray_deduction_t`` is for exposition only to indicate
   that the implementation will require a metafunction to deduce the resulting
   ``array_ref`` type from the input ``array_ref`` and slice specifiers.
 
@@ -738,7 +743,7 @@ codomain member reference generation.
   class layout_concept /* exposition only */ {
   public:
  
-    template< typename ExtentType , ExtentsType ... >
+    template< typename ExtentType , ExtentType ... >
     class mapping {
     public:
 
@@ -976,12 +981,26 @@ Tighten up domain, codomain, and domain -> codomain mapping specifications.
 
 Consistently use *extent* and *extents* for the multidimensional index space.
 
+----------------------------------------------------------------------------
+Future reversion
+----------------------------------------------------------------------------
+
+Align with and extend layout properties of
+P0454, Wording for Minimal ``mdspan``.
+
 
 ******************************************************************
 References
 ******************************************************************
 
 ISOCPP issue: https://issues.isocpp.org/show_bug.cgi?id=80
+
+----------------------------------------------------------------------------
+P0454 : Wording for a Minimal ``mdspan``
+----------------------------------------------------------------------------
+
+The ``mdspan`` is a minimal version of the multidimensional array view
+capability.
 
 ----------------------------------------------------------------------------
 P0122 : span: bounds-safe views for sequences of objects
@@ -993,7 +1012,9 @@ The ``array_ref`` codomain concept of *span* is well-aligned with this paper.
 P0367 : Accessors
 ----------------------------------------------------------------------------
 
-The ``array_ref`` intent for *properties* extension in regard to how codomain
-objects are referenced is well-aligned with the proposed *accessor* properties.
+The P0367 Accessors proposal includes polymorphic mechanisms for 
+accessing the memory an object or span of objects.
+The ``Properties...`` extension point in this proposal is intended
+to include such memroy access properties.
 
 
