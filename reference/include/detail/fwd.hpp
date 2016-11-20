@@ -10,10 +10,50 @@
 
 #include <cstdint>
 
-namespace std { namespace experimental { namespace detail
+namespace std { namespace experimental
 {
 
+template <typename... Ts>
+struct conjunction;
+
+template <typename... Ts>
+struct disjunction;
+
+template <typename T, T... I>
+struct integer_sequence;
+
+template <std::size_t... Idxs>
+using index_sequence = integer_sequence<std::size_t, Idxs...>;
+
+namespace detail
+{
+
+template <typename Sequence0, typename Sequence1>
+struct merge_and_renumber_integer_sequences;
+
+template <typename Sequence0, typename Sequence1>
+struct merge_and_renumber_reversed_integer_sequences;
+
+} // std::experimental::detail
+
+template <typename T, std::size_t N>
+struct make_integer_sequence;
+
+template <std::size_t N>
+using make_index_sequence =
+    make_integer_sequence<std::size_t, N>;
+
+template <typename T, std::size_t N>
+struct make_reversed_integer_sequence;
+
+template <std::size_t N>
+using make_reversed_index_sequence =
+    make_reversed_integer_sequence<std::size_t, N>;
+
 ///////////////////////////////////////////////////////////////////////////////
+
+namespace detail
+{
 
 // Reduction-style visitation of the extents of dimensions<>. Op, Reduction and
 // Sentinel are function objects with a constexpr const method that takes the

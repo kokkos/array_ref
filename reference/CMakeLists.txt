@@ -63,6 +63,7 @@ set(TESTS
     test_dims_index_into_dynamic_dims
     test_dims_meta_interfaces
     test_dims_rt_interfaces
+    test_integer_sequence
     test_layout_mapping_left_basics
     test_layout_mapping_left_padding
     test_layout_mapping_left_stepping

@@ -17,7 +17,7 @@ namespace std { namespace experimental
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename...>
+template <typename... Ts>
 struct conjunction;
 
 template <>
@@ -31,12 +31,11 @@ struct conjunction<T0, T1> : conditional<T0::value, T1, T0>::type {};
 
 template<typename T0, typename T1, typename T2, typename... TN>
 struct conjunction<T0, T1, T2, TN...>
-  : conditional<T0::value, conjunction<T1, T2, TN...>, T0>::type
-{};
+  : conditional<T0::value, conjunction<T1, T2, TN...>, T0>::type {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename...>
+template <typename... Ts>
 struct disjunction : false_type {};
 
 template <typename T>
