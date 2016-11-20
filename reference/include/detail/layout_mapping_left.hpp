@@ -9,6 +9,7 @@
 #define STD_0F383687_D414_463B_9C79_74EA4545EEB5
 
 #include "detail/fwd.hpp"
+#include "detail/integer_sequence.hpp"
 #include "detail/dimensions.hpp"
 
 //#warning Add and use an embedded dimensions typedef
@@ -34,7 +35,11 @@ struct layout_mapping_left : Dimensions
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
-    using size_type = std::size_t;
+    using typename Dimensions::size_type; 
+
+    // Smallest stride dimension to largest stride dimension.
+    using order =
+        typename make_index_sequence<Dimensions::rank()>::type;
 
     ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS

@@ -9,6 +9,7 @@
 #define STD_836A92EF_4885_4F3B_A7E1_5395FEDD3125
 
 #include "detail/fwd.hpp"
+#include "detail/integer_sequence.hpp"
 #include "detail/dimensions.hpp"
 
 //#warning Rename to layout_right_mapping
@@ -32,7 +33,11 @@ struct layout_mapping_right : Dimensions
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
-    using size_type = std::size_t;
+    using typename Dimensions::size_type; 
+
+    // Smallest stride dimension to largest stride dimension.
+    using order =
+        typename make_reversed_index_sequence<Dimensions::rank()>::type;
 
     ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
