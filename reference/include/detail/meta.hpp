@@ -53,6 +53,26 @@ namespace experimental { namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template <typename Dimensions, std::size_t N>
+struct rank_greater_than
+{
+    enum { value = N < Dimensions::rank() };
+};
+
+template <typename Dimensions, std::size_t N>
+struct rank_equal_to
+{
+    enum { value = N == Dimensions::rank() };
+};
+
+template <typename Dimensions, std::size_t N>
+struct is_last_index
+{
+    enum { value = (1 < Dimensions::rank()) && (N == (Dimensions::rank() - 1)) };
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
 // Base case.
 template <>
 struct count_dynamic_dims<> : std::integral_constant<std::size_t, 0> {};

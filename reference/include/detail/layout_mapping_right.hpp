@@ -49,6 +49,9 @@ struct layout_mapping_right : Dimensions
     layout_mapping_right& operator=(layout_mapping_right const& b) noexcept = default;
     layout_mapping_right& operator=(layout_mapping_right&& b) noexcept = default;
 
+    template <typename... DynamicDims>
+    constexpr layout_mapping_right(DynamicDims... ddims) noexcept;
+
     constexpr layout_mapping_right(
         Dimensions d
         ) noexcept;
@@ -62,7 +65,7 @@ struct layout_mapping_right : Dimensions
 
     static constexpr bool is_regular() noexcept;
 
-    constexpr size_type stride(size_type rank) noexcept;
+    constexpr size_type stride(size_type rank) const noexcept;
 
     constexpr size_type span() const noexcept;
 
@@ -85,6 +88,17 @@ template <typename Dimensions, typename Stepping, typename Padding>
 inline constexpr
 layout_mapping_right<Dimensions, Stepping, Padding>::layout_mapping_right() noexcept
   : Dimensions()
+  , step_()
+  , pad_()
+{}
+
+template <typename Dimensions, typename Stepping, typename Padding>
+template <typename... DynamicDims>
+inline constexpr
+layout_mapping_right<Dimensions, Stepping, Padding>::layout_mapping_right(
+    DynamicDims... ddims
+    ) noexcept
+  : Dimensions(ddims...)
   , step_()
   , pad_()
 {}
@@ -123,7 +137,7 @@ layout_mapping_right<Dimensions, Stepping, Padding>::stride(
     size_type rank
     ) const noexcept
 {
-	//#warning I think this is wrong, it should be the actual stride, right?
+    //#warning I think this is wrong, it should be the actual stride, right?
     return step_[rank];
 }
 
@@ -190,7 +204,7 @@ namespace detail
 //
 // The first case (1 < rank()) recurses, with cases:
 // * Nth index
-// * Final index
+// * Last index
 
 // Nth index
 template <
@@ -235,8 +249,10 @@ struct layout_mapping_right_indexer<
     Dimensions
   , Stepping
   , Padding
-  , 0                                                // First index
-  , typename enable_if<1 < Dimensions::rank()>::type // 1 < rank()
+  , 0                                                       // First index
+  , typename enable_if<
+        detail::rank_greater_than<Dimensions, 1>::value     // 1 < rank()
+    >::type 
 >
 {
     template <std::size_t... IdxDims>
@@ -265,8 +281,10 @@ struct layout_mapping_right_indexer<
     Dimensions
   , Stepping
   , Padding
-  , 0                                                 // First index
-  , typename enable_if<1 == Dimensions::rank()>::type // 1 == rank()
+  , 0                                                       // First index
+  , typename enable_if<
+        detail::rank_equal_to<Dimensions, 1>::value         // 1 == rank()
+    >::type 
 >
 {
     template <std::size_t... IdxDims>
@@ -295,7 +313,9 @@ struct layout_mapping_right_indexer<
   , Stepping
   , Padding
   , N
-  , typename enable_if<0 == Dimensions::rank()>::type // 0 == rank()
+  , typename enable_if<
+        detail::rank_equal_to<Dimensions, 0>::value         // 0 == rank()
+    >::type 
 >
 {
     template <std::size_t... IdxDims>
@@ -311,7 +331,7 @@ struct layout_mapping_right_indexer<
     }
 };
 
-// Final index
+// Last index
 template <
     typename Dimensions
   , typename Stepping
@@ -324,9 +344,8 @@ struct layout_mapping_right_indexer<
   , Padding
   , N
   , typename enable_if<
-        (1 < Dimensions::rank())
-     && (N == (Dimensions::rank() - 1)) // Final index
-    >::type
+        detail::is_last_index<Dimensions, N>::value         // Last index
+    >::type 
 >
 {
     template <std::size_t... IdxDims>

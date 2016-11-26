@@ -131,6 +131,18 @@ inline constexpr std::size_t index_into_dynamic_dims(
     ) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
+// Expression SFINAE workarounds for MSVC.
+
+template <typename Dimensions, std::size_t N>
+struct rank_greater_than;
+
+template <typename Dimensions, std::size_t N>
+struct rank_equal_to;
+
+template <typename Dimensions, std::size_t N>
+struct is_last_index;
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Counts the number of dynamic dimensions.
 template <std::size_t... Dims>

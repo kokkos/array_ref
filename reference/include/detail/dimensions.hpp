@@ -88,7 +88,7 @@ constexpr
 dimensions<Dims...>::dimensions(DynamicDims... ddims) noexcept
   // FIXME: We cast here to avoid a narrowing conversion warning from GCC.
   // I'm not thrilled about it.
-  : dynamic_dims_{static_cast<value_type>(ddims)...}
+  : dynamic_dims_{{static_cast<value_type>(ddims)...}}
 {
     static_assert(
         detail::pack_is_integral<DynamicDims...>::value
