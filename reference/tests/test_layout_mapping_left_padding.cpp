@@ -34,7 +34,7 @@ void test_2d_static()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), (X + N) * (Y + M));
 
-    int dptr[(l[0] + l.padding()[0]) * (l[1] + l.padding()[1])];
+    int dptr[(X + N) * (Y + M)];
 
     // Set all real elements to 42.
     for (auto j = 0; j < l[1]; ++j)

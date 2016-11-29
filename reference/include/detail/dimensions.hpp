@@ -123,7 +123,7 @@ dimensions<Dims...>::size() const noexcept
       , detail::multiplies_by_value
       , detail::static_sentinel<1>
       , 0
-      , rank()
+      , std::rank<dimensions>::value
     >()(*this);
 }
 

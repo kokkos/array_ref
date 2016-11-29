@@ -133,8 +133,7 @@ layout_mapping_left<Dimensions, Stepping, Padding>::is_regular() noexcept
 }
 
 template <typename Dimensions, typename Stepping, typename Padding>
-constexpr
-typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
+inline constexpr typename Dimensions::size_type
 layout_mapping_left<Dimensions, Stepping, Padding>::stride(
     size_type rank
     ) const noexcept
@@ -144,8 +143,7 @@ layout_mapping_left<Dimensions, Stepping, Padding>::stride(
 }
 
 template <typename Dimensions, typename Stepping, typename Padding>
-inline constexpr
-typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
+inline constexpr typename Dimensions::size_type
 layout_mapping_left<Dimensions, Stepping, Padding>::span() const noexcept
 {
     return detail::dims_ternary_reduction<
@@ -173,7 +171,7 @@ layout_mapping_left<Dimensions, Stepping, Padding>::padding() const noexcept
 
 template <typename Dimensions, typename Stepping, typename Padding>
 template <typename... Idx>
-inline typename layout_mapping_left<Dimensions, Stepping, Padding>::size_type
+inline typename Dimensions::size_type
 layout_mapping_left<Dimensions, Stepping, Padding>::index(
     Idx... idx
     ) const noexcept

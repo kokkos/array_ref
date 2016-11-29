@@ -50,7 +50,7 @@ void test_1d_static()
     BOOST_TEST_EQ((sub_l.size()), X / N);
     BOOST_TEST_EQ((sub_l.span()), X);
 
-    int dptr[l[0]];
+    int dptr[X];
 
     // Set all elements to 42.
     for (auto i = 0; i < l[0]; ++i)
@@ -200,7 +200,7 @@ void test_2d_static()
     BOOST_TEST_EQ((sub_l.size()), (X / N) * (Y / M));
     BOOST_TEST_EQ((sub_l.span()), X * Y);
 
-    int dptr[l[0] * l[1]];
+    int dptr[X * Y];
 
     // Set all elements to 42.
     for (auto j = 0; j < l[1]; ++j)

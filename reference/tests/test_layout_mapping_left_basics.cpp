@@ -33,7 +33,7 @@ void test_1d_static()
     BOOST_TEST_EQ((l.size()), X);
     BOOST_TEST_EQ((l.span()), X);
 
-    int dptr[l[0]];
+    int dptr[X];
 
     // Set all elements to a unique value.
     for (auto i = 0; i < l[0]; ++i)
@@ -96,7 +96,7 @@ void test_2d_static()
     BOOST_TEST_EQ((l.size()), X * Y);
     BOOST_TEST_EQ((l.span()), X * Y);
 
-    tuple<int, int> dptr[l[0] * l[1]];
+    tuple<int, int> dptr[X * Y];
 
     // Set all elements to a unique value.
     for (auto j = 0; j < l[1]; ++j)
@@ -212,7 +212,7 @@ void test_3d_static()
     BOOST_TEST_EQ((l.size()), X * Y * Z);
     BOOST_TEST_EQ((l.span()), X * Y * Z);
 
-    tuple<int, int, int> dptr[l[0] * l[1] * l[2]];
+    tuple<int, int, int> dptr[X * Y * Z];
 
     // Set all elements to a unique value.
     for (auto k = 0; k < l[2]; ++k)
