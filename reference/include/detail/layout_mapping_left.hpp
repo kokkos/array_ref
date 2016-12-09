@@ -37,7 +37,7 @@ struct layout_mapping_left : Dimensions
 
     using typename Dimensions::size_type; 
 
-    // Smallest stride dimension to largest stride dimension.
+    // Smallest stride dimension to largest stride dimension (order to rank).
     using order =
         typename make_index_sequence<Dimensions::rank()>::type;
 

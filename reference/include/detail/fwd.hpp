@@ -131,6 +131,46 @@ inline constexpr std::size_t index_into_dynamic_dims(
     ) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
+
+template <typename... T>
+struct typelist;
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Key, typename Value, Key K, Value V>
+struct integral_pair;
+
+// Metafunction class; embedded apply<T0, T1> returns true if the key of the
+// integral_pair T0 is less than the key of the integral_pair T1.
+struct integral_pair_less;
+
+// Metafunction class; embedded apply<T0, T1> returns true if integral_constant
+// T0 is less than integral_constant T1. 
+struct integral_constant_less;
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Add a new element to the front of a typelist.
+template <typename T, typename Sequence> 
+struct type_list_prepend;
+
+// Add a new element to a sorted type_list. Compare is a metafunction class;
+// its embedded apply<T0, T1> template takes two parameters and returns a
+// boolean integral_constant.
+template <typename T, typename Sequence
+        , typename Compare = integral_constant_less> 
+struct type_list_push;
+
+template <typename Compare, typename T, typename... Tail> 
+struct type_list_push_impl;
+
+// Produces a sorted type_list from an input type_list. Compare is a
+// metafunction class; its embedded apply<T0, T1> template takes two parameters
+// and returns a boolean integral_constant.
+template <typename Sequence, typename Compare = integral_constant_less> 
+struct type_list_sort;
+
+///////////////////////////////////////////////////////////////////////////////
 // Expression SFINAE workarounds for MSVC.
 
 template <typename Dimensions, std::size_t N>
@@ -156,12 +196,23 @@ template <std::size_t... Dims>
 using make_dynamic_dims_array_t =
     typename make_dynamic_dims_array<Dims...>::type;
 
-// Returns a dimensions<> object of size N with static extents of Value.
+// Creates a dimensions<> type of rank N with static extents of Value.
 template <std::size_t N, std::size_t Value, std::size_t... Dims>
 struct make_filled_dims;
 
 template <std::size_t N, std::size_t Value, std::size_t... Dims>
 using make_filled_dims_t = typename make_filled_dims<N, Value, Dims...>::type;
+
+// Creates a typelist of key-value pairs from an integer_sequence, where
+// the key is the position of the value in the input integer_sequence.
+template <typename Sequence>
+struct make_integer_sequence_index_mapping;
+
+// Creates a key-value typelist from two input integer_sequences.
+template <typename KeySequence, typename ValueSequence>
+struct make_key_value_type_list;
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Returns true if std::is_integral<> is true for all of the types in the
 // parameter pack.

@@ -53,6 +53,92 @@ namespace experimental { namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template <typename... T>
+struct type_list
+{
+    using type = type_list;
+
+    static constexpr std::size_t size() noexcept
+    {
+        return sizeof...(T);
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Key, typename Value, Key K, Value V>
+struct integral_pair
+{
+    using type = integral_pair;
+
+    using key_type = Key;
+    static constexpr key_type key = K;
+
+    using value_type = Value;
+    static constexpr value_type value = V;
+}; 
+
+///////////////////////////////////////////////////////////////////////////////
+
+struct integral_pair_less
+{
+    template <typename T0, typename T1>
+    struct apply
+      : std::integral_constant<bool, T0::key < T1::key> {};
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+struct integral_constant_less
+{
+    template <typename T0, typename T1>
+    struct apply 
+      : std::integral_constant<bool, T0::value < T1::value> {};
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, typename... Tail> 
+struct type_list_prepend<T, type_list<Tail...> > : type_list<T, Tail...> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, typename... Tail, typename Compare>
+struct type_list_push<T, type_list<Tail...>, Compare>
+  : type_list_push_impl<Compare, T, Tail...> {};
+
+template <typename Compare, typename T, typename... Tail>
+struct type_list_push_impl : type_list<T> {};
+
+template <typename Compare, typename T0, typename T1, typename... Tail> 
+struct type_list_push_impl<Compare, T0, T1, Tail...>
+  : type_list_prepend<
+        typename std::conditional<
+            Compare::template apply<T0, T1>::value, T0, T1
+        >::type
+      , typename type_list_push_impl<
+            Compare
+          , typename std::conditional<
+                Compare::template apply<T1, T0>::value, T0, T1
+            >::type
+          , Tail...
+        >::type
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Sequence, typename Compare> 
+struct type_list_sort : type_list<> {};
+
+template <typename T, typename... Tail, typename Compare>
+struct type_list_sort<type_list<T, Tail...>, Compare>
+  : type_list_push<
+        T
+      , typename type_list_sort<type_list<Tail...>, Compare>::type
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
 template <typename Dimensions, std::size_t N>
 struct rank_greater_than
 {
@@ -103,6 +189,26 @@ struct make_filled_dims<0, Value, Dims...>
 
 template <std::size_t N, std::size_t Value, std::size_t... Dims>
 struct make_filled_dims : make_filled_dims<N - 1, Value, Dims..., Value> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, T... I>
+struct make_integer_sequence_index_mapping<integer_sequence<T, I...> >
+  : make_key_value_type_list<
+        make_integer_sequence<T, sizeof...(I)>
+      , integer_sequence<T, I...>
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Key, Key... Ks, typename Value, Value... Vs>
+struct make_key_value_type_list<
+           integer_sequence<Key, Ks...>
+         , integer_sequence<Value, Vs...>
+       >
+{
+    using type = type_list<integral_pair<Key, Value, Ks, Vs>...>;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
