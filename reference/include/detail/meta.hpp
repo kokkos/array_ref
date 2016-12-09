@@ -53,14 +53,14 @@ namespace experimental { namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename... T>
+template <typename... Ts>
 struct type_list
 {
     using type = type_list;
 
     static constexpr std::size_t size() noexcept
     {
-        return sizeof...(T);
+        return sizeof...(Ts);
     }
 };
 
@@ -80,20 +80,20 @@ struct integral_pair
 
 ///////////////////////////////////////////////////////////////////////////////
 
-struct integral_pair_less
+struct type_key_less
 {
     template <typename T0, typename T1>
     struct apply
-      : std::integral_constant<bool, T0::key < T1::key> {};
+      : integral_constant<bool, T0::key < T1::key> {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-struct integral_constant_less
+struct type_value_less
 {
     template <typename T0, typename T1>
     struct apply 
-      : std::integral_constant<bool, T0::value < T1::value> {};
+      : integral_constant<bool, T0::value < T1::value> {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -107,18 +107,18 @@ template <typename T, typename... Tail, typename Compare>
 struct type_list_push<T, type_list<Tail...>, Compare>
   : type_list_push_impl<Compare, T, Tail...> {};
 
-template <typename Compare, typename T, typename... Tail>
-struct type_list_push_impl : type_list<T> {};
+template <typename Compare, typename T>
+struct type_list_push_impl<Compare, T> : type_list<T> {};
 
 template <typename Compare, typename T0, typename T1, typename... Tail> 
 struct type_list_push_impl<Compare, T0, T1, Tail...>
   : type_list_prepend<
-        typename std::conditional<
+        typename conditional<
             Compare::template apply<T0, T1>::value, T0, T1
         >::type
       , typename type_list_push_impl<
             Compare
-          , typename std::conditional<
+          , typename conditional<
                 Compare::template apply<T1, T0>::value, T0, T1
             >::type
           , Tail...
@@ -127,14 +127,58 @@ struct type_list_push_impl<Compare, T0, T1, Tail...>
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename Sequence, typename Compare> 
-struct type_list_sort : type_list<> {};
+template <typename Compare> 
+struct type_list_sort<type_list<>, Compare> : type_list<> {};
 
 template <typename T, typename... Tail, typename Compare>
 struct type_list_sort<type_list<T, Tail...>, Compare>
   : type_list_push<
         T
       , typename type_list_sort<type_list<Tail...>, Compare>::type
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Key, Key... Ks, typename Value, Value... Vs>
+struct make_key_value_type_list<
+           integer_sequence<Key, Ks...>
+         , integer_sequence<Value, Vs...>
+       >
+{
+    using type = type_list<integral_pair<Key, Value, Ks, Vs>...>;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, T... I>
+struct make_key_value_type_list_from_integer_sequence<integer_sequence<T, I...> >
+  : make_key_value_type_list<
+        make_integer_sequence<T, sizeof...(I)>
+      , integer_sequence<T, I...>
+    > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, typename... KeyValues>
+struct make_integer_sequence_from_keys<T, type_list<KeyValues...> >
+  : integer_sequence<T, KeyValues::key...> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+// 1.) Create a sequence of key-value pairs from the input sequence. O(n)
+// 2.) Sort the new key-value sequence by key. O(sort(n))
+// 3.) Create a new integer_sequence of sorted keys from the key-value
+//     sequence. O(n)
+
+template <typename T, T... I>
+struct make_integer_sequence_inverse_mapping<integer_sequence<T, I...> >
+  : make_integer_sequence_from_keys<                        // 3.)
+        T
+      , type_list_sort<                                     // 2.)
+            make_key_value_type_list_from_integer_sequence< // 1.)
+                integer_sequence<T, I...>
+            >
+        >
     > {};
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -161,11 +205,11 @@ struct is_last_index
 
 // Base case.
 template <>
-struct count_dynamic_dims<> : std::integral_constant<std::size_t, 0> {};
+struct count_dynamic_dims<> : integral_constant<size_t, 0> {};
 
 template <std::size_t Head, std::size_t... Tail>
 struct count_dynamic_dims<Head, Tail...>
-  : std::integral_constant<std::size_t,
+  : integral_constant<std::size_t,
         ( Head == dyn
         ? count_dynamic_dims<Tail...>::value + 1
         : count_dynamic_dims<Tail...>::value) 
@@ -176,7 +220,7 @@ struct count_dynamic_dims<Head, Tail...>
 template <std::size_t... Dims>
 struct make_dynamic_dims_array
 {
-    using type = std::array<std::size_t, count_dynamic_dims<Dims...>::value>;
+    using type = array<std::size_t, count_dynamic_dims<Dims...>::value>;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -192,29 +236,9 @@ struct make_filled_dims : make_filled_dims<N - 1, Value, Dims..., Value> {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename T, T... I>
-struct make_integer_sequence_index_mapping<integer_sequence<T, I...> >
-  : make_key_value_type_list<
-        make_integer_sequence<T, sizeof...(I)>
-      , integer_sequence<T, I...>
-    > {};
-
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename Key, Key... Ks, typename Value, Value... Vs>
-struct make_key_value_type_list<
-           integer_sequence<Key, Ks...>
-         , integer_sequence<Value, Vs...>
-       >
-{
-    using type = type_list<integral_pair<Key, Value, Ks, Vs>...>;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-
 // Base case.
 template <>
-struct pack_is_integral<> : std::true_type {};
+struct pack_is_integral<> : true_type {};
 
 template <typename Head, typename... Tail>
 struct pack_is_integral<Head, Tail...>
@@ -223,7 +247,7 @@ struct pack_is_integral<Head, Tail...>
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-struct is_integral_range_slice_specifier : std::false_type {};
+struct is_integral_range_slice_specifier : false_type {};
 
 // initializer_list<I0> case
 template <typename I0>
@@ -253,7 +277,7 @@ struct is_integral_range_slice_specifier<array<I0, 2> >
 
 template <>
 struct is_integral_range_slice_specifier<all_tag>
-  : std::true_type {};
+  : true_type {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -268,7 +292,7 @@ struct is_slice_specifier
 
 // Base case.
 template <>
-struct pack_is_slice_specifiers<> : std::true_type {};
+struct pack_is_slice_specifiers<> : true_type {};
 
 template <typename Head, typename... Tail>
 struct pack_is_slice_specifiers<Head, Tail...>
@@ -282,11 +306,11 @@ struct pack_is_slice_specifiers<Head, Tail...>
 // Base case.
 template <>
 struct count_integral_range_slice_specifiers<>
-  : std::integral_constant<std::size_t, 0> {};
+  : integral_constant<std::size_t, 0> {};
 
 template <typename Head, typename... Tail>
 struct count_integral_range_slice_specifiers<Head, Tail...>
-  : std::integral_constant<std::size_t,
+  : integral_constant<std::size_t,
         ( is_integral_range_slice_specifier<Head>::value
         ? count_integral_range_slice_specifiers<Tail...>::value + 1
         : count_integral_range_slice_specifiers<Tail...>::value) 
