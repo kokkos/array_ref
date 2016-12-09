@@ -43,6 +43,8 @@ struct dimensions
     static constexpr size_type rank() noexcept;
     static constexpr size_type rank_dynamic() noexcept;
 
+    static constexpr bool is_dynamic(size_type rank) noexcept;
+
     constexpr size_type size() const noexcept;
 
     // NOTE: Spec needs to clarify the return value of this function if idx
@@ -112,6 +114,12 @@ inline constexpr typename dimensions<Dims...>::size_type
 dimensions<Dims...>::rank_dynamic() noexcept
 {
     return detail::count_dynamic_dims<Dims...>::value;
+}
+
+template <std::size_t... Dims>
+inline constexpr bool dimensions<Dims...>::is_dynamic(size_type rank) noexcept
+{
+    return detail::dynamic_extent(rank, Dims...) == dyn;
 }
 
 template <std::size_t... Dims>
