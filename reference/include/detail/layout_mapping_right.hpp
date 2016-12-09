@@ -33,7 +33,7 @@ struct layout_mapping_right : Dimensions
     ///////////////////////////////////////////////////////////////////////////
     // TYPES
 
-    using typename Dimensions::size_type; 
+    using size_type = typename Dimensions::size_type; 
 
     // Smallest stride dimension to largest stride dimension (order to rank).
     using order =
@@ -131,7 +131,8 @@ layout_mapping_right<Dimensions, Stepping, Padding>::is_regular() noexcept
 }
 
 template <typename Dimensions, typename Stepping, typename Padding>
-inline constexpr typename Dimensions::size_type
+inline constexpr typename
+    layout_mapping_right<Dimensions, Stepping, Padding>::size_type
 layout_mapping_right<Dimensions, Stepping, Padding>::stride(
     size_type rank
     ) const noexcept
@@ -141,7 +142,8 @@ layout_mapping_right<Dimensions, Stepping, Padding>::stride(
 }
 
 template <typename Dimensions, typename Stepping, typename Padding>
-inline constexpr typename Dimensions::size_type
+inline constexpr typename
+    layout_mapping_right<Dimensions, Stepping, Padding>::size_type
 layout_mapping_right<Dimensions, Stepping, Padding>::span() const noexcept
 {
     return detail::dims_ternary_reduction<
