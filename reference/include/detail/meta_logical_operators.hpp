@@ -36,6 +36,9 @@ struct conjunction<T0, T1, T2, TN...>
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename... Ts>
+struct disjunction;
+
+template <typename... Ts>
 struct disjunction : false_type {};
 
 template <typename T>
