@@ -115,7 +115,7 @@ struct layout_regular_indexer<
   , Padding
   , Ordering
   , typename enable_if<
-        rank_is_unit_stride<N, Dimensions, Ordering>::value // N == otr[0]
+        is_rank_unit_stride<N, Dimensions, Ordering>::value // N == otr[0]
     >::type
 {
     using size_type = typename Dimensions::size_type; 

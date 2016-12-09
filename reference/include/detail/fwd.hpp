@@ -205,16 +205,16 @@ struct make_integer_sequence_inverse_mapping;
 // Expression SFINAE workarounds for MSVC.
 
 template <std::size_t N, typename Dimensions>
-struct rank_is_greater_than;
+struct is_rank_greater_than;
 
 template <std::size_t N, typename Dimensions>
-struct rank_is_equal_to;
+struct is_rank_equal_to;
 
 template <std::size_t N, typename Dimensions, typename Ordering>
-struct rank_is_unit_stride;
+struct is_rank_unit_stride;
 
 template <std::size_t N, typename Dimensions>
-struct rank_is_last_index;
+struct is_rank_last_index;
 
 ///////////////////////////////////////////////////////////////////////////////
 

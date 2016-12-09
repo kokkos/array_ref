@@ -214,31 +214,31 @@ struct make_integer_sequence_inverse_mapping<integer_sequence<T, I...> >
 ///////////////////////////////////////////////////////////////////////////////
 
 template <std::size_t N, typename Dimensions>
-struct rank_is_greater_than
+struct is_rank_greater_than
 {
     static constexpr bool value = N < Dimensions::rank();
 };
 
 template <std::size_t N, typename Dimensions>
-struct rank_is_equal_to
+struct is_rank_equal_to
 {
     static constexpr bool value = N == Dimensions::rank();
 };
 
 template <std::size_t N, typename Dimensions, typename T>
-struct rank_is_unit_stride<N, Dimensions, integer_sequence<T> >
+struct is_rank_unit_stride<N, Dimensions, integer_sequence<T> >
 {
     static constexpr bool value = true;
 };
 
 template <std::size_t N, typename Dimensions, typename T, T I0, T... Is>
-struct rank_is_unit_stride<N, Dimensions, integer_sequence<T, I0, Is...> >
+struct is_rank_unit_stride<N, Dimensions, integer_sequence<T, I0, Is...> >
 {
     static constexpr bool value = N == I0;
 };
 
 template <std::size_t N, typename Dimensions>
-struct rank_is_last_index
+struct is_rank_last_index
 {
     static constexpr bool value =    (1 < Dimensions::rank()) 
                                   && (N == (Dimensions::rank() - 1));
