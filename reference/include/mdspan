@@ -58,7 +58,7 @@ struct mdspan
 
     template < typename... Integers
              , typename = typename enable_if<
-                   detail::pack_is_integral<Integers...>::value
+                   detail::is_integral_pack<Integers...>::value
                >::type
              >
     explicit constexpr mdspan(
@@ -103,7 +103,7 @@ struct mdspan
     template <typename... Integers>
     typename std::enable_if<
         Dims::rank() == sizeof...(Integers)
-        && detail::pack_is_integral<Integers...>::value
+        && detail::is_integral_pack<Integers...>::value
       , reference
     >::type operator()(Integers... indices) const noexcept;
 
@@ -225,7 +225,7 @@ template <typename ValueType, typename Dims, typename Layout, typename Accessor>
 template <typename... Integers>
 inline typename std::enable_if<
        Dims::rank() == sizeof...(Integers)
-    && detail::pack_is_integral<Integers...>::value
+    && detail::is_integral_pack<Integers...>::value
   , typename mdspan<ValueType, Dims, Layout, Accessor>::reference
 >::type mdspan<ValueType, Dims, Layout, Accessor>::operator()(
     Integers... indices

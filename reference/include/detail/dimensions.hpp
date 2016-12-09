@@ -91,7 +91,7 @@ dimensions<Dims...>::dimensions(DynamicDims... ddims) noexcept
   : dynamic_dims_{{static_cast<value_type>(ddims)...}}
 {
     static_assert(
-        detail::pack_is_integral<DynamicDims...>::value
+        detail::is_integral_pack<DynamicDims...>::value
       , "Non-integral types passed to dimensions<> constructor."
     );
     static_assert(

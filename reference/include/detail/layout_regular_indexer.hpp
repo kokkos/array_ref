@@ -73,12 +73,17 @@ struct layout_regular_indexer
       , Dimensions, Stepping, Padding, Ordering
     >;
 
-    template <std::size_t... IdxDims>
+    static constexpr bool is_dynamic_stride()
+    {
+        return p::is_dynamic(N) || s::is_dynamic(N)
+            || d::is_dynamic(otr(rto(N) - 1))
+            || next::is_dynamic_stride();
+    }
+
     static constexpr size_type stride(
         Dimensions             d
       , Stepping               s
       , Padding                p
-      , dimensions<IdxDims...> i
         ) noexcept
     {
 
@@ -97,7 +102,7 @@ struct layout_regular_indexer
     }
 };
 
-// Termination case: N == otr[0]
+// Base case: N == otr[0].
 template <
     std::size_t N
   , typename Dimensions, typename Stepping, typename Padding, typename Ordering
@@ -115,12 +120,16 @@ struct layout_regular_indexer<
 {
     using size_type = typename Dimensions::size_type; 
 
-    template <std::size_t... IdxDims>
+    static constexpr bool is_dynamic_stride()
+    {
+        return p::is_dynamic(N) || s::is_dynamic(N)
+            || d::is_dynamic(otr(rto(N) - 1));
+    }
+
     static constexpr size_type stride(
         Dimensions             d
       , Stepping               s
       , Padding                p
-      , dimensions<IdxDims...> i
         ) noexcept
     {
         return p[N] + s[N];

@@ -137,7 +137,7 @@ struct type_list;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Stores the contents of an integer_sequence in a static constexpr array and 
+// Stores the contents of an integer_sequence<> in a static constexpr array and 
 // provides a fast constexpr indexing operation.
 template <typename Sequence>
 struct integer_sequence_array;
@@ -157,42 +157,47 @@ struct type_value_less;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Add a new element to the front of a type_list.
+// Add a new element to the front of an integer_sequence<>.
+template <typename T, T I, typename Sequence> 
+struct integer_sequence_push_front;
+
+// Add a new element to the front of a type_list<>.
 template <typename T, typename Sequence> 
 struct type_list_push_front;
 
-// Add a new element to a sorted type_list. Compare is a metafunction class;
+// Add a new element to a sorted type_list<>. Compare is a metafunction class;
 // its embedded apply<T0, T1> template takes two parameters and returns a
-// boolean integral_constant.
+// boolean integral_constant<>.
 template <typename T, typename Sequence, typename Compare = type_value_less> 
 struct type_list_push;
 
 template <typename Compare, typename T, typename... Tail> 
 struct type_list_push_impl;
 
-// Produces a sorted type_list from an input type_list. Compare is a
+// Creates a sorted type_list<> from an input type_list<>. Compare is a
 // metafunction class; its embedded apply<T0, T1> template takes two parameters
-// and returns a boolean integral_constant.
+// and returns a boolean integral_constant<>.
 template <typename Sequence, typename Compare = type_value_less> 
 struct type_list_sort;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Creates a typelist of integral_pairs from two input integer_sequences.
+// Creates a typelist of integral_pairs from two input integer_sequence<>s.
 template <typename KeySequence, typename ValueSequence>
 struct make_key_value_type_list;
 
-// Creates a typelist of integral_pairs from an integer_sequence, where
-// the key is the position of the value in the input integer_sequence.
+// Creates a typelist of integral_pairs from an integer_sequence<>, where
+// the key is the position of the value in the input integer_sequence<>.
 template <typename Sequence>
 struct make_key_value_type_list_from_integer_sequence;
 
-// Creates an integer_sequence from the keys of a type_list of integral_pairs.
+// Creates an integer_sequence<> from the keys of a type_list<> of
+// integral_pair<>s.
 template <typename T, typename KeyValueSequence>
 struct make_integer_sequence_from_keys;
 
-// Creates an integer_sequence which maps the values of the input
-// integer_sequence to the positions of those values.
+// Creates an integer_sequence<> which maps the values of the input
+// integer_sequence<> to the positions of those values.
 template <typename Sequence>
 struct make_integer_sequence_inverse_mapping;
 
@@ -217,7 +222,22 @@ struct rank_is_last_index;
 template <std::size_t... Dims>
 struct count_dynamic_dims;
 
-// Builds a std::array with one entry for each dynamic dimension.
+// Create an integer_sequence<> of the rank indices of dynamic dimensions.
+template <std::size_t N, std::size_t... Dims>
+struct make_dynamic_dims_indices_impl;
+
+template <std::size_t N, std::size_t... Dims>
+using make_dynamic_dims_indices_impl_t =
+    typename make_dynamic_dims_indices_impl<N, Dims...>::type;
+
+template <std::size_t... Dims>
+using make_dynamic_dims_indices = make_dynamic_dims_indices_impl<0, Dims...>;
+
+template <std::size_t... Dims>
+using make_dynamic_dims_indices_t =
+    typename make_dynamic_dims_indices_impl<0, Dims...>::type;
+
+// Builds an array<> with one entry for each dynamic dimension.
 template <std::size_t... Dims>
 struct make_dynamic_dims_array;
 
@@ -237,7 +257,7 @@ using make_filled_dims_t = typename make_filled_dims<N, Value, Dims...>::type;
 // Returns true if std::is_integral<> is true for all of the types in the
 // parameter pack.
 template <typename... T>
-struct pack_is_integral;
+struct is_integral_pack;
 
 // Returns true if T is an integral range slice specifier, e.g. one of the
 // following, where I0 and I1 are integral types:

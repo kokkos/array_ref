@@ -62,7 +62,7 @@ set(TESTS
     test_dims_dynamic_extent
     test_dims_index_into_dynamic_dims
     test_dims_meta_interfaces
-    test_dims_rt_interfaces
+    test_dims_runtime_interfaces
     test_integer_sequence
     test_layout_mapping_left_basics
     test_layout_mapping_left_padding
@@ -78,7 +78,7 @@ set(TESTS
     test_meta_is_slice_specifier
     test_meta_make_dynamic_dims_array
     test_meta_make_filled_dims
-    test_meta_pack_is_integral
+    test_meta_is_integral_pack
     test_meta_type_list
    )
 

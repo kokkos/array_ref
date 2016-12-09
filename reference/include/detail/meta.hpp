@@ -122,6 +122,12 @@ struct type_value_less
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template <typename T, T I0, T... Is> 
+struct integer_sequence_push_front<T, I0, integer_sequence<T, Is...> >
+  : integer_sequence<T, I0, Is...> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
 template <typename T, typename... Tail> 
 struct type_list_push_front<T, type_list<Tail...> > : type_list<T, Tail...> {};
 
@@ -177,7 +183,7 @@ struct make_key_value_type_list<
 template <typename T, T... I>
 struct make_key_value_type_list_from_integer_sequence<integer_sequence<T, I...> >
   : make_key_value_type_list<
-        typename make_integer_sequence<std::size_t, sizeof...(I)>::type
+        typename make_index_sequence<sizeof...(I)>::type
       , integer_sequence<T, I...>
     > {};
 
@@ -242,7 +248,7 @@ struct rank_is_last_index
 
 // Base case.
 template <>
-struct count_dynamic_dims<> : integral_constant<size_t, 0> {};
+struct count_dynamic_dims<> : integral_constant<std::size_t, 0> {};
 
 template <std::size_t Head, std::size_t... Tail>
 struct count_dynamic_dims<Head, Tail...>
@@ -251,6 +257,28 @@ struct count_dynamic_dims<Head, Tail...>
         ? count_dynamic_dims<Tail...>::value + 1
         : count_dynamic_dims<Tail...>::value) 
     > {};
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Base case.
+template <std::size_t N>
+struct make_dynamic_dims_indices_impl<N>
+{
+    using type = index_sequence<>;
+};
+
+template <std::size_t N, std::size_t Head, std::size_t... Tail>
+struct make_dynamic_dims_indices_impl<N, Head, Tail...>
+{
+    using type = typename conditional<
+        Head == dyn
+      , typename integer_sequence_push_front<
+            std::size_t, N
+          , typename make_dynamic_dims_indices_impl<N + 1, Tail...>::type
+        >::type
+      , typename make_dynamic_dims_indices_impl<N + 1, Tail...>::type
+    >::type;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -275,11 +303,11 @@ struct make_filled_dims : make_filled_dims<N - 1, Value, Dims..., Value> {};
 
 // Base case.
 template <>
-struct pack_is_integral<> : true_type {};
+struct is_integral_pack<> : true_type {};
 
 template <typename Head, typename... Tail>
-struct pack_is_integral<Head, Tail...>
-  : experimental::conjunction<is_integral<Head>, pack_is_integral<Tail...> > {};
+struct is_integral_pack<Head, Tail...>
+  : experimental::conjunction<is_integral<Head>, is_integral_pack<Tail...> > {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
