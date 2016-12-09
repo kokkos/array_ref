@@ -22,6 +22,7 @@ using std::experimental::detail::type_list_push_front;
 using std::experimental::detail::type_list_sort;
 
 using std::experimental::detail::make_key_value_type_list_from_integer_sequence;
+using std::experimental::detail::make_integer_sequence_inverse_mapping;
 
 int main()
 {
@@ -438,6 +439,116 @@ int main()
     }
 
     // make_integer_sequence_inverse_mapping
+
+    { // 01
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 0, 1>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 0, 1>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 10
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 1, 0>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 1, 0>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 012
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 0, 1, 2>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 0, 1, 2>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 021
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 0, 2, 1>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 0, 2, 1>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 102
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 1, 0, 2>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 1, 0, 2>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 120
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 1, 2, 0>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 2, 0, 1>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 201
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 2, 0, 1>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 1, 2, 0>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 210
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 2, 1, 0>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 2, 1, 0>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 0123
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 0, 1, 2, 3>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 0, 1, 2, 3>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 3210
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 3, 2, 1, 0>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 3, 2, 1, 0>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
+
+    { // 1320
+        using A = make_integer_sequence_inverse_mapping<
+            integer_sequence<int, 1, 3, 2, 0>
+        >::type;
+
+        using B = integer_sequence<std::size_t, 3, 0, 2, 1>;
+
+        BOOST_TEST_EQ((is_same<A, B>::value), true);
+    }
 
     return boost::report_errors();
 }

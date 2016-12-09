@@ -172,13 +172,13 @@ struct make_integer_sequence_from_keys<T, type_list<KeyValues...> >
 
 template <typename T, T... I>
 struct make_integer_sequence_inverse_mapping<integer_sequence<T, I...> >
-  : make_integer_sequence_from_keys<                        // 3.)
+  : make_integer_sequence_from_keys<                                 // 3.)
         std::size_t
-      , type_list_sort<                                     // 2.)
-            make_key_value_type_list_from_integer_sequence< // 1.)
+      , typename type_list_sort<                                     // 2.)
+            typename make_key_value_type_list_from_integer_sequence< // 1.)
                 integer_sequence<T, I...>
-            >
-        >
+            >::type
+        >::type
     > {};
 
 ///////////////////////////////////////////////////////////////////////////////
