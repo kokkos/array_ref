@@ -66,6 +66,30 @@ struct type_list
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template <typename T, T... I>
+struct integer_sequence_array<integer_sequence<T, I...> >
+{
+    using size_type = std::size_t;
+    using value_type = T;
+
+    static constexpr value_type value[] = { I... };
+
+    static constexpr size_type size() noexcept
+    {
+        return sizeof...(I);
+    }
+
+    constexpr value_type operator[] (size_type idx) const noexcept
+    {
+        return value[idx];
+    }
+};
+
+template <typename T, T... I>
+constexpr T integer_sequence_array<integer_sequence<T, I...> >::value[];
+
+///////////////////////////////////////////////////////////////////////////////
+
 template <typename Key, typename Value, Key K, Value V>
 struct integral_pair
 {
@@ -183,22 +207,35 @@ struct make_integer_sequence_inverse_mapping<integer_sequence<T, I...> >
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename Dimensions, std::size_t N>
-struct rank_greater_than
+template <std::size_t N, typename Dimensions>
+struct rank_is_greater_than
 {
-    enum { value = N < Dimensions::rank() };
+    static constexpr bool value = N < Dimensions::rank();
 };
 
-template <typename Dimensions, std::size_t N>
-struct rank_equal_to
+template <std::size_t N, typename Dimensions>
+struct rank_is_equal_to
 {
-    enum { value = N == Dimensions::rank() };
+    static constexpr bool value = N == Dimensions::rank();
 };
 
-template <typename Dimensions, std::size_t N>
-struct is_last_index
+template <std::size_t N, typename Dimensions, typename T>
+struct rank_is_unit_stride<N, Dimensions, integer_sequence<T> >
 {
-    enum { value = (1 < Dimensions::rank()) && (N == (Dimensions::rank() - 1)) };
+    static constexpr bool value = true;
+};
+
+template <std::size_t N, typename Dimensions, typename T, T I0, T... Is>
+struct rank_is_unit_stride<N, Dimensions, integer_sequence<T, I0, Is...> >
+{
+    static constexpr bool value = N == I0;
+};
+
+template <std::size_t N, typename Dimensions>
+struct rank_is_last_index
+{
+    static constexpr bool value =    (1 < Dimensions::rank()) 
+                                  && (N == (Dimensions::rank() - 1));
 };
 
 ///////////////////////////////////////////////////////////////////////////////

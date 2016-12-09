@@ -249,7 +249,7 @@ struct layout_mapping_right_indexer<
   , Padding
   , 0                                                       // First index
   , typename enable_if<
-        detail::rank_greater_than<Dimensions, 1>::value     // 1 < rank()
+        detail::rank_is_greater_than<1, Dimensions>::value     // 1 < rank()
     >::type 
 >
 {
@@ -281,7 +281,7 @@ struct layout_mapping_right_indexer<
   , Padding
   , 0                                                       // First index
   , typename enable_if<
-        detail::rank_equal_to<Dimensions, 1>::value         // 1 == rank()
+        detail::rank_is_equal_to<1, Dimensions>::value         // 1 == rank()
     >::type 
 >
 {
@@ -312,7 +312,7 @@ struct layout_mapping_right_indexer<
   , Padding
   , N
   , typename enable_if<
-        detail::rank_equal_to<Dimensions, 0>::value         // 0 == rank()
+        detail::rank_is_equal_to<0, Dimensions>::value         // 0 == rank()
     >::type 
 >
 {
@@ -342,7 +342,7 @@ struct layout_mapping_right_indexer<
   , Padding
   , N
   , typename enable_if<
-        detail::is_last_index<Dimensions, N>::value         // Last index
+        detail::rank_is_last_index<N, Dimensions>::value         // Last index
     >::type 
 >
 {

@@ -137,6 +137,13 @@ struct type_list;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Stores the contents of an integer_sequence in a static constexpr array and 
+// provides a fast constexpr indexing operation.
+template <typename Sequence>
+struct integer_sequence_array;
+
+///////////////////////////////////////////////////////////////////////////////
+
 template <typename Key, typename Value, Key K, Value V>
 struct integral_pair;
 
@@ -192,14 +199,17 @@ struct make_integer_sequence_inverse_mapping;
 ///////////////////////////////////////////////////////////////////////////////
 // Expression SFINAE workarounds for MSVC.
 
-template <typename Dimensions, std::size_t N>
-struct rank_greater_than;
+template <std::size_t N, typename Dimensions>
+struct rank_is_greater_than;
 
-template <typename Dimensions, std::size_t N>
-struct rank_equal_to;
+template <std::size_t N, typename Dimensions>
+struct rank_is_equal_to;
 
-template <typename Dimensions, std::size_t N>
-struct is_last_index;
+template <std::size_t N, typename Dimensions, typename Ordering>
+struct rank_is_unit_stride;
+
+template <std::size_t N, typename Dimensions>
+struct rank_is_last_index;
 
 ///////////////////////////////////////////////////////////////////////////////
 
