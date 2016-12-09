@@ -77,6 +77,7 @@ set(TESTS
     test_meta_extract_dimensions
     test_meta_is_slice_specifier
     test_meta_make_dynamic_dims_array
+    test_meta_make_dynamic_dims_indices
     test_meta_make_filled_dims
     test_meta_is_integral_pack
     test_meta_type_list
