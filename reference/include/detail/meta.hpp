@@ -99,7 +99,7 @@ struct type_value_less
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename... Tail> 
-struct type_list_prepend<T, type_list<Tail...> > : type_list<T, Tail...> {};
+struct type_list_push_front<T, type_list<Tail...> > : type_list<T, Tail...> {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -112,7 +112,7 @@ struct type_list_push_impl<Compare, T> : type_list<T> {};
 
 template <typename Compare, typename T0, typename T1, typename... Tail> 
 struct type_list_push_impl<Compare, T0, T1, Tail...>
-  : type_list_prepend<
+  : type_list_push_front<
         typename conditional<
             Compare::template apply<T0, T1>::value, T0, T1
         >::type
@@ -153,7 +153,7 @@ struct make_key_value_type_list<
 template <typename T, T... I>
 struct make_key_value_type_list_from_integer_sequence<integer_sequence<T, I...> >
   : make_key_value_type_list<
-        make_integer_sequence<T, sizeof...(I)>
+        typename make_integer_sequence<std::size_t, sizeof...(I)>::type
       , integer_sequence<T, I...>
     > {};
 
@@ -173,7 +173,7 @@ struct make_integer_sequence_from_keys<T, type_list<KeyValues...> >
 template <typename T, T... I>
 struct make_integer_sequence_inverse_mapping<integer_sequence<T, I...> >
   : make_integer_sequence_from_keys<                        // 3.)
-        T
+        std::size_t
       , type_list_sort<                                     // 2.)
             make_key_value_type_list_from_integer_sequence< // 1.)
                 integer_sequence<T, I...>

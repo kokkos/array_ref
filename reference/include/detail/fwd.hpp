@@ -152,7 +152,7 @@ struct type_value_less;
 
 // Add a new element to the front of a type_list.
 template <typename T, typename Sequence> 
-struct type_list_prepend;
+struct type_list_push_front;
 
 // Add a new element to a sorted type_list. Compare is a metafunction class;
 // its embedded apply<T0, T1> template takes two parameters and returns a
