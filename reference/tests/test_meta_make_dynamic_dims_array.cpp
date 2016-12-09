@@ -17,17 +17,20 @@ using std::experimental::detail::make_dynamic_dims_array_t;
 
 int main()
 {
+    // See notes in the definition of make_dynamic_dims_array, when there are no
+    // dynamic extents we change the element type to unsigned char to ensure
+    // that the size of the array is 1.
     BOOST_TEST((is_same<
-        make_dynamic_dims_array_t<       >, array<std::size_t, 0>
+        make_dynamic_dims_array_t<             >, array<unsigned char, 0>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_array_t<3      >, array<std::size_t, 0>
+        make_dynamic_dims_array_t<3            >, array<unsigned char, 0>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_array_t<3, 5   >, array<std::size_t, 0>
+        make_dynamic_dims_array_t<3,   5       >, array<unsigned char, 0>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_array_t<3, 5, 9>, array<std::size_t, 0>
+        make_dynamic_dims_array_t<3,   5,   9  >, array<unsigned char, 0>
     >::value));
 
     BOOST_TEST((is_same<

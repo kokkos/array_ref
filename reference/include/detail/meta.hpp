@@ -285,7 +285,18 @@ struct make_dynamic_dims_indices_impl<N, Head, Tail...>
 template <std::size_t... Dims>
 struct make_dynamic_dims_array
 {
-    using type = array<std::size_t, count_dynamic_dims<Dims...>::value>;
+    static constexpr std::size_t size = count_dynamic_dims<Dims...>::value;
+
+    // libc++'s array<> is not an empty class (e.g. 1 == sizeof()) when it is
+    // size zero; at a minimum, it contains one element. As a workaround, we 
+    // change the array element type to unsigned char when there are no 
+    // dynamic dimensions. This ensures that dimensions<> will have the correct
+    // size (1 byte, the smallest size possible for any type) when there are no
+    // dynamic dimensions.
+    using type = array<
+        typename conditional<0 == size, unsigned char, std::size_t>::type
+      , size
+    >;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
