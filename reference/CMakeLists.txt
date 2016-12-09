@@ -79,6 +79,7 @@ set(TESTS
     test_meta_make_dynamic_dims_array
     test_meta_make_filled_dims
     test_meta_pack_is_integral
+    test_meta_type_list
    )
 
 foreach(TEST ${TESTS})
