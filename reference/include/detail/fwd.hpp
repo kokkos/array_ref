@@ -50,10 +50,10 @@ template <std::size_t N>
 using make_reversed_index_sequence =
     make_reversed_integer_sequence<std::size_t, N>;
 
-///////////////////////////////////////////////////////////////////////////////
-
 namespace detail
 {
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Reduction-style visitation of the extents of dimensions<>. Op, Reduction and
 // Sentinel are function objects with a constexpr const method that takes the
@@ -157,13 +157,55 @@ struct type_value_less;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Add a new dimension to the front of a dimensions<>.
+template <std::size_t Dim, typename Dimensions> 
+struct dimensions_push_front;
+
+template <std::size_t Dim, typename Dimensions> 
+using dimensions_push_front_t =
+    typename dimensions_push_front<Dim, Dimensions>::type;
+
+// Add a new dimension to the back of a dimensions<>.
+template <std::size_t Dim, typename Dimensions> 
+struct dimensions_push_back;
+
+template <std::size_t Dim, typename Dimensions> 
+using dimensions_push_back_t =
+    typename dimensions_push_back<Dim, Dimensions>::type;
+
 // Add a new element to the front of an integer_sequence<>.
 template <typename T, T I, typename Sequence> 
 struct integer_sequence_push_front;
 
+template <typename T, T I, typename Sequence> 
+using integer_sequence_push_front_t =
+    typename integer_sequence_push_front<T, I, Sequence>::type;
+
+// Add a new element to the back of an integer_sequence<>.
+template <typename T, T I, typename Sequence> 
+struct integer_sequence_push_back;
+
+template <typename T, T I, typename Sequence> 
+using integer_sequence_push_back_t =
+    typename integer_sequence_push_back<T, I, Sequence>::type;
+
 // Add a new element to the front of a type_list<>.
 template <typename T, typename Sequence> 
 struct type_list_push_front;
+
+template <typename T, typename Sequence> 
+using type_list_push_front_t =
+    typename type_list_push_front<T, Sequence>::type;
+
+// Add a new element to the back of a type_list<>.
+template <typename T, typename Sequence> 
+struct type_list_push_back;
+
+template <typename T, typename Sequence> 
+using type_list_push_back_t =
+    typename type_list_push_back<T, Sequence>::type;
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Add a new element to a sorted type_list<>. Compare is a metafunction class;
 // its embedded apply<T0, T1> template takes two parameters and returns a

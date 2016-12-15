@@ -122,14 +122,51 @@ struct type_value_less
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template <std::size_t Dim0, std::size_t... Dims> 
+struct dimensions_push_front<Dim0, dimensions<Dims...> >
+{
+    using type = dimensions<Dim0, Dims...>;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <std::size_t Dim0, std::size_t... Dims> 
+struct dimensions_push_back<Dim0, dimensions<Dims...> >
+{
+    using type = dimensions<Dims..., Dim0>;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
 template <typename T, T I0, T... Is> 
 struct integer_sequence_push_front<T, I0, integer_sequence<T, Is...> >
-  : integer_sequence<T, I0, Is...> {};
+{
+    using type = integer_sequence<T, I0, Is...>;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, T I0, T... Is> 
+struct integer_sequence_push_back<T, I0, integer_sequence<T, Is...> >
+{
+    using type = integer_sequence<T, Is..., I0>;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename... Tail> 
-struct type_list_push_front<T, type_list<Tail...> > : type_list<T, Tail...> {};
+struct type_list_push_front<T, type_list<Tail...> >
+{
+    using type = type_list<T, Tail...>;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, typename... Tail> 
+struct type_list_push_back<T, type_list<Tail...> >
+{
+    using type = type_list<Tail..., T>;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
