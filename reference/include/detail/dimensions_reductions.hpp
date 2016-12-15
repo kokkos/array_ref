@@ -29,12 +29,10 @@ struct dims_unary_reduction
         dimensions<Dims0...> d0
         ) const noexcept
     {
-/*
         static_assert(
-            dimensions<Dims0...>::rank() == Size 
+            std::rank<dimensions<Dims0...> >::value == Size 
           , "Size not equal to rank of argument"
         );
-*/
         return Reduction()(
             Op()(d0[Idx])
           , dims_unary_reduction<Op, Reduction, Sentinel, Idx + 1, Size>()
