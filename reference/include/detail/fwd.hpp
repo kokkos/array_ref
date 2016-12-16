@@ -34,17 +34,25 @@ struct merge_and_renumber_integer_sequences;
 template <typename Sequence0, typename Sequence1>
 struct merge_and_renumber_reversed_integer_sequences;
 
+template <typename T, std::size_t N>
+struct make_integer_sequence_impl;
+
+template <typename T, std::size_t N>
+struct make_reversed_integer_sequence_impl;
+
 } // std::experimental::detail
 
 template <typename T, std::size_t N>
-struct make_integer_sequence;
+using make_integer_sequence =
+    typename detail::make_integer_sequence_impl<T, N>::type;
 
 template <std::size_t N>
 using make_index_sequence =
     make_integer_sequence<std::size_t, N>;
 
 template <typename T, std::size_t N>
-struct make_reversed_integer_sequence;
+using make_reversed_integer_sequence =
+    typename detail::make_reversed_integer_sequence_impl<T, N>::type;
 
 template <std::size_t N>
 using make_reversed_index_sequence =

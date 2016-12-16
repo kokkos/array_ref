@@ -220,7 +220,7 @@ struct make_key_value_type_list<
 template <typename T, T... I>
 struct make_key_value_type_list_from_integer_sequence<integer_sequence<T, I...> >
   : make_key_value_type_list<
-        typename make_index_sequence<sizeof...(I)>::type
+        make_index_sequence<sizeof...(I)>
       , integer_sequence<T, I...>
     > {};
 

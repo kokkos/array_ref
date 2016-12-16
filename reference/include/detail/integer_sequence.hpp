@@ -37,47 +37,65 @@ template <typename T, T... I0, T... I1>
 struct merge_and_renumber_integer_sequences<
            integer_sequence<T, I0...>, integer_sequence<T, I1...>
        >
-  : integer_sequence<T, I0..., (sizeof...(I0) + I1)...> {};
+{
+    using type = integer_sequence<T, I0..., (sizeof...(I0) + I1)...>;
+};
 
 template <typename T, T... I0, T... I1>
 struct merge_and_renumber_reversed_integer_sequences<
            integer_sequence<T, I0...>, integer_sequence<T, I1...>
        >
-  : integer_sequence<T, (sizeof...(I1) + I0)..., I1...> {};
-
-} // std::experimental::detail
-
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename T, std::size_t N>
-struct make_integer_sequence
-  : detail::merge_and_renumber_integer_sequences<
-        typename make_integer_sequence<T, N / 2>::type
-      , typename make_integer_sequence<T, N - N / 2>::type
-    > {};
-
-template <typename T>
-struct make_integer_sequence<T, 0> : integer_sequence<T> {};
-
-template <typename T>
-struct make_integer_sequence<T, 1> : integer_sequence<T, 0> {};
+{
+    using type = integer_sequence<T, (sizeof...(I1) + I0)..., I1...>;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, std::size_t N>
-struct make_reversed_integer_sequence
-  : detail::merge_and_renumber_reversed_integer_sequences<
-        typename make_reversed_integer_sequence<T, N / 2>::type
-      , typename make_reversed_integer_sequence<T, N - N / 2>::type
-    > {};
+struct make_integer_sequence_impl
+{
+    using type = typename detail::merge_and_renumber_integer_sequences<
+        make_integer_sequence<T, N / 2>
+      , make_integer_sequence<T, N - N / 2>
+    >::type;
+};
 
 template <typename T>
-struct make_reversed_integer_sequence<T, 0> : integer_sequence<T> {};
+struct make_integer_sequence_impl<T, 0>
+{
+    using type = integer_sequence<T>;
+};
 
 template <typename T>
-struct make_reversed_integer_sequence<T, 1> : integer_sequence<T, 0> {};
+struct make_integer_sequence_impl<T, 1>
+{
+    using type = integer_sequence<T, 0>;
+};
 
-}} // std::experimental
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T, std::size_t N>
+struct make_reversed_integer_sequence_impl
+{
+    using type = typename detail::merge_and_renumber_reversed_integer_sequences<
+        make_reversed_integer_sequence<T, N / 2>
+      , make_reversed_integer_sequence<T, N - N / 2>
+    >::type;
+};
+
+template <typename T>
+struct make_reversed_integer_sequence_impl<T, 0>
+{
+    using type = integer_sequence<T>;
+};
+
+template <typename T>
+struct make_reversed_integer_sequence_impl<T, 1>
+{
+    using type = integer_sequence<T, 0>;
+};
+
+}}} // std::experimental::detail
 
 #endif // STD_DFA2020D_4C7F_4C76_BCA2_668E25E9FAE4
 

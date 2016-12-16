@@ -36,8 +36,7 @@ struct layout_mapping_right : Dimensions
     using size_type = typename Dimensions::size_type; 
 
     // Smallest stride dimension to largest stride dimension (order to rank).
-    using order =
-        typename make_reversed_index_sequence<Dimensions::rank()>::type;
+    using order = make_reversed_index_sequence<Dimensions::rank()>;
 
     ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
