@@ -32,8 +32,6 @@ int main()
     BOOST_TEST_EQ((count_dynamic_dims<dyn, 5,   dyn>::value), 2);
     BOOST_TEST_EQ((count_dynamic_dims<dyn, dyn, 9  >::value), 2);
 
-    BOOST_TEST_EQ((count_dynamic_dims<dyn, dyn, dyn>::value), 3);
-
     return boost::report_errors();
 }
 
