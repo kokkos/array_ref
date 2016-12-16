@@ -8,8 +8,6 @@
 #if !defined(STD_A3B0F119_C38A_44E3_95E4_DD40594F4328)
 #define STD_A3B0F119_C38A_44E3_95E4_DD40594F4328
 
-// TODO: Make constexpr 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Order Agnostic Index and Stride Calculations for Regular Layouts
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,13 +29,17 @@
 
 #include "detail/fwd.hpp"
 #include "detail/meta.hpp"
+#include "detail/dimensions.hpp"
 
 namespace std { namespace experimental { namespace detail
 {
 
 template <
     std::size_t N
-  , typename Dimensions, typename Stepping, typename Padding, typename Ordering
+  , typename Dimensions
+  , typename Stepping
+  , typename Padding
+  , typename Ordering
   , typename enable = void
     >
 struct layout_regular_indexer;
@@ -45,7 +47,10 @@ struct layout_regular_indexer;
 // Recursive case.
 template <
     std::size_t N
-  , typename Dimensions, typename Stepping, typename Padding, typename Ordering
+  , typename Dimensions
+  , typename Stepping
+  , typename Padding
+  , typename Ordering
   , typename enable
     >
 struct layout_regular_indexer
@@ -75,8 +80,8 @@ struct layout_regular_indexer
 
     static constexpr bool is_dynamic_stride()
     {
-        return p::is_dynamic(N) || s::is_dynamic(N)
-            || d::is_dynamic(otr(rto(N) - 1))
+        return Padding::is_dynamic(N) || Stepping::is_dynamic(N)
+            || Dimensions::is_dynamic(otr(rto(N) - 1))
             || next::is_dynamic_stride();
     }
 
@@ -86,8 +91,7 @@ struct layout_regular_indexer
       , Padding                p
         ) noexcept
     {
-
-        return p[N] + s[N] * d[otr(rto(N) - 1)] * next::stride(d, s, p, i);
+        return p[N] + s[N] * d[otr(rto(N) - 1)] * next::stride(d, s, p);
     }
 
     template <std::size_t... IdxDims>
@@ -98,15 +102,17 @@ struct layout_regular_indexer
       , dimensions<IdxDims...> i
         ) noexcept
     {
-        return i[N] * stride(d, s, p, i) + next::index(d, s, p, i);
+        return i[N] * stride(d, s, p) + next::index(d, s, p, i);
     }
 };
 
 // Base case: N == otr[0].
 template <
     std::size_t N
-  , typename Dimensions, typename Stepping, typename Padding, typename Ordering
-  , typename enable
+  , typename Dimensions
+  , typename Stepping
+  , typename Padding
+  , typename Ordering
     >
 struct layout_regular_indexer<
     N
@@ -117,13 +123,13 @@ struct layout_regular_indexer<
   , typename enable_if<
         is_rank_unit_stride<N, Dimensions, Ordering>::value // N == otr[0]
     >::type
+>
 {
     using size_type = typename Dimensions::size_type; 
 
     static constexpr bool is_dynamic_stride()
     {
-        return p::is_dynamic(N) || s::is_dynamic(N)
-            || d::is_dynamic(otr(rto(N) - 1));
+        return Padding::is_dynamic(N) || Stepping::is_dynamic(N);
     }
 
     static constexpr size_type stride(
@@ -143,8 +149,50 @@ struct layout_regular_indexer<
       , dimensions<IdxDims...> i
         ) noexcept
     {
-        return i[N] * stride(d, s, p, i);
+        return i[N] * stride(d, s, p);
     }
+};
+
+template <
+    typename Dimensions
+  , typename Stepping
+  , typename Padding
+  , typename Ordering
+  , typename Ranks
+    >
+struct make_layout_regular_striding_impl;
+
+template <
+    typename Dimensions
+  , typename Stepping
+  , typename Padding
+  , typename Ordering
+  , std::size_t... RankIndices
+    >
+struct make_layout_regular_striding_impl<
+    Dimensions
+  , Stepping
+  , Padding
+  , Ordering
+  , index_sequence<RankIndices...>
+>
+{
+    static_assert(
+        Dimensions::rank() == sizeof...(RankIndices)
+      , "The ranks of Dimensions and index_sequence<RankIndices...> are "
+        "not equal."
+    );
+
+    using type = dimensions<
+        ( layout_regular_indexer<
+            RankIndices, Dimensions, Stepping, Padding, Ordering
+          >::is_dynamic_stride()
+        ? dyn
+        : layout_regular_indexer<
+            RankIndices, Dimensions, Stepping, Padding, Ordering
+          >::stride(Dimensions{}, Stepping{}, Padding{})
+        )...
+    >;
 };
 
 }}} // std::experimental::detail
