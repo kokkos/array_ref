@@ -72,6 +72,7 @@ set(TESTS
     test_layout_mapping_right_padding
     test_layout_mapping_right_stepping
     test_layout_mapping_right_stepping_padding
+    test_layout_regular_indexer_basics
     test_meta_count_dynamic_dims
     test_meta_count_integral_range_slice_specifiers
     test_meta_extract_dimensions
