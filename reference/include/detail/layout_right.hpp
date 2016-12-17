@@ -11,8 +11,9 @@
 #include "detail/fwd.hpp"
 #include "detail/layout_mapping_right.hpp"
 
-namespace std { namespace experimental
-{
+namespace std { namespace experimental {
+
+///////////////////////////////////////////////////////////////////////////////
 
 struct layout_right
 {
