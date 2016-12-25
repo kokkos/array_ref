@@ -277,22 +277,36 @@ template <typename Sequence, typename Compare = type_value_less>
 
 // Creates a typelist of integral_pairs from two input integer_sequence<>s.
 template <typename KeySequence, typename ValueSequence>
-struct make_key_value_type_list;
+  struct make_key_value_type_list_impl;
+template <typename KeySequence, typename ValueSequence>
+  using make_key_value_type_list =
+    typename make_key_value_type_list_impl<KeySequence, ValueSequence>::type; 
 
 // Creates a typelist of integral_pairs from an integer_sequence<>, where
 // the key is the position of the value in the input integer_sequence<>.
 template <typename Sequence>
-struct make_key_value_type_list_from_integer_sequence;
+  struct make_key_value_type_list_from_integer_sequence_impl;
+template <typename Sequence>
+  using make_key_value_type_list_from_integer_sequence =
+    typename make_key_value_type_list_from_integer_sequence_impl<
+        Sequence
+    >::type;
 
 // Creates an integer_sequence<> from the keys of a type_list<> of
 // integral_pair<>s.
 template <typename T, typename KeyValueSequence>
-struct make_integer_sequence_from_keys;
+  struct make_integer_sequence_from_keys_impl;
+template <typename T, typename KeyValueSequence>
+  using make_integer_sequence_from_keys =
+    typename make_integer_sequence_from_keys_impl<T, KeyValueSequence>::type;
 
 // Creates an integer_sequence<> which maps the values of the input
 // integer_sequence<> to the positions of those values.
 template <typename Sequence>
-struct make_integer_sequence_inverse_mapping;
+  struct make_integer_sequence_inverse_mapping_impl;
+template <typename Sequence>
+  using make_integer_sequence_inverse_mapping =
+    typename make_integer_sequence_inverse_mapping_impl<Sequence>::type;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Expression SFINAE workarounds for MSVC.

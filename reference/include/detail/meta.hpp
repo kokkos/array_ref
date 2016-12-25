@@ -204,7 +204,7 @@ struct type_list_sort_impl<type_list<T, Tail...>, Compare>
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename Key, Key... Ks, typename Value, Value... Vs>
-struct make_key_value_type_list<
+struct make_key_value_type_list_impl<
            integer_sequence<Key, Ks...>
          , integer_sequence<Value, Vs...>
        >
@@ -215,17 +215,23 @@ struct make_key_value_type_list<
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, T... I>
-struct make_key_value_type_list_from_integer_sequence<integer_sequence<T, I...> >
-  : make_key_value_type_list<
+struct make_key_value_type_list_from_integer_sequence_impl<
+    integer_sequence<T, I...>
+>
+{
+    using type = make_key_value_type_list<
         make_index_sequence<sizeof...(I)>
       , integer_sequence<T, I...>
-    > {};
+    >;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename... KeyValues>
-struct make_integer_sequence_from_keys<T, type_list<KeyValues...> >
-  : integer_sequence<T, KeyValues::key...> {};
+struct make_integer_sequence_from_keys_impl<T, type_list<KeyValues...> >
+{
+    using type = integer_sequence<T, KeyValues::key...>;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -235,15 +241,17 @@ struct make_integer_sequence_from_keys<T, type_list<KeyValues...> >
 //     sequence. O(n)
 
 template <typename T, T... I>
-struct make_integer_sequence_inverse_mapping<integer_sequence<T, I...> >
-  : make_integer_sequence_from_keys<                                 // 3.)
+struct make_integer_sequence_inverse_mapping_impl<integer_sequence<T, I...> >
+{
+    using type = make_integer_sequence_from_keys<           // 3.)
         std::size_t
-      , typename type_list_sort<                                     // 2.)
-            typename make_key_value_type_list_from_integer_sequence< // 1.)
+      , type_list_sort<                                     // 2.)
+            make_key_value_type_list_from_integer_sequence< // 1.)
                 integer_sequence<T, I...>
-            >::type
-        >::type
-    > {};
+            >
+        >
+    >;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
