@@ -190,14 +190,16 @@ struct type_list_push_impl<T, type_list<Head, Tail...>, Compare>
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename Compare> 
-struct type_list_sort<type_list<>, Compare> : type_list<> {};
+struct type_list_sort_impl<type_list<>, Compare>
+{
+    using type = type_list<>;
+};
 
 template <typename T, typename... Tail, typename Compare>
-struct type_list_sort<type_list<T, Tail...>, Compare>
-  : type_list_push<
-        T
-      , typename type_list_sort<type_list<Tail...>, Compare>::type
-    > {};
+struct type_list_sort_impl<type_list<T, Tail...>, Compare>
+{
+    using type = type_list_push<T, type_list_sort<type_list<Tail...>, Compare> >;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 

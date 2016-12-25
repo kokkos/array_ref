@@ -269,7 +269,9 @@ template <typename T, typename Sequence, typename Compare = type_value_less>
 // metafunction class; its embedded apply<T0, T1> template takes two parameters
 // and returns a boolean integral_constant<>.
 template <typename Sequence, typename Compare = type_value_less> 
-struct type_list_sort;
+  struct type_list_sort_impl;
+template <typename Sequence, typename Compare = type_value_less> 
+  using type_list_sort = typename type_list_sort_impl<Sequence, Compare>::type;
 
 ///////////////////////////////////////////////////////////////////////////////
 
