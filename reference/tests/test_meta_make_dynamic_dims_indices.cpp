@@ -11,7 +11,7 @@
 
 using std::is_same;
 
-using std::experimental::index_sequence;
+using std::experimental::detail::index_sequence;
 
 using std::experimental::dyn;
 using std::experimental::detail::make_dynamic_dims_indices_t;

@@ -12,7 +12,7 @@
 using std::is_same;
 
 using std::integral_constant;
-using std::experimental::integer_sequence;
+using std::experimental::detail::integer_sequence;
 using std::experimental::detail::integral_pair;
 
 using std::experimental::detail::type_list;

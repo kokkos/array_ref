@@ -14,8 +14,9 @@
 
 //#warning Rename to layout_right_mapping
 
-namespace std { namespace experimental
-{
+namespace std { namespace experimental {
+
+///////////////////////////////////////////////////////////////////////////////
 
 template <
     typename Dimensions
@@ -36,7 +37,7 @@ struct layout_mapping_right : Dimensions
     using size_type = typename Dimensions::size_type; 
 
     // Smallest stride dimension to largest stride dimension (order to rank).
-    using order = make_reversed_index_sequence<Dimensions::rank()>;
+    using order = detail::make_reversed_index_sequence<Dimensions::rank()>;
 
     ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
@@ -191,8 +192,7 @@ layout_mapping_right<Dimensions, Stepping, Padding>::index(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace detail
-{
+namespace detail {
 
 // Recursive row-major layout implementation.
 //

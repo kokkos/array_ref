@@ -16,8 +16,9 @@
 
 //#warning Better coverage for stepping() and padding()
 
-namespace std { namespace experimental
-{
+namespace std { namespace experimental {
+
+///////////////////////////////////////////////////////////////////////////////
 
 template <
     typename Dimensions
@@ -38,7 +39,7 @@ struct layout_mapping_left : Dimensions
     using size_type = typename Dimensions::size_type; 
 
     // Smallest stride dimension to largest stride dimension (order to rank).
-    using order = make_index_sequence<Dimensions::rank()>;
+    using order = detail::make_index_sequence<Dimensions::rank()>;
 
     ///////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS AND ASSIGNMENT OPERATORS
@@ -193,8 +194,7 @@ layout_mapping_left<Dimensions, Stepping, Padding>::index(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace detail
-{
+namespace detail {
 
 // Recursive column-major layout implementation.
 //

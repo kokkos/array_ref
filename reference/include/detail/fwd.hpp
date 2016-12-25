@@ -10,56 +10,91 @@
 
 #include <cstdint>
 
-namespace std { namespace experimental
-{
+namespace std { namespace experimental { namespace detail {
 
+///////////////////////////////////////////////////////////////////////////////
+
+// C++17's logical type traits.
+
+// Metafunction returning T0::value && T1::value && ... && TN::value. Short
+// circuits so that if TK::value is false, TKplus1::value is not instantiated.
 template <typename... Ts>
 struct conjunction;
 
+// Metafunction returning T0::value || T1::value || ... || TN::value. 
 template <typename... Ts>
 struct disjunction;
 
+// Metafunction returning !T::value
+template <typename T>
+struct negation;
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Subset of C++14's type trait *_t type aliases.
+
+// Metafunction which returns True if B and False otherwise.
+template <bool B, typename True, typename False>
+using conditional_t = typename conditional<B, True, False>::type;
+
+///////////////////////////////////////////////////////////////////////////////
+
+// C++14's integer_sequence and associated helper aliases plus some non-standard
+// extensions.
+
+// A compile-time sequence of integral constants of type T.
 template <typename T, T... I>
 struct integer_sequence;
 
+// A compile-time sequence of std::size_t constants.
 template <std::size_t... Idxs>
 using index_sequence = integer_sequence<std::size_t, Idxs...>;
 
-namespace detail
-{
-
+// Create a new integer_sequence containing the elements of Sequence0 followed
+// by the elements of Sequence1. Sequence0::size() is added to each element from
+// Sequence1 in the new sequence.
 template <typename Sequence0, typename Sequence1>
-struct merge_and_renumber_integer_sequences;
-
+  struct merge_and_renumber_integer_sequences_impl;
 template <typename Sequence0, typename Sequence1>
-struct merge_and_renumber_reversed_integer_sequences;
+  using merge_and_renumber_integer_sequences =
+      typename merge_and_renumber_integer_sequences_impl<
+          Sequence0, Sequence1
+      >::type;
 
+// Create a new integer_sequence containing the elements of Sequence0 followed
+// by the elements of Sequence1. Sequence1::size() is added to each element from
+// Sequence0 in the new sequence.
+template <typename Sequence0, typename Sequence1>
+  struct merge_and_renumber_reversed_integer_sequences_impl;
+template <typename Sequence0, typename Sequence1>
+  using merge_and_renumber_reversed_integer_sequences =
+      typename merge_and_renumber_reversed_integer_sequences_impl<
+          Sequence0, Sequence1
+      >::type;
+
+// Create a new integer_sequence with elements 0, 1, 2, ..., N - 1.
 template <typename T, std::size_t N>
-struct make_integer_sequence_impl;
-
+  struct make_integer_sequence_impl;
 template <typename T, std::size_t N>
-struct make_reversed_integer_sequence_impl;
+  using make_integer_sequence =
+    typename make_integer_sequence_impl<T, N>::type;
 
-} // std::experimental::detail
-
-template <typename T, std::size_t N>
-using make_integer_sequence =
-    typename detail::make_integer_sequence_impl<T, N>::type;
-
+// Create a new index_sequence with elements 0, 1, 2, ..., N - 1.
 template <std::size_t N>
-using make_index_sequence =
+  using make_index_sequence =
     make_integer_sequence<std::size_t, N>;
 
+// Create a new integer_sequence with elements N - 1, N - 2, N - 3, ..., 0.
 template <typename T, std::size_t N>
-using make_reversed_integer_sequence =
-    typename detail::make_reversed_integer_sequence_impl<T, N>::type;
+  struct make_reversed_integer_sequence_impl;
+template <typename T, std::size_t N>
+  using make_reversed_integer_sequence =
+    typename make_reversed_integer_sequence_impl<T, N>::type;
 
+// Create a new index_sequence with elements N - 1, N - 2, N - 3, ..., 0.
 template <std::size_t N>
-using make_reversed_index_sequence =
+  using make_reversed_index_sequence =
     make_reversed_integer_sequence<std::size_t, N>;
-
-namespace detail
-{
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -140,78 +175,84 @@ inline constexpr std::size_t index_into_dynamic_dims(
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// A compile-time sequence of types.
+
 template <typename... T>
 struct type_list;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Stores the contents of an integer_sequence<> in a static constexpr array and 
-// provides a fast constexpr indexing operation.
+// A compile-time data structure which stores the contents of an
+// integer_sequence<> in a static constexpr array and provides a fast constexpr
+// indexing operation.
+
 template <typename Sequence>
 struct integer_sequence_array;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Compile-time pair data structure.
+
 template <typename Key, typename Value, Key K, Value V>
 struct integral_pair;
 
-// Metafunction class; embedded apply<T0, T1> returns true if T0::key is less
-// than T1::key. 
+///////////////////////////////////////////////////////////////////////////////
+
+// Compile-time sorting predicates.
+
+// Metafunction class with an ambedded apply<T0, T1> metafunction that returns
+// true if T0::key is less than T1::key. 
 struct type_key_less;
 
-// Metafunction class; embedded apply<T0, T1> returns true if T0::value is less
-// than T1::value. 
+// Metafunction class with an embedded apply<T0, T1> metafunction that returns
+// true if T0::value is less than T1::value. 
 struct type_value_less;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Compile-time insertion operations.
+
 // Add a new dimension to the front of a dimensions<>.
 template <std::size_t Dim, typename Dimensions> 
-struct dimensions_push_front;
-
+  struct dimensions_push_front_impl;
 template <std::size_t Dim, typename Dimensions> 
-using dimensions_push_front_t =
-    typename dimensions_push_front<Dim, Dimensions>::type;
+  using dimensions_push_front =
+    typename dimensions_push_front_impl<Dim, Dimensions>::type;
 
 // Add a new dimension to the back of a dimensions<>.
 template <std::size_t Dim, typename Dimensions> 
-struct dimensions_push_back;
-
+  struct dimensions_push_back_impl;
 template <std::size_t Dim, typename Dimensions> 
-using dimensions_push_back_t =
-    typename dimensions_push_back<Dim, Dimensions>::type;
+  using dimensions_push_back =
+    typename dimensions_push_back_impl<Dim, Dimensions>::type;
 
 // Add a new element to the front of an integer_sequence<>.
 template <typename T, T I, typename Sequence> 
-struct integer_sequence_push_front;
-
+  struct integer_sequence_push_front_impl;
 template <typename T, T I, typename Sequence> 
-using integer_sequence_push_front_t =
-    typename integer_sequence_push_front<T, I, Sequence>::type;
+  using integer_sequence_push_front =
+    typename integer_sequence_push_front_impl<T, I, Sequence>::type;
 
 // Add a new element to the back of an integer_sequence<>.
 template <typename T, T I, typename Sequence> 
-struct integer_sequence_push_back;
-
+  struct integer_sequence_push_back_impl;
 template <typename T, T I, typename Sequence> 
-using integer_sequence_push_back_t =
-    typename integer_sequence_push_back<T, I, Sequence>::type;
+  using integer_sequence_push_back =
+    typename integer_sequence_push_back_impl<T, I, Sequence>::type;
 
 // Add a new element to the front of a type_list<>.
 template <typename T, typename Sequence> 
-struct type_list_push_front;
-
+  struct type_list_push_front_impl;
 template <typename T, typename Sequence> 
-using type_list_push_front_t =
-    typename type_list_push_front<T, Sequence>::type;
+  using type_list_push_front =
+    typename type_list_push_front_impl<T, Sequence>::type;
 
 // Add a new element to the back of a type_list<>.
 template <typename T, typename Sequence> 
-struct type_list_push_back;
-
+  struct type_list_push_back_impl;
 template <typename T, typename Sequence> 
-using type_list_push_back_t =
-    typename type_list_push_back<T, Sequence>::type;
+  using type_list_push_back =
+    typename type_list_push_back_impl<T, Sequence>::type;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -352,7 +393,7 @@ template <
     >
 struct layout_mapping_right_indexer;
 
-} // detail
+} // std::experimental::detail
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -369,7 +410,7 @@ namespace detail {
 
 struct all_tag {};
 
-} // detail 
+} // std::experimental::detail 
 
 constexpr detail::all_tag all{};
 
@@ -391,7 +432,6 @@ template <
     >
 struct layout_mapping_left;
 
-// TODO
 template <
     typename Dimensions
   , typename Striding
@@ -399,18 +439,8 @@ template <
     >
 struct layout_mapping_right; 
 
-// TODO
-template <
-    typename Dimensions
-  , typename Striding
-  , typename Padding
-  , typename Ordering
-    >
-struct basic_layout_order;
-
 struct layout_left;
 
-// TODO
 struct layout_right; 
 
 // TODO

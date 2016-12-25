@@ -17,8 +17,7 @@
 #include "detail/fwd.hpp"
 #include "detail/meta_logical_operators.hpp"
 
-namespace std
-{
+namespace std {
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -48,8 +47,7 @@ template <typename... Params, unsigned ND>
 struct extent<experimental::mdspan<Params...>, ND>
   : extent<typename experimental::mdspan<Params...>::dimensions, ND> {};
 
-namespace experimental { namespace detail
-{
+namespace experimental { namespace detail {
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -123,7 +121,7 @@ struct type_value_less
 ///////////////////////////////////////////////////////////////////////////////
 
 template <std::size_t Dim0, std::size_t... Dims> 
-struct dimensions_push_front<Dim0, dimensions<Dims...> >
+struct dimensions_push_front_impl<Dim0, dimensions<Dims...> >
 {
     using type = dimensions<Dim0, Dims...>;
 };
@@ -131,7 +129,7 @@ struct dimensions_push_front<Dim0, dimensions<Dims...> >
 ///////////////////////////////////////////////////////////////////////////////
 
 template <std::size_t Dim0, std::size_t... Dims> 
-struct dimensions_push_back<Dim0, dimensions<Dims...> >
+struct dimensions_push_back_impl<Dim0, dimensions<Dims...> >
 {
     using type = dimensions<Dims..., Dim0>;
 };
@@ -139,7 +137,7 @@ struct dimensions_push_back<Dim0, dimensions<Dims...> >
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, T I0, T... Is> 
-struct integer_sequence_push_front<T, I0, integer_sequence<T, Is...> >
+struct integer_sequence_push_front_impl<T, I0, integer_sequence<T, Is...> >
 {
     using type = integer_sequence<T, I0, Is...>;
 };
@@ -147,7 +145,7 @@ struct integer_sequence_push_front<T, I0, integer_sequence<T, Is...> >
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, T I0, T... Is> 
-struct integer_sequence_push_back<T, I0, integer_sequence<T, Is...> >
+struct integer_sequence_push_back_impl<T, I0, integer_sequence<T, Is...> >
 {
     using type = integer_sequence<T, Is..., I0>;
 };
@@ -155,7 +153,7 @@ struct integer_sequence_push_back<T, I0, integer_sequence<T, Is...> >
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename... Tail> 
-struct type_list_push_front<T, type_list<Tail...> >
+struct type_list_push_front_impl<T, type_list<Tail...> >
 {
     using type = type_list<T, Tail...>;
 };
@@ -163,7 +161,7 @@ struct type_list_push_front<T, type_list<Tail...> >
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename... Tail> 
-struct type_list_push_back<T, type_list<Tail...> >
+struct type_list_push_back_impl<T, type_list<Tail...> >
 {
     using type = type_list<Tail..., T>;
 };
@@ -355,7 +353,7 @@ struct is_integral_pack<> : true_type {};
 
 template <typename Head, typename... Tail>
 struct is_integral_pack<Head, Tail...>
-  : experimental::conjunction<is_integral<Head>, is_integral_pack<Tail...> > {};
+  : conjunction<is_integral<Head>, is_integral_pack<Tail...> > {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -370,7 +368,7 @@ struct is_integral_range_slice_specifier<initializer_list<I0> >
 // pair<I0, I1> case
 template <typename I0, typename I1>
 struct is_integral_range_slice_specifier<pair<I0, I1> >
-  : experimental::conjunction<
+  : conjunction<
         is_integral<typename decay<I0>::type>
       , is_integral<typename decay<I1>::type>
     > {};
@@ -378,7 +376,7 @@ struct is_integral_range_slice_specifier<pair<I0, I1> >
 // tuple<I0, I1> case
 template <typename I0, typename I1>
 struct is_integral_range_slice_specifier<tuple<I0, I1> >
-  : experimental::conjunction<
+  : conjunction<
         is_integral<typename decay<I0>::type>
       , is_integral<typename decay<I1>::type>
     > {};
@@ -396,7 +394,7 @@ struct is_integral_range_slice_specifier<all_tag>
 
 template <typename T>
 struct is_slice_specifier
-  : experimental::disjunction<
+  : disjunction<
         is_integral_range_slice_specifier<T>
       , is_integral<typename decay<T>::type>
     > {};
@@ -409,7 +407,7 @@ struct pack_is_slice_specifiers<> : true_type {};
 
 template <typename Head, typename... Tail>
 struct pack_is_slice_specifiers<Head, Tail...>
-  : experimental::conjunction<
+  : conjunction<
         is_slice_specifier<Head>
       , pack_is_slice_specifiers<Tail...>
     > {};

@@ -13,9 +13,10 @@ using std::true_type;
 using std::false_type;
 using std::is_same;
 
-using std::experimental::make_integer_sequence;
-using std::experimental::make_reversed_integer_sequence;
-using std::experimental::integer_sequence;
+using std::experimental::detail::integer_sequence;
+
+using std::experimental::detail::make_integer_sequence;
+using std::experimental::detail::make_reversed_integer_sequence;
 
 int main()
 {

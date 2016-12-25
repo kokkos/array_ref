@@ -13,16 +13,18 @@
 
 #include "detail/fwd.hpp"
 
-namespace std { namespace experimental
-{
+namespace std { namespace experimental { namespace detail {
+
+///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, T... I>
 struct integer_sequence
 {
     using type = integer_sequence;
     using value_type = T;
+    using size_type = std::size_t;
 
-    static constexpr std::size_t size() noexcept
+    static constexpr size_type size() noexcept
     {
         return sizeof...(I);
     }
@@ -30,11 +32,8 @@ struct integer_sequence
 
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace detail
-{
-
 template <typename T, T... I0, T... I1>
-struct merge_and_renumber_integer_sequences<
+struct merge_and_renumber_integer_sequences_impl<
            integer_sequence<T, I0...>, integer_sequence<T, I1...>
        >
 {
@@ -42,7 +41,7 @@ struct merge_and_renumber_integer_sequences<
 };
 
 template <typename T, T... I0, T... I1>
-struct merge_and_renumber_reversed_integer_sequences<
+struct merge_and_renumber_reversed_integer_sequences_impl<
            integer_sequence<T, I0...>, integer_sequence<T, I1...>
        >
 {
@@ -54,10 +53,10 @@ struct merge_and_renumber_reversed_integer_sequences<
 template <typename T, std::size_t N>
 struct make_integer_sequence_impl
 {
-    using type = typename detail::merge_and_renumber_integer_sequences<
+    using type = merge_and_renumber_integer_sequences<
         make_integer_sequence<T, N / 2>
       , make_integer_sequence<T, N - N / 2>
-    >::type;
+    >;
 };
 
 template <typename T>
@@ -77,10 +76,10 @@ struct make_integer_sequence_impl<T, 1>
 template <typename T, std::size_t N>
 struct make_reversed_integer_sequence_impl
 {
-    using type = typename detail::merge_and_renumber_reversed_integer_sequences<
+    using type = merge_and_renumber_reversed_integer_sequences<
         make_reversed_integer_sequence<T, N / 2>
       , make_reversed_integer_sequence<T, N - N / 2>
-    >::type;
+    >;
 };
 
 template <typename T>

@@ -12,8 +12,7 @@
 
 #include <type_traits>
 
-namespace std { namespace experimental
-{
+namespace std { namespace experimental { namespace detail {
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -48,6 +47,15 @@ template <typename T0, typename... TN>
 struct disjunction<T0, TN...>
   : conditional<T0::value != false, T0, disjunction<TN...> >::type {};
 
-}}
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+struct negation;
+
+template <typename T>
+struct negation : std::integral_constant<bool, !T::value> {};
+
+}}} // std::experimental::detail
 
 #endif // STD_F2BEAFA8_F13E_481C_8A36_200DCD59D101
+
