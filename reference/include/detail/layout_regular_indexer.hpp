@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // d   := dims
-// p   := padding (should have rank + 1 elements not rank elements)
+// p   := padding
 // s   := stepping
 // i   := index
 // rto := rank index to ordering (smallest to largest stride dimension)
