@@ -3,7 +3,7 @@
 //
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 #if !defined(STD_0F383687_D414_463B_9C79_74EA4545EEB5)
 #define STD_0F383687_D414_463B_9C79_74EA4545EEB5

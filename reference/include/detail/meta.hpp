@@ -3,7 +3,7 @@
 //
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 #if !defined(STD_324BD9FF_856B_4DC7_BC6F_2A93F3DF63CD)
 #define STD_324BD9FF_856B_4DC7_BC6F_2A93F3DF63CD
@@ -257,9 +257,7 @@ struct make_integer_sequence_inverse_mapping_impl<integer_sequence<T, I...> >
 
 template <std::size_t N, typename Dimensions>
 struct is_rank_greater_than
-{
-    static constexpr bool value = N < Dimensions::rank();
-};
+  : integral_constant<bool, N < Dimensions::rank()> {};
 
 template <std::size_t N, typename Dimensions>
 struct is_rank_equal_to
