@@ -168,27 +168,24 @@ struct type_list_push_back_impl<T, type_list<Tail...> >
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <typename T, typename... Tail, typename Compare>
-struct type_list_push<T, type_list<Tail...>, Compare>
-  : type_list_push_impl<Compare, T, Tail...> {};
+template <typename T, typename Compare>
+struct type_list_push_impl<T, type_list<>, Compare>
+{
+    using type = type_list<T>;
+};
 
-template <typename Compare, typename T>
-struct type_list_push_impl<Compare, T> : type_list<T> {};
-
-template <typename Compare, typename T0, typename T1, typename... Tail> 
-struct type_list_push_impl<Compare, T0, T1, Tail...>
-  : type_list_push_front<
-        typename conditional<
-            Compare::template apply<T0, T1>::value, T0, T1
-        >::type
+template <typename T, typename Head, typename... Tail, typename Compare> 
+struct type_list_push_impl<T, type_list<Head, Tail...>, Compare>
+{
+    using type = type_list_push_front<
+        conditional_t<Compare::template apply<T, Head>::value, T, Head>
       , typename type_list_push_impl<
-            Compare
-          , typename conditional<
-                Compare::template apply<T1, T0>::value, T0, T1
-            >::type
-          , Tail...
+            conditional_t<Compare::template apply<Head, T>::value, T, Head>
+          , type_list<Tail...>
+          , Compare
         >::type
-    > {};
+    >;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 

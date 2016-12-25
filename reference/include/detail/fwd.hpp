@@ -260,10 +260,10 @@ template <typename T, typename Sequence>
 // its embedded apply<T0, T1> template takes two parameters and returns a
 // boolean integral_constant<>.
 template <typename T, typename Sequence, typename Compare = type_value_less> 
-struct type_list_push;
-
-template <typename Compare, typename T, typename... Tail> 
-struct type_list_push_impl;
+  struct type_list_push_impl;
+template <typename T, typename Sequence, typename Compare = type_value_less> 
+  using type_list_push = 
+    typename type_list_push_impl<T, Sequence, Compare>::type;
 
 // Creates a sorted type_list<> from an input type_list<>. Compare is a
 // metafunction class; its embedded apply<T0, T1> template takes two parameters
