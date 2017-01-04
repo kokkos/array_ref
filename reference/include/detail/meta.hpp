@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "detail/fwd.hpp"
+#include "detail/integer_sequence.hpp"
 #include "detail/meta_logical_operators.hpp"
 
 namespace std {
