@@ -223,12 +223,13 @@ struct layout_mapping_right_indexer
         ) const noexcept
     {
         static_assert(
-            0                  < N
-          , "Dimension index is out of bounds in layout_mapping_right."
+            (0                 <= N) 
+          , "Dimension rank N is negative in layout_mapping_right."
         );
         static_assert(
-            Dimensions::rank() > N
-          , "Dimension index is out of bounds in layout_mapping_right."
+            Dimensions::rank() >  N
+          , "Dimension rank N is greater than the rank of Dimensions "
+            "(out of bounds) in layout_mapping_right."
         );
         layout_mapping_right_indexer<Dimensions, Stepping, Padding, N + 1> const
             next;
@@ -357,12 +358,13 @@ struct layout_mapping_right_indexer<
         ) const noexcept
     {
         static_assert(
-            0                  < N
-          , "Dimension index is out of bounds in layout_mapping_right"
+            (0                 <= N) 
+          , "Dimension rank N is negative in layout_mapping_right."
         );
         static_assert(
-            Dimensions::rank() > N
-          , "Dimension index is out of bounds in layout_mapping_right."
+            Dimensions::rank() >  N
+          , "Dimension rank N is greater than the rank of Dimensions "
+            "(out of bounds) in layout_mapping_right."
         );
         auto constexpr R = Dimensions::rank();
         return (d[R - N] * step[R - N] + pad[R - N])
