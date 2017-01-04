@@ -56,30 +56,48 @@ template <
     >
 struct layout_regular_indexer
 {
+    static_assert(
+        (0                 <= N) 
+      , "Dimension rank N is negative in layout_regular_indexer."
+    );
+    static_assert(
+        Dimensions::rank() >  N
+      , "Dimension rank N is greater than the rank of Dimensions "
+        "(out of bounds) in layout_regular_indexer."
+    );
+
     using size_type = typename Dimensions::size_type; 
 
     using otr_type = Ordering;
-    using rto_type =
-        typename make_integer_sequence_inverse_mapping<Ordering>::type;
+    using rto_type = make_integer_sequence_inverse_mapping<Ordering>;
 
-    // Order-to-rank.
+    // Order-to-rank mapping. Returns the rank of the dimension with the
+    // specified ordering.
     static constexpr size_type otr(size_type order) noexcept
     {
         return integer_sequence_array<otr_type>()[order];
     }
 
-    // Rank-to-order.
+    // Rank-to-order mapping. Returns the ordering for the dimension with the
+    // specified rank.
     static constexpr size_type rto(size_type rank) noexcept
     {
         return integer_sequence_array<rto_type>()[rank];
     }
 
+    // Returns true if the Nth rank is the unit stride dimension.
+    static constexpr bool is_unit_stride() noexcept
+    {
+        return false;
+    }
+
+    // The next type alias is not defined when false == is_unit_stride().
     using next = layout_regular_indexer<
         otr(rto(N) - 1)
       , Dimensions, Stepping, Padding, Ordering
     >;
 
-    static constexpr bool is_dynamic_stride()
+    static constexpr bool is_dynamic_stride() noexcept
     {
         return Padding::is_dynamic(N) || Stepping::is_dynamic(N)
             || Dimensions::is_dynamic(otr(rto(N) - 1))
@@ -108,6 +126,7 @@ struct layout_regular_indexer
 };
 
 // Base case: N == otr[0].
+// Also handles the empty case (0 == Dimensions::rank()).
 template <
     std::size_t N
   , typename Dimensions
@@ -126,9 +145,49 @@ struct layout_regular_indexer<
     >::type
 >
 {
+    static_assert(
+        (0                  <= N) 
+      , "Dimension rank N is negative in layout_regular_indexer."
+    );
+    static_assert(
+        (Dimensions::rank() >  N)
+     || (0 == N && 0 == Dimensions::rank()) // Disable for the empty case.
+      , "Dimension rank N is greater than the rank of Dimensions "
+        "(out of bounds) in layout_regular_indexer."
+    );
+
     using size_type = typename Dimensions::size_type; 
 
-    static constexpr bool is_dynamic_stride()
+    using otr_type = Ordering;
+    using rto_type = make_integer_sequence_inverse_mapping<Ordering>;
+
+    // Order-to-rank mapping. Returns the rank of the dimension with the
+    // specified ordering.
+    //
+    // Preconditions: order < Ordering::size()
+    static constexpr size_type otr(size_type order) noexcept
+    {
+        return integer_sequence_array<otr_type>()[order];
+    }
+
+    // Rank-to-order mapping. Returns the ordering for the dimension with the
+    // specified rank.
+    //
+    // Preconditions: rank < Dimensions::rank()
+    static constexpr size_type rto(size_type rank) noexcept
+    {
+        return integer_sequence_array<rto_type>()[rank];
+    }
+
+    // Returns true if the Nth rank is the unit stride dimension.
+    static constexpr bool is_unit_stride() noexcept
+    {
+        return true;
+    }
+
+    // The next type alias is not defined when false == is_unit_stride().
+
+    static constexpr bool is_dynamic_stride() noexcept
     {
         return Padding::is_dynamic(N) || Stepping::is_dynamic(N);
     }
@@ -153,6 +212,8 @@ struct layout_regular_indexer<
         return i[N] * stride(d, s, p);
     }
 };
+
+// TODO
 
 template <
     typename Dimensions
