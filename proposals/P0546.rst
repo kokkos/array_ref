@@ -17,16 +17,16 @@ P0546r0 : Span - foundation for the future
 +------------+-------------------------------------------------------------+
 | **References**                                                           |
 +------------+-------------------------------------------------------------+
-| P0454r0    | Wording for a Minimal ``mdspan``                            |
-+------------+-------------------------------------------------------------+
 | P0009r2    | Multidimensional array reference specification              |
++------------+-------------------------------------------------------------+
+| P0122r3    | span: bounds-safe views for sequences of objects            |
++------------+-------------------------------------------------------------+
+| P0454r0    | Wording for a Minimal ``mdspan``                            |
 +------------+-------------------------------------------------------------+
 | P0332      | Relaxed array declaration                                   |
 +------------+-------------------------------------------------------------+
-| P0122      | span: bounds-safe views for sequences of objects            |
-+------------+-------------------------------------------------------------+
 | P0367      | Accessors                                                   |
-+--------------------------------------------------------------------------+
++------------+-------------------------------------------------------------+
 
 
 ******************************************************************
@@ -58,9 +58,13 @@ delete the *magic value* ``dynamic_extent`` .
 ..
 
   - The ``ArrayType`` is either
-    ``ElementType[N]`` for a span with explicit static length,
-    ``ElementType[]`` for a span with an explicit dynamic length, or
-    ``ElementType`` for a span with an implied dynamic length.
+
+    - ``ElementType[N]`` for a span with explicit static length,
+
+    - ``ElementType[]`` for a span with an explicit dynamic length, or
+
+    - ``ElementType`` for a span with an implied dynamic length.
+
     The current proposal requires ``rank_v<ArrayType> <= 1`` .
 
   - The need for a ``dynamic_extent`` *magic value* is entirely eliminated.
@@ -144,9 +148,10 @@ Changes to Header <span> synopsis
   // Note: Prefer output element type of std::byte versus char.
   // Note: Static length specification may change for ( rank_v<ArrayType> > 1 )
   template< class ArrayType , class ... AccessProperties >
-    std::conditional_t< extent_v<ArrayType>==0
+    std::conditional_t< rank_v<ArrayType>==1 && extent_v<ArrayType>==0
                       , span<char[]>
-                      , span<char[sizeof(ArrayType)]>
+                      , span<char[sizeof(remove_all_extents_t<ArrayType>)*extent_v<ArrayType>]>
+                      >
   as_writeable_bytes( const span<ArrayType,AccessProperties...> & ) noexcept ;
 
   }
@@ -165,7 +170,7 @@ Changes to Class template span [views.span]
   The domain index space is the integral values *[ 0 .. size() )*.
   The codomain element space is the contiguous sequence of objects.
 
-  **3** Requires: ``remove_all_extent_t<ArrayType>`` is a complete
+  **3** Requires: ``remove_all_extents_t<ArrayType>`` is a complete
   object type that is not an abstract class type.
   ``rank_v<ArrayType> <= 1``, which may be relaxed in a future
   extension of ``span`` .
@@ -183,10 +188,12 @@ Changes to Class template span [views.span]
 
   namespace std {
 
+  // Unless noted here, previously proposed span members remain unchanged
+
   template< class ArrayType , class ... AccessProperties >
   class span {
   public:
-    using element_type = remove_all_extent_t<ArrayType> ;
+    using element_type = remove_all_extents_t<ArrayType> ;
 
     constexpr static index_type rank   = rank_v<ArrayType> ? rank_v<ArrayType> : 1 ;
     constexpr static index_type extent = extent_v<ArrayType> ;
@@ -348,8 +355,8 @@ Changes to span comparison operators [span.comparison]
 ..
 
   Remark: The spans *may* be comparable even when
-  ``remove_all_extent_t<lhsArrayType>`` and
-  ``remove_all_extent_t<rhsArrayType>`` are different types
+  ``remove_all_extents_t<lhsArrayType>`` and
+  ``remove_all_extents_t<rhsArrayType>`` are different types
   (e.g., have different *cv* qualification) or
   ``lhsAccessProperties...`` and
   ``rhsAccessProperties...`` are different.
