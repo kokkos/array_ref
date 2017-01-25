@@ -174,16 +174,15 @@ Changes to Class template span [views.span]
   object type that is not an abstract class type.
   ``rank_v<ArrayType> <= 1``, which may be relaxed in a future
   extension of ``span`` .
+  ``sizeof...(AccessProperties) == 0``, which may be relaxed in a future
+  extensions of ``span``.
 
   **4** The ``iterator`` type for ``span`` is a random access iterator
   and a contiguous iterator.  The ``reverse_iterator`` type is a
   random access iterator.
   Iteration is over the codomain of the ``span`` independent of the
-  domamin.
+  domain.
     
-  **5** Currently requires ``sizeof...(AccessProperties) == 0``.
-  This requirement will be relaxed in future extensions of ``span``.
-
 .. code-block:: c++
 
   namespace std {
@@ -252,7 +251,7 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 
 ..
 
-  Requires: ``distance(firstElem,lastElem) >= 0.
+  Requires: ``distance(firstElem,lastElem) >= 0``.
   ``extent == 0`` or ``extent == distance(firstElem,lastElem)``.
 
 
