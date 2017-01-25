@@ -1,0 +1,356 @@
+===================================================================
+P0546r0 : Span - foundation for the future
+===================================================================
+
+:Project: ISO JTC1/SC22/WG21: Programming Language C++
+:Number: P0546r0
+:Date: 2017-XX-XX
+:Reply-to: hcedwar@sandia.gov
+:Author: H\. Carter Edwards
+:Contact: hcedwar@sandia.gov
+:Audience: Library Evolution Working Group (LEWG)
+:URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0546.rst
+
+
++------------+-------------------------------------------------------------+
+| **Revision History**                                                     |
++------------+-------------------------------------------------------------+
+| **References**                                                           |
++------------+-------------------------------------------------------------+
+| P0454r0    | Wording for a Minimal ``mdspan``                            |
++------------+-------------------------------------------------------------+
+| P0009r2    | Multidimensional array reference specification              |
++------------+-------------------------------------------------------------+
+| P0332      | Relaxed array declaration                                   |
++------------+-------------------------------------------------------------+
+| P0122      | span: bounds-safe views for sequences of objects            |
++------------+-------------------------------------------------------------+
+| P0367      | Accessors                                                   |
++--------------------------------------------------------------------------+
+
+
+******************************************************************
+Motivation
+******************************************************************
+
+The ``span`` capability proposed in
+**P0122, span: bounds-safe views for sequences of objects**
+is intended to provide high performance access to a sequence of elements.
+The current ``span`` proposal defines a single access abstraction:
+the mapping an integral offset and simple iterator to an element reference.
+The proposed ``span`` abstraction is the foundation for an extensible
+set of high performance computing access abstractions, with the
+proper preparation.
+This paper proposes a modification to the **P0122** ``span`` to
+establish this extensibility foundation.
+
+
+**Summary of proposed change.**
+
+Instead of ``ElementType`` provide an ``ArrayType`` and
+delete the *magic value* ``dynamic_extent`` .
+
+.. code-block:: c++
+
+  template < class ArrayType , class ... AccessProperties >
+  class span ;
+
+..
+
+  - The ``ArrayType`` is either
+    ``ElementType[N]`` for a span with explicit static length,
+    ``ElementType[]`` for a span with an explicit dynamic length, or
+    ``ElementType`` for a span with an implied dynamic length.
+    The current proposal requires ``rank_v<ArrayType> <= 1`` .
+
+  - The need for a ``dynamic_extent`` *magic value* is entirely eliminated.
+
+  - ``AccessProperties...`` is a well-defined extention point for the future.
+    This extension point, while not used in this proposal, enables
+    code which is templated on ``span`` to be *future proofed* with
+    respect to extensions by including the ``AccessProperties...`` pack.
+    For example the proposed changes to the ``span`` comparison operators
+    have this template parameter even though this proposal requires
+    ``sizeof...(AccessProperties) == 0`` .
+
+
+**Foundation for the Future**
+
+The proposed changes prepares ``span`` to be an extensible
+foundation for future higher performance access intentions.
+Examples of possible extensions are as follows.
+
+  - ``ArrayType`` could allow ``( rank_v<ArrayType> > 1 )``
+
+  - ``AccessProperties...`` could include a layout mapping specification
+    when ``( rank_v<ArrayType> > 1 )`` .
+
+  - ``AccessProperties...`` could include a contract specification
+    for *restrict* , that guarantees non-aliasing.
+
+  - ``AccessProperties...`` could include memory access performance requests
+    such as non-caching load/store, streaming access, or random access.
+    **P0367 Accessors** includes numerous potential memory access properties
+    foward looking to high performance / low latency computing and
+    heterogeneous architectures.
+
+
+******************************************************************
+Proposed Wording Change
+******************************************************************
+
+Changes to Header <span> synopsis
+----------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  namespace std {
+
+  // eliminate:  constexpr ptrdiff_t dynamic_extent = -1;
+
+  template< class ArrayType , class ... AccessProperties >
+  class span;
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator==( const span<lhsArrayType,lhsAccessProperties...> &
+                           , const span<rhsArrayType,rhsAccessProperties...> & );
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator!=( const span<lhsArrayType,lhsAccessProperties...> &
+                           , const span<rhsArrayType,rhsAccessProperties...> & );
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator< ( const span<lhsArrayType,lhsAccessProperties...> &
+                           , const span<rhsArrayType,rhsAccessProperties...> & );
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator<=( const span<lhsArrayType,lhsAccessProperties...> &
+                           , const span<rhsArrayType,rhsAccessProperties...> & );
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator> ( const span<lhsArrayType,lhsAccessProperties...> &
+                           , const span<rhsArrayType,rhsAccessProperties...> & );
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator>=( const span<lhsArrayType,lhsAccessProperties...> &
+                           , const span<rhsArrayType,rhsAccessProperties...> & );
+
+  // Note: Prefer output element type of std::byte versus char.
+  // Note: Static length specification may change for ( rank_v<ArrayType> > 1 )
+  template< class ArrayType , class ... AccessProperties >
+    std::conditional_t< extent_v<ArrayType>==0
+                      , span<char[]>
+                      , span<char[sizeof(ArrayType)]>
+  as_writeable_bytes( const span<ArrayType,AccessProperties...> & ) noexcept ;
+
+  }
+
+..
+
+
+Changes to Class template span [views.span]
+----------------------------------------------------------------------------
+
+  **1** A ``span`` provides mechanisms to reference members within a
+  contiguous sequence (array) of objects.  Note that a ``span``
+  does not own the storage of that sequence.
+
+  **2** A ``span`` has a *domain index space* and a *codomain element space*.
+  The domain index space is the integral values *[ 0 .. size() )*.
+  The codomain element space is the contiguous sequence of objects.
+
+  **3** Requires: ``remove_all_extent_t<ArrayType>`` is a complete
+  object type that is not an abstract class type.
+  ``rank_v<ArrayType> <= 1``, which may be relaxed in a future
+  extension of ``span`` .
+
+  **4** The ``iterator`` type for ``span`` is a random access iterator
+  and a contiguous iterator.  The ``reverse_iterator`` type is a
+  random access iterator.
+  Iteration is over the codomain of the ``span`` independent of the
+  domamin.
+    
+  **5** Currently requires ``sizeof...(AccessProperties) == 0``.
+  This requirement will be relaxed in future extensions of ``span``.
+
+.. code-block:: c++
+
+  namespace std {
+
+  template< class ArrayType , class ... AccessProperties >
+  class span {
+  public:
+    using element_type = remove_all_extent_t<ArrayType> ;
+
+    constexpr static index_type rank   = rank_v<ArrayType> ? rank_v<ArrayType> : 1 ;
+    constexpr static index_type extent = extent_v<ArrayType> ;
+
+    template< class OtherArrayType , class ... OtherAccessProperties >
+      constexpr span( const span<OtherArrayType,OtherAccessProperties...> & );
+
+    template< class OtherArrayType , class ... OtherAccessProperties >
+      constexpr span( span<OtherArrayType,OtherAccessProperties...> && );
+
+    template< size_t Count >
+      constexpr span< element_type[ Count ], AccessProperties... > first() const ;
+
+    template< size_t Count >
+      constexpr span< element_type[ Count ], AccessProperties... > last() const ;
+
+    constexpr span< element_type[], AccessProperties... > first( size_t count ) const ;
+
+    constexpr span< element_type[], AccessProperties... > last( size_t count ) const ;
+
+    constexpr span< element_type[], AccessProperties... > subspan( index_type offset , index_type count = -1 ) const ;
+
+  };
+
+..
+
+
+Changes to span constructors, copy, assignment, and destructor [span.cons]
+----------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  constexpr span() noexcept ;
+  constexpr span( nullptr_t ) nodexcept ;
+
+..
+
+  Requires: ``extent == 0``
+
+
+.. code-block:: c++
+
+  constexpr span( pointer ptr , index_type count ) noexcept ;
+
+..
+
+  Requires: ``extent == 0`` or ``extent == count``.
+  If ``ptr`` is null then ``count == 0``.
+  If ``ptr`` is not null then it shall point to the beginning of a
+  valid sequence of objects of at least ``count`` length.
+
+
+.. code-block:: c++
+
+  constexpr span( pointer firstElem , pointer lastElem ) noexcept ;
+
+..
+
+  Requires: ``distance(firstElem,lastElem) >= 0.
+  ``extent == 0`` or ``extent == distance(firstElem,lastElem)``.
+
+
+.. code-block:: c++
+
+  
+  template< size_t N >
+    constexpr span( element_type (&arr)[N] ) noexcept ;
+  template< size_t N >
+    constexpr span( array<element_type,N> & arr ) noexcept ;
+  template< size_t N >
+    constexpr span( array<remove_const_t<element_type>,N> & arr ) noexcept ;
+
+..
+
+  Requires: ``extent == 0`` or ``extent == N``.
+
+
+.. code-block:: c++
+
+  
+  template< class OtherArrayType , class ... OtherAccessProperties >
+    constexpr span( const span<OtherArrayType,OtherAccessProperties...> & other );
+
+  template< class OtherArrayType , class ... OtherAccessProperties >
+    constexpr span( span<OtherArrayType,OtherAccessProperties...> && other );
+
+..
+
+  Requires: ``extent == 0`` or ``extent == other.size()``.
+  ``is_same_v< element_type , remove_extent_t< OtherArrayType >``
+
+  Effects: Constructs ``span`` on the same
+  sequence of objects referenced by ``other``.
+
+
+
+Changes to span subviews [span.sub]
+----------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  template< size_t Count >
+    constexpr span< element_type[Count] , AccessProperties... > first() const ;
+
+  template< size_t Count >
+    constexpr span< element_type[Count] , AccessProperties... > last() const ;
+
+..
+
+  Requires: ``Count <= size()``
+
+
+.. code-block:: c++
+
+  constexpr span< element_type[] , AccessProperties... > first( index_type count ) const ;
+
+  constexpr span< element_type[] , AccessProperties... > last( index_type count ) const ;
+
+..
+
+  Requires: ``Count <= size()``
+
+
+.. code-block:: c++
+
+  constexpr span< element_type[] , AccessProperties... > subspan( index_type offset , index_type count ) const ;
+
+..
+
+  Requires: ``0 <= offset && offset < size()``.
+  ``count == -1 || offset + count < size()``.
+
+  Returns: ``span( data() + offset , count == -1 ? size() - offset : count )``
+
+
+Changes to span observers [span.obs]
+----------------------------------------------------------------------------
+
+  Remark: Current observers are for the codomain.
+
+
+Changes to span iterator support [span.iterators]
+----------------------------------------------------------------------------
+
+  Remark: Iterator mechanisms are for the codomain.
+
+
+
+Changes to span comparison operators [span.comparison]
+----------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  template< class lhsArrayType , class ... lhsAccessProperties
+          , class rhsArrayType , class ... rhsAccessProperties >
+  constexpr bool operator OP ( const span<lhsArrayType,lhsAccessProperties...> &
+                             , const span<rhsArrayType,rhsAccessProperties...> & );
+
+..
+
+  Remark: The spans *may* be comparable even when
+  ``remove_all_extent_t<lhsArrayType>`` and
+  ``remove_all_extent_t<rhsArrayType>`` are different types
+  (e.g., have different *cv* qualification) or
+  ``lhsAccessProperties...`` and
+  ``rhsAccessProperties...`` are different.
+
