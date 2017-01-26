@@ -57,7 +57,7 @@ delete the *magic value* ``dynamic_extent`` .
 
 .. code-block:: c++
 
-  template < class ArrayType , class ... AccessProperties >
+  template < class ArrayType , typename ... AccessProperties >
   class span ;
 
 ..
@@ -118,42 +118,42 @@ Changes to Header <span> synopsis
 
   // eliminate:  constexpr ptrdiff_t dynamic_extent = -1;
 
-  template< class ArrayType , class ... AccessProperties >
+  template< class ArrayType , typename ... AccessProperties >
   class span;
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator==( const span<lhsArrayType,lhsAccessProperties...> &
                            , const span<rhsArrayType,rhsAccessProperties...> & );
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator!=( const span<lhsArrayType,lhsAccessProperties...> &
                            , const span<rhsArrayType,rhsAccessProperties...> & );
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator< ( const span<lhsArrayType,lhsAccessProperties...> &
                            , const span<rhsArrayType,rhsAccessProperties...> & );
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator<=( const span<lhsArrayType,lhsAccessProperties...> &
                            , const span<rhsArrayType,rhsAccessProperties...> & );
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator> ( const span<lhsArrayType,lhsAccessProperties...> &
                            , const span<rhsArrayType,rhsAccessProperties...> & );
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator>=( const span<lhsArrayType,lhsAccessProperties...> &
                            , const span<rhsArrayType,rhsAccessProperties...> & );
 
   // Note: Prefer output element type of std::byte versus char.
   // Note: Static length specification may change for ( rank_v<ArrayType> > 1 )
-  template< class ArrayType , class ... AccessProperties >
+  template< class ArrayType , typename ... AccessProperties >
     conditional_t< ( rank_v<ArrayType> <= 1 ) && ( extent_v<ArrayType> > 0 )
                  , span<char[sizeof(remove_all_extents_t<ArrayType>)*extent_v<ArrayType>]>
                  , span<char[]>
@@ -168,18 +168,18 @@ Changes to Header <span> synopsis
 Changes to Class template span [views.span]
 ----------------------------------------------------------------------------
 
-  **1**  ``span`` provides mechanisms to access members within a
+  **1** ``span`` provides mechanisms to access members within a
   contiguous sequence (array) of objects.  Note that a ``span``
   does not own the storage of that sequence.
 
   **2** Requires: ``remove_all_extents_t<ArrayType>`` is a complete
   object type that is not an abstract class type.
   ``rank_v<ArrayType> <= 1``, which may be relaxed in a future
-  extension of ``span`` .
+  extension of ``span``.
   ``sizeof...(AccessProperties) == 0``, which may be relaxed in a future
   extension of ``span``.
 
-  **3**  ``span`` has a *domain index space* and a *codomain element space*.
+  **3** ``span`` has a *domain index space* and a *codomain element space*.
   The domain index space is the integral values *[ 0 .. extent() )*.
   The codomain element space is the contiguous sequence of objects.
   When ``rank_v<ArrayType> > 1`` is permitted in a future extension
@@ -188,8 +188,7 @@ Changes to Class template span [views.span]
 
   **4** The ``iterator`` type for ``span`` is a random access iterator
   and a contiguous iterator.  The ``reverse_iterator`` type is a
-  random access iterator.
-  Iteration is over the codomain.
+  random access iterator. Iteration is over the codomain.
 
 
 .. code-block:: c++
@@ -198,7 +197,7 @@ Changes to Class template span [views.span]
 
   // Unless noted here, previously proposed span members remain unchanged
 
-  template< class ArrayType , class ... AccessProperties >
+  template< class ArrayType , typename ... AccessProperties >
   class span {
   public:
     using element_type = remove_all_extents_t<ArrayType> ;
@@ -211,23 +210,23 @@ Changes to Class template span [views.span]
 
     // replace: type-morphing constructors
 
-    template< class OtherArrayType , class ... OtherAccessProperties >
+    template< class OtherArrayType , typename ... OtherAccessProperties >
       constexpr span( const span<OtherArrayType,OtherAccessProperties...> & );
 
-    template< class OtherArrayType , class ... OtherAccessProperties >
+    template< class OtherArrayType , typename ... OtherAccessProperties >
       constexpr span( span<OtherArrayType,OtherAccessProperties...> && );
 
     // replace: subspan functions
 
-    template< size_t Count >
+    template< ptrdiff_t Count >
       constexpr span< element_type[ Count ], AccessProperties... > first() const ;
 
-    template< size_t Count >
+    template< ptrdiff_t Count >
       constexpr span< element_type[ Count ], AccessProperties... > last() const ;
 
-    constexpr span< element_type[], AccessProperties... > first( size_t count ) const ;
+    constexpr span< element_type[], AccessProperties... > first( index_type count ) const ;
 
-    constexpr span< element_type[], AccessProperties... > last( size_t count ) const ;
+    constexpr span< element_type[], AccessProperties... > last( index_type count ) const ;
 
     constexpr span< element_type[], AccessProperties... > subspan( index_type offset , index_type count = -1 ) const ;
 
@@ -289,10 +288,10 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 .. code-block:: c++
 
   
-  template< class OtherArrayType , class ... OtherAccessProperties >
+  template< class OtherArrayType , typename ... OtherAccessProperties >
     constexpr span( const span<OtherArrayType,OtherAccessProperties...> & other );
 
-  template< class OtherArrayType , class ... OtherAccessProperties >
+  template< class OtherArrayType , typename ... OtherAccessProperties >
     constexpr span( span<OtherArrayType,OtherAccessProperties...> && other );
 
 ..
@@ -441,8 +440,8 @@ Changes to span comparison operators [span.comparison]
 
 .. code-block:: c++
 
-  template< class lhsArrayType , class ... lhsAccessProperties
-          , class rhsArrayType , class ... rhsAccessProperties >
+  template< class lhsArrayType , typename ... lhsAccessProperties
+          , class rhsArrayType , typename ... rhsAccessProperties >
   constexpr bool operator OP ( const span<lhsArrayType,lhsAccessProperties...> &
                              , const span<rhsArrayType,rhsAccessProperties...> & );
 
