@@ -4,7 +4,7 @@ P0546r0 : Span - foundation for the future
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
 :Number: P0546r0
-:Date: 2017-XX-XX
+:Date: 2017-01-26
 :Reply-to: hcedwar@sandia.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -43,7 +43,9 @@ set of high performance computing access abstractions, with the
 proper preparation.
 This paper proposes improvements to the **P0122** proposed ``span``
 that will establish a solid, future-proof, and extensible foundation 
-to incorporate additional high performance access needs.
+to incorporate additional high performance access needs such
+as needs identified in **P0009** and **P0367**.
+
 
 
 **Summary of proposed change.**
