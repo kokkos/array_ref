@@ -351,7 +351,7 @@ Changes to span observers [span.obs]
 
 .. code-block:: c++
 
-  constexpr static index_type rank() const noexcept ;
+  constexpr static index_type rank() noexcept ;
 
 ..
 
@@ -361,7 +361,7 @@ Changes to span observers [span.obs]
 
 .. code-block:: c++
 
-  constexpr static index_type static_extent() const noexcept ;
+  constexpr static index_type static_extent() noexcept ;
 
 ..
 
