@@ -5,9 +5,11 @@ P0546r0 : Span - foundation for the future
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
 :Number: P0546r0
 :Date: 2017-01-26
-:Reply-to: hcedwar@sandia.gov
+:Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
+:Author: Bryce Lelbach
+:Contact: balelbach@lbl.gov
 :Audience: Library Evolution Working Group (LEWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0546.rst
 
