@@ -46,11 +46,11 @@ proper preparation.
 This paper proposes improvements to the **P0122** proposed ``span``
 that will establish a solid, future-proof, and extensible foundation 
 to incorporate additional high performance access needs such
-as needs identified in **P0009** and **P0367**.
+as those identified in **P0009** and **P0367**.
 
 
 
-**Summary of proposed change.**
+**Summary of Proposed Change**
 
 Instead of ``ElementType`` provide an ``ArrayType`` and
 delete the *magic value* ``dynamic_extent`` .
@@ -74,18 +74,18 @@ delete the *magic value* ``dynamic_extent`` .
 
   - The need for a ``dynamic_extent`` *magic value* is entirely eliminated.
 
-  - ``AccessProperties...`` is a well-defined extention point.
+  - ``AccessProperties...`` is a well-defined extension point.
     This extension point, while not exercised in this proposal, enables
     code which is templated on ``span`` to be *future proofed* with
     respect to extensions by including the ``AccessProperties...`` pack.
     For example the proposed changes to the ``span`` comparison operators
     have this template parameter even though this proposal requires
-    ``sizeof...(AccessProperties) == 0`` .
+    ``sizeof...(AccessProperties) == 0``.
 
 
 **Foundation for the Future**
 
-The proposed changes prepares ``span`` to be an extensible
+The proposed changes prepare ``span`` to be an extensible
 foundation for future higher performance access intentions.
 Examples of possible extensions are as follows.
 
@@ -95,12 +95,13 @@ Examples of possible extensions are as follows.
     when ``( rank_v<ArrayType> > 1 )`` .
 
   - ``AccessProperties...`` could include a contract specification
-    for *restrict* , that guarantees non-aliasing.
+    for *restrict*  that guarantees that a ``span`` type is free from 
+    certain forms of aliasing.
 
   - ``AccessProperties...`` could include memory access performance requests
-    such as non-caching load/store, streaming access, or random access.
+    such as non-caching loads/stores, streaming access, or random access.
     **P0367 Accessors** includes numerous potential memory access properties
-    foward looking to high performance / low latency computing and
+    of interest to high performance / low latency computing and
     heterogeneous architectures.
 
 
