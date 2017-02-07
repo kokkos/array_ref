@@ -14,51 +14,51 @@ using std::is_same;
 using std::experimental::detail::index_sequence;
 
 using std::experimental::dyn;
-using std::experimental::detail::make_dynamic_dims_indices_t;
+using std::experimental::detail::make_dynamic_dims_indices;
 
 int main()
 {
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<             >, index_sequence<>
+        make_dynamic_dims_indices<             >, index_sequence<>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<3            >, index_sequence<>
+        make_dynamic_dims_indices<3            >, index_sequence<>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<3,   5       >, index_sequence<>
+        make_dynamic_dims_indices<3,   5       >, index_sequence<>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<3,   5,   9  >, index_sequence<>
-    >::value));
-
-    BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<dyn          >, index_sequence<0>
-    >::value));
-    BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<dyn, dyn     >, index_sequence<0, 1>
-    >::value));
-    BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<dyn, dyn, dyn>, index_sequence<0, 1, 2>
+        make_dynamic_dims_indices<3,   5,   9  >, index_sequence<>
     >::value));
 
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<dyn, 5,   9  >, index_sequence<0>
+        make_dynamic_dims_indices<dyn          >, index_sequence<0>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<3,   dyn, 9  >, index_sequence<1>
+        make_dynamic_dims_indices<dyn, dyn     >, index_sequence<0, 1>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<3,   5,   dyn>, index_sequence<2>
+        make_dynamic_dims_indices<dyn, dyn, dyn>, index_sequence<0, 1, 2>
     >::value));
 
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<3,   dyn, dyn>, index_sequence<1, 2>
+        make_dynamic_dims_indices<dyn, 5,   9  >, index_sequence<0>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<dyn, 5,   dyn>, index_sequence<0, 2>
+        make_dynamic_dims_indices<3,   dyn, 9  >, index_sequence<1>
     >::value));
     BOOST_TEST((is_same<
-        make_dynamic_dims_indices_t<dyn, dyn, 9  >, index_sequence<0, 1>
+        make_dynamic_dims_indices<3,   5,   dyn>, index_sequence<2>
+    >::value));
+
+    BOOST_TEST((is_same<
+        make_dynamic_dims_indices<3,   dyn, dyn>, index_sequence<1, 2>
+    >::value));
+    BOOST_TEST((is_same<
+        make_dynamic_dims_indices<dyn, 5,   dyn>, index_sequence<0, 2>
+    >::value));
+    BOOST_TEST((is_same<
+        make_dynamic_dims_indices<dyn, dyn, 9  >, index_sequence<0, 1>
     >::value));
 
     return boost::report_errors();

@@ -331,17 +331,9 @@ struct count_dynamic_dims;
 
 // Create an integer_sequence<> of the rank indices of dynamic dimensions.
 template <std::size_t N, std::size_t... Dims>
-struct make_dynamic_dims_indices_impl;
-
-template <std::size_t N, std::size_t... Dims>
-using make_dynamic_dims_indices_impl_t =
-    typename make_dynamic_dims_indices_impl<N, Dims...>::type;
-
+  struct make_dynamic_dims_indices_impl;
 template <std::size_t... Dims>
-using make_dynamic_dims_indices = make_dynamic_dims_indices_impl<0, Dims...>;
-
-template <std::size_t... Dims>
-using make_dynamic_dims_indices_t =
+  using make_dynamic_dims_indices =
     typename make_dynamic_dims_indices_impl<0, Dims...>::type;
 
 // Builds an array<> with one entry for each dynamic dimension.
