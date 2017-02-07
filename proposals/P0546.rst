@@ -38,8 +38,9 @@ Motivation
 The ``span`` capability proposed in
 **P0122, span: bounds-safe views for sequences of objects**
 is intended to provide high performance access to a sequence of elements.
-The current **P0122** proposal defines a single access abstraction:
-the mapping an integral offset and simple iterator to an element reference.
+The current **P0122** proposal defines two access mechanisms:
+mapping an integral offset to an element and 
+an iterator over the sequence of elements.
 The proposed ``span`` abstraction is the foundation for an extensible
 set of high performance computing access abstractions, with the
 proper preparation.
@@ -77,10 +78,11 @@ delete the *magic value* ``dynamic_extent`` .
   - ``AccessProperties...`` is a well-defined extension point.
     This extension point, while not exercised in this proposal, enables
     code which is templated on ``span`` to be *future proofed* with
-    respect to extensions by including the ``AccessProperties...`` pack.
-    For example the proposed changes to the ``span`` comparison operators
-    have this template parameter even though this proposal requires
-    ``sizeof...(AccessProperties) == 0``.
+    respect to extensions by including the ``AccessProperties`` parameter pack.
+    For example this proposal requires ``sizeof...(AccessProperties) == 0``;
+    however, the proposed ``span`` comparison operator overloads
+    retain the ``AccessProperties`` parameter pack so that they are
+    future proof.
 
 
 **Foundation for the Future**
@@ -349,7 +351,7 @@ Changes to span observers [span.obs]
 
 .. code-block:: c++
 
-  constexpr static index_type rank() const noexcept ;
+  constexpr static index_type rank() noexcept ;
 
 ..
 
@@ -359,7 +361,7 @@ Changes to span observers [span.obs]
 
 .. code-block:: c++
 
-  constexpr static index_type static_extent() const noexcept ;
+  constexpr static index_type static_extent() noexcept ;
 
 ..
 
@@ -415,7 +417,7 @@ Changes to span iterator support [span.iterators]
 
   Returns:
   When ``data() != nullptr`` an iterator referring to the element
-  in the codomain element space with the smallest address.
+  in the codomain with the smallest address.
   When ``data() == nullptr`` then ``begin() == end()``.
 
 
@@ -426,9 +428,7 @@ Changes to span iterator support [span.iterators]
 ..
 
   Returns:
-  When ``data() != nullptr`` an iterator *referring* to an element
-  in the codomain that is one element past the
-  element with the largest address; i.e.,
+  When ``data() != nullptr`` an iterator such that
   ``--end()`` refers to the element in the codomain
   with the largest address.
   When ``data() == nullptr`` then ``begin() == end()``.
