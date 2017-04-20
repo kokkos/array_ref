@@ -240,15 +240,6 @@ inline constexpr DynamicDimsArray filter_initialize_dynamic_dims_array(
               , (DimsHead == dyn ? a[idx] = head, a : a)
               , tail...
            );
-/*
-    return filter_initialize_dynamic_dims_array<DimsTail...>(
-                (idx != 0 ? idx - 1 : idx)
-//              , (DimsHead == dyn ? a[(idx != 0 ? idx - 1 : idx)] = head, a : a)
-              , (DimsHead == dyn ? a[index_into_dynamic_dims((idx != 0 ? idx - 1 : idx), DimsTail...)] = head, a : a)
-//              , (DimsHead == dyn ? a[index_into_dynamic_dims(idx, DimsTail...)] = head, a : a)
-              , tail...
-           );
-*/
 }
 
 }}} // std::experimental::detail
