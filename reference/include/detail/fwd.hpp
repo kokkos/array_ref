@@ -173,6 +173,31 @@ inline constexpr std::size_t index_into_dynamic_dims(
     Idx idx, Head head, Tail... tail
     ) noexcept;
 
+// Initialize dynamic dims storage from a parameter pack of dims that include
+// static dims.
+
+// Base case.
+template <typename Idx, typename DynamicDimsArray>
+inline constexpr DynamicDimsArray filter_initialize_dynamic_dims_array(
+    Idx              idx
+  , DynamicDimsArray a
+    ) noexcept;
+
+template <
+    std::size_t    DimsHead
+  , std::size_t... DimsTail
+  , typename       Idx
+  , typename       DynamicDimsArray
+  , typename       DynamicDimsHead
+  , typename...    DynamicDimsTail
+    >
+inline constexpr DynamicDimsArray filter_initialize_dynamic_dims_array(
+    Idx                idx
+  , DynamicDimsArray   a
+  , DynamicDimsHead    head
+  , DynamicDimsTail... tail
+    ) noexcept;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 // A compile-time sequence of types.
