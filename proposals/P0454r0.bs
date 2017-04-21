@@ -1,0 +1,874 @@
+<pre class='metadata'>
+Title: Wording for a Minimal mdspan<>
+Abstract: Proposed wording, based on span [[P0122R3]] for an <code>mdspan</code> with a core subset of the full <code>mdspan</code> functionality.
+Shortname: P0454
+Revision: 0
+Audience: LEWG, LWG
+Status: D
+Group: WG21
+URL: http://wg21.link/P0454r0
+Editor: H. Carter Edwards, Sandia National Laboratory, hcedwar@sandia.gov 
+Editor: Bryce Adelstein Lelbach, Lawrence Berkeley National Laboratory, balelbach@lbl.gov
+Date: 2016-10-10
+Markup Shorthands: markdown yes
+</pre>
+
+Modified P0122R3 Wording {#spanword}
+==========
+
+The proposed changes are relative to the working draft of the standard
+as of [[N4567]] with the changes proposed in [[P0122R3]] applied.
+
+The � character is used to denote a placeholder section number which the editor
+shall determine.
+
+Apply the following changes to 23.7.� [views.general] paragraph 1:
+
+<blockquote>
+The header `<span>` defines the <del>view</del><ins>views</ins> `span`
+<ins>and `mdspan`</ins>. A `span` is a view over a
+contiguous sequence of objects, the storage of which is owned by some other
+object.<ins> An `mdspan` is a multidimensional view over a contiguous sequence
+of objects, the storage of which is owned by some other object.</ins>
+</blockquote>
+
+Apply the following changes to 23.7.�.1 [views.span.synop]:
+
+<pre>
+namespace std {
+
+// [views.constants], constants
+<del>constexpr ptrdiff_t dynamic_extent = -1;</del>
+<ins>enum class dynamic_extent_tag {};
+inline constexpr dynamic_extent_tag dyn { -1 };
+
+template &lt;auto Extent&gt;
+  using is_dynamic_dimension = typename is_same&lt;decay_t&lt;decltype(Extent)&gt;,
+dynamic_extent_tag&gt;::type;
+template &lt;auto Extent&gt;
+  inline constexpr bool is_dynamic_dimension_v =
+is_dynamic_dimension&lt;Extent&gt;::value;</ins>
+
+// [views.span], class template span
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent = <del>dynamic_extent</del><ins>dyn</ins>&gt;
+class span;
+
+// [views.span.comparison], span comparison operators
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  constexpr bool operator==(const span&lt;ElementType, Extent&gt;& l, const
+span&lt;ElementType, Extent&gt;& r);
+
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  constexpr bool operator!=(const span&lt;ElementType, Extent&gt;& l, const
+span&lt;ElementType, Extent&gt;& r);
+
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  constexpr bool operator&lt;(const span&lt;ElementType, Extent&gt;& l, const
+span&lt;ElementType, Extent&gt;& r);
+
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  constexpr bool operator&lt;=(const span&lt;ElementType, Extent&gt;& l, const
+span&lt;ElementType, Extent&gt;& r);
+
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  constexpr bool operator&gt;(const span&lt;ElementType, Extent&gt;& l, const
+span&lt;ElementType, Extent&gt;& r);
+
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  constexpr bool operator&gt;=(const span&lt;ElementType, Extent&gt;& l, const
+span&lt;ElementType, Extent&gt;& r);
+
+// [views.span.objectrep], views of object representation
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  span&lt;const char, ((<del>Extent == dynamic_extent</del><ins>is_dynamic_dimension_v&lt;Extent&gt;</ins>) ? dynamic_extent :
+(sizeof(ElementType) * Extent))&gt; as_bytes(span&lt;ElementType, Extent&gt; s)
+noexcept;
+
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent&gt;
+  span&lt;const char, ((<del>Extent == dynamic_extent</del><ins>is_dynamic_dimension_v&lt;Extent&gt;</ins>) ? dynamic_extent :
+(sizeof(ElementType) * Extent))&gt; as_writeable_bytes(span&lt;ElementType,
+Extent&gt;) noexcept;
+
+<ins>// [views.dimensions], class template dimensions
+template &lt;auto... Extents&gt;
+class dimensions;
+
+// [views.dimensions.comparison], dimensions comparison operators
+template &lt;auto... Extents&gt;
+  constexpr bool operator==(const dimensions<Extents...>& l,
+                            const dimensions<Extents...>& r);
+
+template &lt;auto... Extents&gt;
+  constexpr bool operator!=(const dimensions<Extents...>& l,
+                            const dimensions<Extents...>& r);
+
+// [views.mdspan], class template mdspan
+template &lt;class ElementType, class Dimensions, class... Properties&gt;
+class mdspan;
+
+template &lt;class T&gt; struct is_mdspan_property;
+template &lt;class T&gt;
+inline constexpr bool is_mdspan_property_v = is_mdspan_property&lt;T&gt;::value;
+
+// [views.layout.props], mdspan layout properties
+class layout_right;
+class layout_left;
+
+<!--
+
+class layout_stride;
+
+-->
+
+template &lt;class T&gt; struct is_layout;
+template &lt;class T&gt;
+inline constexpr bool is_layout_v = is_layout&lt;T&gt;::value;
+
+<!--
+
+// [views.mdspan.subspan], mdspan slicing support
+struct all_extent_tag { };
+inline constexpr all_extent_tag all { };</ins>
+
+-->
+
+} // namespace std
+</pre>
+
+Add the following paragraph in between paragraphs 2 and 3 in 23.7.�.2 [views.span.template]:
+
+<blockquote>
+<ins>`span` requires the type of `Extent` to be either `dynamic_extent_tag` or
+implicitly convertible to the `span`'s `index_type`.</ins>
+</blockquote>
+
+Apply the following changes to the definition of `span` in 23.7.�.2 [views.span.template]
+
+<pre>
+namespace std {
+
+// A view over a contiguous, single-dimension sequence of objects
+template &lt;class ElementType, <del>ptrdiff_t</del><ins>auto</ins> Extent = <del>dynamic_extent</del><ins>dyn</ins>&gt;
+class span {
+</pre>
+
+<pre>
+&nbsp; <ins>inline</ins> constexpr <del>static index_type</del><ins>auto</ins> extent = Extent;
+</pre>
+
+<pre>
+&nbsp; template &lt;class OtherElementType, <del>ptrdiff_t</del><ins>auto</ins> OtherExtent&gt;
+    constexpr span(const span&lt;OtherElementType, OtherExtent&gt;& other);
+  template &lt;class OtherElementType, <del>ptrdiff_t</del><ins>auto</ins> OtherExtent&gt;
+    constexpr span(span&lt;OtherElementType, OtherExtent&gt;&& other);
+</pre>
+
+<pre>
+  template &lt;ptrdiff_t Offset, <del>ptrdiff_t</del><ins>auto</ins> Count = <del>dynamic_extent</del><ins>dyn</ins>&gt;
+    constexpr span&lt;element_type, Count&gt; subspan() const;
+  constexpr span&lt;element_type, dynamic_extent&gt; first(index_type count) const;
+  constexpr span&lt;element_type, dynamic_extent&gt; last(index_type count) const;
+<ins>  constexpr span&lt;element_type, dynamic_extent&gt; subspan(index_type
+    offset) const;</ins>
+  constexpr span&lt;element_type, dynamic_extent&gt; subspan(index_type
+    offset, index_type count<del> = dynamic_extent</del>) const;
+</pre>
+
+Apply the following changes to the converting copy constructor in 23.7.�.3
+[views.span.cons]:
+
+<blockquote>
+<pre>
+template &lt;class OtherElementType, <del>ptrdiff_t</del><ins>auto</ins> OtherExtent&gt;
+  constexpr span(const span&lt;OtherElementType, OtherExtent&gt;& other);
+template &lt;class OtherElementType, <del>ptrdiff_t</del><ins>auto</ins> OtherExtent&gt;
+  constexpr span(span&lt;OtherElementType, OtherExtent&gt;&& other);
+</pre>
+
+*Remarks:* These constructors shall not participate in overload resolution
+unless trying to access OtherElementType through an ElementType* would meet the
+rules for well-defined object access defined in 3.10/10.
+
+*Requires:* If <del>`extent` is not equal to `dynamic_extent`</del><ins>`is_dynamic_dimension_v<Extent> == false`</ins>,
+then `other.size()` shall be equal to `extent`.
+
+*Effects:* Constructs a `span` by copying the implementation data members of
+another `span`, performing suitable conversions.
+
+*Postconditions:* `size() == other.size() && data() == reinterpret_cast<pointer>(other.data())`.
+
+*Complexity:* Constant.
+
+*Throws:* Nothing.
+</blockquote>
+
+Apply the following changes to `subspan()` in 23.7.�.4 [views.span.sub]:
+
+<blockquote>
+<pre>
+template &lt;ptrdiff_t Offset, <del>ptrdiff_t</del><ins>auto</ins> Count = <del>dynamic_extent</del><ins>dyn</ins>&gt;
+  constexpr span&lt;element_type, Count&gt; subspan() const;
+</pre>
+
+*Requires:* <code>(Offset == 0 || Offset &gt; 0 &amp;&amp; Offset < size()) &amp;&amp;
+(<del>Count == dynamic_extent</del><ins>is_dynamic_dimension&lt;Count&gt;</ins> || Count >= 0 &amp;&amp; Offset + Count &lt;= size())</code>.
+
+*Effects:* Returns a new `span` that is a view over `Count` elements of the
+current span starting at element `Offset`. If <del>`Count` is equal to
+`dynamic_extent`</del><ins>`is_dynamic_dimension<Count> == true`</ins>, then a `span` over all elements from `Offset` onwards is
+returned.
+
+*Returns:* <code>span(data() + Offset, <del>Count == dynamic_extent</del><ins>is_dynamic_dimension&lt;Count&gt;</ins> ? size() - Offset : Count)</code>.
+
+*Complexity:* Constant.
+</blockquote>
+
+Add the following `subspan()` overload to 23.7.�.4 [views.span.sub]:
+
+<blockquote>
+<ins style="display: block;">
+<pre>
+constexpr span&lt;element_type, dynamic_extent&gt; subspan(index_type
+  offset) const;
+</pre>
+
+*Requires:* `(offset == 0 || offset > 0 && offset < size())`.
+
+*Effects:* Returns a new `span` that is a view over all elements from `offset`
+onwards.
+
+*Returns:* `span(data() + offset, size() - offset)`.
+
+*Complexity:* Constant.
+</ins>
+</blockquote>
+
+Apply the following changes to `subspan()` in 23.7.�.4 [views.span.sub]:
+
+<blockquote>
+<pre>
+constexpr span&lt;element_type, dynamic_extent&gt; subspan(index_type
+  offset, index_type count<del> = dynamic_extent</del>) const;
+</pre>
+
+*Requires:* <code>(offset == 0 || offset > 0 && offset < size()) &&
+(<del>count == dynamic_extent || </del>count >= 0 && offset + count <= size())</code>.
+
+*Effects:* Returns a new `span` that is a view over `count` elements of the
+current span starting at element `offset`.<del> If count is equal to
+`dynamic_extent`, then a `span` over all elements from `offset` onwards is
+returned.</del>
+
+*Returns:* <code>span(data() + offset, <del>count == dynamic_extent ? size() - offset : </del>count)</code>.
+
+*Complexity:* Constant.
+</blockquote>
+
+`mdspan` Wording {#mdspanword}
+================
+
+`dimensions` Class Template {#dims}
+----------------
+
+Add the following section, 23.7.� [views.dimensions.template]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.� Class Template** `dimensions` **[views.dimensions.template]**
+
+<pre>
+template &lt;auto... Extents&gt;
+class dimensions {
+public:
+  // types
+  using value_type = ptrdiff_t;
+  using index_type = ptrdiff_t;
+
+  // [views.dimensions.cons], constructors/assignment/destructor
+  constexpr dimensions() noexcept;
+  template &lt;class... DynamicExtents&gt;
+    constexpr dimensions(DynamicExtents... dexts) noexcept;
+  constexpr dimensions(dimensions const& other) noexcept = default;
+  constexpr dimensions(dimensions&& other) noexcept = default;
+  dimensions& operator=(dimensions const& other) noexcept = default;
+  dimensions& operator=(dimensions&& other) noexcept = default;
+
+  // [views.dimensions.obs], observers
+  static constexpr index_type rank() noexcept;
+  static constexpr index_type rank_dynamic() noexcept;
+
+  constexpr size_type size() noexcept;
+
+  constexpr bool is_dynamic_dimension(index_type i) const noexcept;
+
+  // [views.dimensions.elem], element access
+  constexpr value_type operator[](index_type i) const noexcept;
+};
+</pre>
+
+`dimensions` is a class which contains storage for a fixed number of integer
+elements, each of which represents the extent of a *dimension*, collectively
+forming a multi-dimensional integer index.
+
+Each non-type template parameter specifies either a positive integral value,
+indicating a *static dimension*, or a value of type `dynamic_extent_tag`, 
+indicating a *dynamic dimension* whose value will be provided at runtime.
+
+Implementations are not permitted to use additional storage, such as dynamic
+memory, to allocate the contained dimensions. The contained values shall be
+allocated in a region of the `dimensions` storage suitably aligned for the type
+`value_type`. [ *Note:* Implementations are not required to store the value
+of static dimensions. — *end note* ] 
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.dimensions.cons]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `dimensions` **Constructors, Assignment and Destructors [views.dimensions.cons]**
+
+<pre>
+constexpr dimensions() noexcept;
+</pre>
+
+*Effects:* Constructs a `dimensions` object with all dynamic dimensions default
+initialized.
+
+<pre>
+template &lt;class... DynamicExtents&gt;
+  constexpr dimensions(DynamicExtents... dexts) noexcept;
+</pre>
+
+*Remarks:* This constructor shall not participate in overload resolution unless
+`sizeof...(DynamicExtents) == rank_dynamic()`.
+
+*Effects:* Constructs a `dimensions` object with each dynamic dimensions
+initialized from a corresponding value in `dexts`.
+
+<!--
+
+[ *Example:*
+
+TODO
+
+— *end example* ] 
+
+-->
+
+<pre>
+constexpr dimensions(dimensions const& other) noexcept = default;
+constexpr dimensions(dimensions&& other) noexcept = default;
+</pre>
+
+*Effects:* Constructs a `dimensions` object by copying from another
+`dimensions` object.
+
+<pre>
+dimensions& operator=(dimensions const& other) noexcept = default;
+dimensions& operator=(dimensions&& other) noexcept = default;
+</pre>
+
+*Effects:* Assigns from one `dimensions` object into another.
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.dimensions.obs]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `dimensions` **Observers [views.dimensions.obs]**
+
+<pre>
+static constexpr index_type rank() noexcept;
+</pre>
+
+*Effects:* Returns the number of elements in the `dimensions` object.
+
+*Returns:* `sizeof...(Extents)`.
+
+<pre>
+static constexpr index_type rank() noexcept;
+</pre>
+
+*Effects:* Returns the number of parameters in `Extents` for which
+`is_dynamic_dimension_v` is `true`.
+
+<pre>
+constexpr bool is_dynamic_dimension(index_type i) const noexcept;
+</pre>
+
+*Effects:* If `i < rank()`, returns true if the `i`th dimension is a dynamic
+dimension. Otherwise, returns false.
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.dimensions.elem]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `dimensions` **Element Access [views.dimensions.elem]**
+
+<pre>
+constexpr value_type operator[](index_type i) const noexcept;
+</pre>
+
+*Effects:* If `i < rank()`, returns the value of the `i`th element. Otherwise,
+returns 0.
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.dimensions.comparison]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `dimensions` **Comparison Operators [views.dimensions.comparison]**
+
+<pre>
+template &lt;auto... Extents&gt;
+  constexpr bool operator==(const dimensions<Extents...>& l,
+                            const dimensions<Extents...>& r);
+</pre>
+
+*Effects:* `l[i] == r[i]`, where `i` is  in the range `[0, rank())`.
+
+*Throws:* Nothing.
+
+<pre>
+template &lt;auto... Extents&gt;
+  constexpr bool operator!=(const dimensions<Extents...>& l,
+                            const dimensions<Extents...>& r);
+</pre>
+
+*Effects:* Equivalent to `return !(l == r);`
+
+</ins>
+</blockquote>
+
+Layout Mapping Requirements {#layreq}
+----------------
+
+Add the following section, 23.7.� [views.layout.requirements]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.� Layout Mapping Requirements [views.layout.requirements]**
+
+A *layout* is class that describes a mapping from a multi-dimensional index to
+a *mapped index*, which is one-dimensional. `mdspan` (23.7.�) is parameterized
+in terms of layout mappings.
+
+A layout shall have an embedded template class `mapping` which takes a single
+template parameter that shall be a type which fulfills the definition of
+the `dimensions` class. *Layout mappings* are instantiations of this embedded
+template class.
+
+In the following section:
+- Let `LM` be a layout mapping and let `lm` be an object of type `LM`.
+- Let `i` be in the range `[0, rank())` in order.
+
+The expression `is_layout<LM>::value` shall be true.
+
+The expression `lm.span()` shall be well-formed and have the following
+semantics:
+
+- *Effects:* Returns `(*this)(extent(0), /* ... */, extent(i)) - (*this)(0, /* ... */, 0)`.
+
+The expression `LM::is_always_strided(r)` shall be true if the difference
+between two mapped indices that are consecutive is always identical.
+
+If `LM::is_always_strided(r)`, the expression `lm.stride(r)` shall be
+well-formed and have the following semantics:
+
+- *Effects:* Returns the difference between two mapped indices that are
+    consecutive.    
+
+The expression `lm(is...)` shall be well-formed and have the following semantics
+if `sizeof...(decltype(is)) == LM::rank()` and all the types in `decltype(is)`
+are integral:
+
+- *Effects:* Returns the mapped index for multi-dimensional index `is`.
+
+</ins>
+</blockquote>
+
+`mdspan` Class Template {#mdspan}
+----------------
+
+Add the following section, 23.7.� [views.mdspan.template]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.� Class template** `mdspan` **[views.mdspan.template]**
+
+<pre>
+template &lt;class ElementType, class Dimensions, class... Properties&gt;
+class mdspan {
+public:
+  // types
+  using element_type = ElementType;
+  using index_type = ptrdiff_t;
+  using difference_type = ptrdiff_t;
+  using pointer = element_type*;
+  using reference = element_type&;
+
+  using layout = <i>implementation defined</i>;
+  using layout_mapping = typename layout::template mapping<Dimensions>;
+
+  // [views.mdspan.cons], constructors/assignment/destructor 
+  constexpr mdspan() noexcept;
+  constexpr mdspan(nullptr_t) noexcept;
+  template &lt;class... DynamicExtents&gt;
+    constexpr mdspan(pointer ptr, DynamicExtents... dexts);
+  constexpr mdspan(pointer ptr, layout_mapping&& l);
+  constexpr mdspan(pointer ptr, layout_mapping const& l);
+  constexpr mdspan(mdspan const& other) noexcept = default;
+  constexpr mdspan(mdspan&& other) noexcept = default;
+  template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+    constexpr mdspan(mdspan&lt;UElementType, UDimensions, UProperties...&gt; const& other);
+  template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+    constexpr mdspan(mdspan&lt;UElementType, UDimensions, UProperties...&gt;&& other);
+
+  mdspan& operator=(mdspan const& other) noexcept = default;
+  mdspan& operator=(mdspan&& other) noexcept = default;
+  template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+    mdspan& operator=(mdspan&lt;UElementType, UDimensions, UProperties...&gt; const& other);
+  template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+    mdspan& operator=(mdspan&lt;UElementType, UDimensions, UProperties...&gt;&& other);
+
+  ~mdspan() noexcept = default;
+
+<!--
+
+  // [views.mdspan.sub], subviews 
+  template &lt;class... SliceSpecifiers&gt;
+  <i>see-below</i> subarray(SliceSpecifiers&&... ss);
+-->
+  
+  // [views.mdspan.domobs], domain observers
+  static constexpr index_type rank() noexcept;
+  static constexpr index_type rank_dynamic() noexcept;
+
+  constexpr bool is_dynamic_dimension(rank_type r) const noexcept;
+  constexpr index_type extent(rank_type r) const noexcept;
+
+  constexpr index_type size() const noexcept;
+  constexpr index_type length() const noexcept;
+  constexpr bool empty() const noexcept;
+
+  // [views.mdspan.codobs], codomain observers
+  constexpr index_type span() const noexcept;
+
+  // [views.mdspan.mapobs], mapping observers
+  constexpr index_type stride(rank_type r) const noexcept;
+
+  constexpr layout_mapping mapping() const noexcept;
+
+  // [views.mdspan.elem], element access
+  template &lt;class... Indices&gt;
+    reference operator()(Indices... is) const;
+
+  constexpr pointer data() const noexcept;
+};
+</pre>
+
+1.  An `mdspan` is a multidimensional view over a contiguous sequence of
+      objects, the storage of which is owned by some other object.
+
+2. `ElementType` is required to be a complete object that is not an abstract
+      class type.
+
+3.  In the following section:
+      - Let `i` be in the range `[0, sizeof...(Properties))` in order and
+      - <code>P<sup>i</sup></code> be the `i`th type in `Properties`, 
+      - Let `r` be in the range `[0, rank())` in order and
+      - <code>Idx<sup>r</sup></code> be the `r`th type in a template parameter
+          pack named `Indices`,
+      - Let `rd` be in the range `[0, rank_dynamic())` in order, and
+      - <code>DExt<sup>rd</sup></code> be the `rd`th type in a template
+          parameter pack named `DynamicExtents`.
+
+4.  <code>is_layout_v&lt;P<sup>i</sup>&gt;</code> shall be true for `i`. The
+      `layout` type is the type in <code>P<sup>i</sup></code> for which
+      <code>is_layout_v&lt;P<sup>i</sup>&gt; == true</code>. If
+      `sizeof...(Properties) == 0` or
+      <code>is_layout_v&lt;P<sup>i</sup>&gt; == false</code>
+      for all `i`, then the `layout` type is `layout_right`. 
+
+5.  If <code>is_mdspan_property_v&lt;P<sup>i</sup>&gt;</code> is false for any
+      `i`, then `mdspan` is ill-formed.
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.mdspan.cons]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `mdspan` **Constructors, Assignment and Destructors [views.mdspan.cons]**
+
+<pre>
+constexpr mdspan() noexcept;
+constexpr mdspan(nullptr_t) noexcept;
+</pre>
+
+*Remarks:* If `!is_dynamic_dimension(r) && extent(r) != 0` then the program is
+ill-formed.
+
+*Effects:* Constructs an empty `mdspan`.
+
+*Postconditions:* `size() == 0 && data() == nullptr`
+
+<pre>
+template &lt;class... DynamicExtents&gt;
+  constexpr mdspan(pointer ptr, DynamicExtents... dexts);
+</pre>
+
+*Effects:* Equivalent to `mdspan(ptr, Dimensions(dexts...))`.
+
+*Complexity:* Constant.
+
+<pre>
+constexpr mdspan(pointer ptr, layout_mapping&& l);
+constexpr mdspan(pointer ptr, layout_mapping const& l);
+</pre>
+
+*Requires:*
+  - `l.size() >= 0`.
+  - If `ptr` is null, then `l.size()` shall be 0.
+  - If `ptr` is not null, `ptr` shall point to the beginning of a valid sequence
+    of objects of at least `l.size()` length.
+
+*Effects:* Constructs an `mdspan` that is a view over the sequence of objects
+pointed to be `ptr` with mapping `l`. If `ptr` is null or `l.size()` is 0, then
+an empty `mdspan` is constructed.
+
+*Complexity:* Constant.
+
+*Throws:* Nothing.
+
+<pre>
+constexpr mdspan(mdspan const& other) noexcept = default;
+constexpr mdspan(mdspan&& other) noexcept = default;
+</pre>
+
+*Effects:* Constructs an `mdspan` by copying from another `mdspan`.
+
+*Postconditions:* `other.size() == size() && other.data() == data() && other.mapping() == mapping()`
+
+<pre>
+template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+  constexpr mdspan(mdspan&lt;UElementType, UDimensions, UProperties...&gt; const& other);
+template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+  constexpr mdspan(mdspan&lt;UElementType, UDimensions, UProperties...&gt;&& other);
+</pre>
+
+*Remarks:* This constructor shall not participate in overload resolution unless
+`mdspan<UElementType, UDimensions, UProperties...>::pointer` is implicitly
+convertible to `pointer`.
+
+*Requires:* If `!other.is_dynamic_dimension(r)` then `other.extent(r)` shall be
+equal to `extent(r)`, for all `r`.
+
+*Effects:* Constructs an `mdspan` by copying from another `mdspan`.
+
+*Postconditions:* `other.size() == size() && reinterpret_cast<pointer>(other.data()) == data() && other.mapping() == mapping()`
+
+*Complexity:* Constant.
+
+*Throws:* Nothing.
+
+<pre>
+mdspan& operator=(mdspan const& other) noexcept = default;
+mdspan& operator=(mdspan&& other) noexcept = default;
+</pre>
+
+*Effects:* Assigns from one `mdspan` to another.
+
+*Postconditions:* `other.size() == size() && other.data() == data() && other.mapping() == mapping()`
+
+<pre>
+template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+  mdspan& operator=(mdspan&lt;UElementType, UDimensions, UProperties...&gt; const& other);
+template &lt;class UElementType, class UDimensions, class... UProperties&gt;
+  mdspan& operator=(mdspan&lt;UElementType, UDimensions, UProperties...&gt;&& other);
+</pre>
+
+*Remarks:* This operator shall not participate in overload resolution unless
+`mdspan<UElementType, UDimensions, UProperties...>::pointer` is implicitly
+convertible to `pointer`.
+
+*Requires:* If `!other.is_dynamic_dimension(r)` then `other.extent(r)` shall be
+equal to `extent(r)`, for all `r`.
+
+*Effects:* Assigns from one `mdspan` to another.
+
+*Postconditions:* `other.size() == size() && other.data() == data() && other.mapping() == mapping()`
+
+</ins>
+</blockquote>
+
+<!--
+
+Add the following section, 23.7.� [views.mdspan.sub]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `mdspan` **Subviews [views.mdspan.sub]**
+
+<pre>
+template &lt;class... SliceSpecifiers&gt;
+<i>see-below</i> subarray(SliceSpecifiers&&... ss);
+</pre>
+
+TODO
+
+</ins>
+</blockquote>
+
+-->
+
+Add the following section, 23.7.� [views.mdspan.domobs]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `mdspan` **Domain Observers [views.mdspan.domobs]**
+
+<pre>
+static constexpr index_type rank() noexcept;
+</pre>
+
+*Effects:* Equivalent to `return layout_mapping::rank();`
+
+<pre>
+static constexpr index_type rank_dynamic() noexcept;
+</pre>
+
+*Effects:* Equivalent to `return layout_mapping::rank_dynamic();`
+
+<pre>
+constexpr bool is_dynamic_dimension(rank_type r) const noexcept;
+</pre>
+
+*Effects:* Equivalent to `return mapping().is_dynamic_dimension(r);`
+
+<pre>
+constexpr index_type extent(rank_type r) const noexcept;
+</pre>
+
+*Effects:* Equivalent to `return mapping()[r];`
+
+<pre>
+constexpr index_type size() const noexcept;
+constexpr index_type length() const noexcept;
+</pre>
+
+*Effects:* Equivalent to `return mapping().size();`
+
+<pre>
+constexpr bool empty() const noexcept;
+</pre>
+
+*Effects:* Equivalent to `return size() == 0;`
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.mdspan.codobs]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `mdspan` **Codomain Observers [views.mdspan.codobs]**
+
+<pre>
+constexpr index_type span() const noexcept;
+</pre>
+
+*Effects:* Equivalent to `return mapping().span();`
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.mdspan.mapobs]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `mdspan` **Mapping Observers [views.mdspan.mapobs]**
+
+<pre>
+constexpr index_type stride(rank_type r) const noexcept;
+</pre>
+
+*Remarks:* This function shall not participate in overload resolution if
+`layout_mapping::is_always_strided(r)` is true for all r.
+
+*Effects:* Equivalent to `return mapping().stride(r);`
+
+<pre>
+constexpr layout_mapping mapping() const noexcept;
+</pre>
+
+*Effects:* Returns a copy of the `mdspan`'s layout mapping.
+
+</ins>
+</blockquote>
+
+Add the following section, 23.7.� [views.mdspan.mapobs]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.�** `mdspan` **Element Access [views.mdspan.elem]**
+
+<pre>
+template &lt;class... Indices&gt;
+  reference operator()(Indices... is) const;
+</pre>
+
+*Effects:* Returns a reference to the element at position `mapping()(is...)`.
+
+*Complexity:* Constant
+
+*Throws:* Nothing
+
+<pre>
+constexpr pointer data() const noexcept;
+</pre>
+
+*Effects:* If `!empty()`, returns a pointer to the first element in the
+sequence accessible via the `mdspan`. Otherwise, returns `nullptr`.
+
+*Complexity:* Constant
+
+</ins>
+</blockquote>
+
+Layout Mapping Properties {#laymap}
+----------------
+
+Add the following section, 23.7.� [views.layout.props]:
+
+<blockquote>
+<ins style="display: block;">
+**23.7.� Layout Mapping Properties [views.layout.props]**
+
+In the following section, let `D` be an instantiation of the `dimensions` class
+template.
+
+`layout_right` shall be a layout ([views.layout.requirements]) such
+that `layout_right::mapping<D>().stride(D::rank() - 1) == 1`.
+
+`layout_left` shall be a layout such that
+`layout_left::mapping<D>().stride(0) == 1`.
+
+</ins>
+</blockquote>
+
+Feature Testing {#test}
+===============
+
+The `__cpp_lib_mdspan` feature test macro should be added.
+
+
