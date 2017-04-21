@@ -71,7 +71,7 @@ struct integer_sequence_array<integer_sequence<T, I...> >
     using size_type = std::size_t;
     using value_type = T;
 
-    static constexpr value_type value[] = { I... };
+    static constexpr value_type values[] = { I... };
 
     static constexpr size_type size() noexcept
     {
@@ -80,12 +80,12 @@ struct integer_sequence_array<integer_sequence<T, I...> >
 
     constexpr value_type operator[] (size_type idx) const noexcept
     {
-        return value[idx];
+        return values[idx];
     }
 };
 
 template <typename T, T... I>
-constexpr T integer_sequence_array<integer_sequence<T, I...> >::value[];
+constexpr T integer_sequence_array<integer_sequence<T, I...> >::values[];
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -255,6 +255,8 @@ struct make_integer_sequence_inverse_mapping_impl<integer_sequence<T, I...> >
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+
+#warning All of these could be constexpr functions instead.
 
 template <std::size_t N, typename Dimensions>
 struct is_rank_greater_than

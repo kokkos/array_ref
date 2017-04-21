@@ -37,6 +37,9 @@ struct dimensions
     template <typename... DynamicDims>
     constexpr dimensions(DynamicDims... ddims) noexcept;
 
+    template <std::size_t N>
+    constexpr dimensions(array<value_type, N> a) noexcept;
+
     /////////////////////////////////////////////////////////////////////////// 
     // RANK, SIZE AND EXTENT 
 
@@ -98,6 +101,18 @@ dimensions<Dims...>::dimensions(DynamicDims... ddims) noexcept
     );
     static_assert(
         detail::count_dynamic_dims<Dims...>::value == sizeof...(DynamicDims)
+      , "Incorrect number of dynamic dimensions passed to dimensions<>."
+        );
+}
+
+template <std::size_t... Dims>
+template <std::size_t N>
+constexpr
+dimensions<Dims...>::dimensions(array<std::size_t, N> a) noexcept
+  : dynamic_dims_{a}
+{
+    static_assert(
+        detail::count_dynamic_dims<Dims...>::value == N
       , "Incorrect number of dynamic dimensions passed to dimensions<>."
         );
 }

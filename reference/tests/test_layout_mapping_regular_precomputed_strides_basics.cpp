@@ -7,9 +7,9 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-#include "detail/layout_regular_indexer.hpp"
+#include "detail/layout_mapping_regular_precomputed_strides.hpp"
 
-using std::experimental::detail::layout_regular_indexer;
+using std::experimental::detail::layout_mapping_regular_precomputed_strides;
 
 int main()
 {

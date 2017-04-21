@@ -61,6 +61,7 @@ set(TESTS
     test_mdspan_basics
     test_dims_dynamic_extent
     test_dims_index_into_dynamic_dims
+    test_dims_filter_initialize_dynamic_dims_array
     test_dims_meta_interfaces
     test_dims_runtime_interfaces
     test_integer_sequence
@@ -72,8 +73,8 @@ set(TESTS
     test_layout_mapping_right_padding
     test_layout_mapping_right_stepping
     test_layout_mapping_right_stepping_padding
-    test_layout_regular_indexer_basics
-    test_layout_regular_indexer_left_basics
+    test_layout_mapping_regular_precomputed_strides_basics
+    test_layout_mapping_regular_precomputed_strides_left_basics
     test_meta_count_dynamic_dims
     test_meta_count_integral_range_slice_specifiers
     test_meta_extract_dimensions

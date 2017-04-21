@@ -46,10 +46,14 @@ struct layout_mapping_left : Dimensions
 
     constexpr layout_mapping_left() noexcept;
 
-    constexpr layout_mapping_left(layout_mapping_left const& b) noexcept = default;
-    constexpr layout_mapping_left(layout_mapping_left&& b) noexcept = default;
-    layout_mapping_left& operator=(layout_mapping_left const& b) noexcept = default;
-    layout_mapping_left& operator=(layout_mapping_left&& b) noexcept = default;
+    constexpr layout_mapping_left(layout_mapping_left const& b) noexcept
+        = default;
+    constexpr layout_mapping_left(layout_mapping_left&& b) noexcept
+        = default;
+    layout_mapping_left& operator=(layout_mapping_left const& b) noexcept
+        = default;
+    layout_mapping_left& operator=(layout_mapping_left&& b) noexcept
+        = default;
 
     template <typename... DynamicDims>
     constexpr layout_mapping_left(DynamicDims... ddims) noexcept;
