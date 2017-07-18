@@ -1,0 +1,351 @@
+/*
+//@HEADER
+// ************************************************************************
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
+// 
+// ************************************************************************
+//@HEADER
+*/
+
+#ifndef STD_EXPERIMENTAL_MDSPAN_HELPER_HEADER
+#define STD_EXPERIMENTAL_MDSPAN_HELPER_HEADER
+
+namespace std {
+namespace experimental {
+namespace detail {
+
+/*--------------------------------------------------------------------------*/
+
+template< int R , ptrdiff_t ... Extents >
+struct extents_impl ;
+
+template< int R >
+struct extents_impl< R >
+{
+  typedef extents_impl next ;
+
+  static constexpr int Rank = 0 ;
+  static constexpr int RankDynamic = 0 ;
+  static constexpr ptrdiff_t StaticN = 1 ;
+  static constexpr ptrdiff_t N = 1 ;
+
+  static constexpr ptrdiff_t static_extent(int) noexcept { return 1 ; }
+  constexpr ptrdiff_t extent(int) const noexcept { return 1 ; }
+  constexpr ptrdiff_t size(int) const noexcept { return 1 ; }
+  constexpr ptrdiff_t size() const noexcept { return 1 ; }
+
+  template< typename IndexType , typename ... Args >
+  constexpr bool in_bounds( IndexType const & i , Args ... args ) const noexcept
+    { return 0 <= i && i < N && in_bounds( args... ); }
+
+  constexpr extents_impl() noexcept = default ;
+  constexpr extents_impl( extents_impl const & ) noexcept = default ;
+  extents_impl & operator = ( extents_impl const & ) noexcept = default ;
+
+  template< typename T >
+  constexpr extents_impl( T const * ) noexcept {}
+
+  constexpr bool in_bounds() const noexcept { return true ; }
+
+};
+
+template< int R , ptrdiff_t ... Tail >
+struct extents_impl< R , dynamic_extent , Tail... >
+  : extents_impl< R + 1 , Tail... >
+{
+  typedef extents_impl< R + 1 , Tail... > next ;
+
+  static constexpr int Rank = 1 + next::Rank ;
+  static constexpr int RankDynamic = 1 + next::RankDynamic ;
+  static constexpr ptrdiff_t StaticN = dynamic_extent ;
+
+  ptrdiff_t N ;
+
+  static constexpr ptrdiff_t static_extent( int k ) noexcept
+    { return k == R ? StaticN : next::static_extent(k); }
+
+  constexpr ptrdiff_t extent( int k ) const noexcept
+    { return k == R ? N : next::extent(k); }
+
+  constexpr ptrdiff_t size( int k ) const noexcept
+    { return k == R ? N * next::size() : next::size(k) ; }
+
+  constexpr ptrdiff_t size() const noexcept
+    { return N * next::size(); }
+
+  ~extents_impl() = default ;
+  constexpr extents_impl() noexcept : next(), N(0) {}
+  constexpr extents_impl( extents_impl const & rhs ) noexcept = default ;
+  extents_impl & operator = ( extents_impl const & rhs ) noexcept = default ;
+
+  template< class ... IndexType >
+  explicit constexpr
+  extents_impl( ptrdiff_t DN , IndexType ... DynamicExtents ) noexcept
+    : next( DynamicExtents... ), N(DN) {}
+
+  template< typename T >
+  explicit
+  extents_impl( T const * const DN ) noexcept
+    : next( DN + 1 ), N(*DN) {}
+
+  template< typename IndexType , typename ... Args >
+  constexpr bool in_bounds( IndexType const & i , Args ... args ) const noexcept
+    { return 0 <= i && i < N && next::in_bounds( args... ); }
+};
+
+template< int R , ptrdiff_t SN , ptrdiff_t ... Tail >
+struct extents_impl< R , SN , Tail... >
+  : extents_impl< R + 1 , Tail... >
+{
+  typedef extents_impl< R + 1 , Tail... > next ;
+
+  static constexpr int Rank = 1 + next::Rank ;
+  static constexpr int RankDynamic = 0 + next::RankDynamic ;
+  static constexpr ptrdiff_t StaticN = SN ;
+  static constexpr ptrdiff_t N = SN ;
+
+  static constexpr ptrdiff_t static_extent( int k ) noexcept
+    { return k == R ? StaticN : next::static_extent(k); }
+
+  constexpr ptrdiff_t extent( int k ) noexcept
+    { return k == R ? N : next::extent(k); }
+
+  constexpr ptrdiff_t size( int k ) const noexcept
+    { return k == R ? N * next::size() : next::size(k) ; }
+
+  constexpr ptrdiff_t size() const noexcept
+    { return N * next::size(); }
+
+  ~extents_impl() = default ;
+  constexpr extents_impl() noexcept = default ;
+  constexpr extents_impl( extents_impl const & rhs ) noexcept = default ;
+  extents_impl & operator = ( extents_impl const & rhs ) noexcept = default ;
+
+  template< class ... IndexType >
+  explicit constexpr
+  extents_impl( IndexType ... DynamicExtents ) noexcept
+    : next( DynamicExtents... ) {}
+
+  template< typename T >
+  explicit
+  extents_impl( T const * const DN ) noexcept
+    : next( DN ) {}
+
+  template< typename IndexType , typename ... Args >
+  constexpr bool in_bounds( IndexType const & i , Args ... args ) const noexcept
+    { return 0 <= i && i < N && next::in_bounds( args... ); }
+};
+
+}}} // std::experimental::detail
+
+/*--------------------------------------------------------------------------*/
+
+namespace std {
+namespace experimental {
+namespace detail {
+
+template< class ... Properties >
+struct mdspan_prop ;
+
+template<>
+struct mdspan_prop<> {
+  typedef std::experimental::extents<> extents ;
+  typedef std::experimental::layout_right layout ;
+};
+
+template< class P , class ... Properties >
+struct mdspan_prop< P , Properties... > {
+
+  typedef mdspan_prop< Properties... > next ;
+
+  typedef typename
+    std::conditional< is_extents<P>::value
+                    , P , typename next::extents >::type
+      extents ;
+                                    
+  typedef typename
+    std::conditional< is_layout<P>::value
+                    , P , typename next::layout >::type
+      layout ;
+};
+
+template< class Extents , class Layout >
+struct mdspan_mapping ;
+
+template< ptrdiff_t ... StaticExtents , class Layout >
+struct mdspan_mapping< extents< StaticExtents ... > , Layout > {
+  typedef typename Layout::template mapping< StaticExtents ... > type ;
+};
+
+}}} // std::experimental::detail
+
+/*--------------------------------------------------------------------------*/
+
+namespace std {
+namespace experimental {
+namespace detail {
+
+template< class >
+struct is_int_pair : public std::false_type {};
+
+template< class T >
+struct is_int_pair< std::pair<T,T> > : public std::is_integral<T> {};
+
+template< int R , class ... Slices >
+struct slices_impl ;
+
+template< int R >
+struct slices_impl< R > {
+
+  typedef slices_impl next ;
+
+  template< class , ptrdiff_t ... Prefix >
+  struct deduce ;
+
+  template< ptrdiff_t ... Prefix >
+  struct deduce< extents<> , Prefix ... > {
+    typedef extents< Prefix... > extents_type ;
+  };
+
+  template< class M >
+  static
+  void get( ptrdiff_t * , ptrdiff_t * , M const & ) {}
+
+  template< class M >
+  ptrdiff_t end( int , M const & ) { return 0 ; }
+};
+
+template< int R , class T , class ... Tail >
+struct slices_impl< R , T , Tail... > {
+
+  typedef slices_impl<R+1,Tail...> next ;
+
+  static constexpr bool is_int  = std::is_integral<T>::value ;
+  static constexpr bool is_all  = std::is_same<T,all_type>::value ;
+  static constexpr bool is_pair = is_int_pair<T>::value ;
+
+  static_assert( is_int || is_all || is_pair , "" );
+
+  template< class , ptrdiff_t ... >
+  struct deduce ;
+
+  template< ptrdiff_t N , ptrdiff_t ... StaticExtents , ptrdiff_t ... Prefix >
+  struct deduce< extents< N , StaticExtents... > , Prefix... > {
+    typedef typename std::conditional
+      < is_int
+      , typename next::template
+          deduce< extents< StaticExtents... > , Prefix... >::extents_type
+      , typename std::conditional
+        < is_all
+        , typename next::template
+            deduce< extents< StaticExtents... > , Prefix... , N >::extents_type
+        , typename next::template
+            deduce< extents< StaticExtents... > , Prefix... , dynamic_extent >::extents_type
+        >::type
+      >::type extents_type ;
+  };
+
+  template< class M >
+  static
+  void get( ptrdiff_t * dyn
+          , ptrdiff_t * str
+          , M const & m
+          , ptrdiff_t , Tail const & ... tail )
+    { next::get( dyn , str , m , tail... ); }
+
+  template< class M >
+  static
+  void get( ptrdiff_t * dyn
+          , ptrdiff_t * str
+          , M const & m
+          , all_type
+          , Tail const & ... tail )
+    {
+      *str = m.stride(R);
+      ++str ;
+      if ( m.static_extent(R) == dynamic_extent ) {
+        *dyn = m.extent(R);
+        ++dyn ;
+      }
+      next::get( dyn , str , m , tail... );
+    }
+
+  template< class M , typename I >
+  static
+  void get( ptrdiff_t * dyn
+          , ptrdiff_t * str
+          , M const & m
+          , std::pair<I,I> const & y , Tail const & ... tail )
+    {
+      *str = m.stride(R);
+      *dyn = y.end - y.begin ;
+      next::get( dyn + 1 , str + 1 , m , tail... );
+    }
+};
+
+ptrdiff_t slices_begin( ptrdiff_t i ) { return i ; }
+
+ptrdiff_t slices_begin( all_type ) { return 0 ; }
+
+template< typename T >
+ptrdiff_t slices_begin( std::pair<T,T> const & x ) { return x.first ; }
+
+
+template< class Extents , class ... Slices >
+struct sub_extents_deduction {
+
+  static_assert( sizeof...(Slices) == Extents::rank() , "" );
+
+  typedef slices_impl< 0 , Slices... > impl ;
+
+  typedef typename impl::template deduce< Extents >::extents_type type ;
+
+  template< class M >
+  static
+  void get( ptrdiff_t * dyn
+          , ptrdiff_t * str
+          , M const & m
+          , Slices const & ... slices )
+    { impl::get( dyn , str , m , slices... ); }
+};
+
+}}} // std::experimental::detail
+
+/*--------------------------------------------------------------------------*/
+
+#endif // #ifndef STD_EXPERIMENTAL_MDSPAN_HELPER_HEADER
+
