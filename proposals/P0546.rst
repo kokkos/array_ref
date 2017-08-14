@@ -17,13 +17,19 @@ D0546r1 : Span - foundation for the future
 +------------+-------------------------------------------------------------+
 | **Revision History**                                                     |
 +------------+-------------------------------------------------------------+
++ P0546r1    + Update subspan bounds requires clause.                      +
++            + Add precedence background information.                      +
++------------+-------------------------------------------------------------+
+
+
++------------+-------------------------------------------------------------+
 | **References**                                                           |
 +------------+-------------------------------------------------------------+
-| P0009r2    | Multidimensional array reference specification              |
+| P0009      | Multidimensional array reference specification              |
 +------------+-------------------------------------------------------------+
-| P0122r3    | span: bounds-safe views for sequences of objects            |
+| P0122      | span: bounds-safe views for sequences of objects            |
 +------------+-------------------------------------------------------------+
-| P0454r0    | Wording for a Minimal ``mdspan``                            |
+| P0454      | Wording for a Minimal ``mdspan``                            |
 +------------+-------------------------------------------------------------+
 | P0332      | Relaxed array declaration                                   |
 +------------+-------------------------------------------------------------+
@@ -50,8 +56,8 @@ to incorporate additional high performance access needs such
 as those identified in **P0009** and **P0367**.
 
 
-
-**Summary of Proposed Change**
+Summary of Proposed Change
+----------------------------------------------------------------------------
 
 Instead of ``ElementType`` provide an ``ArrayType`` and
 delete the *magic value* ``dynamic_extent`` .
@@ -85,7 +91,23 @@ delete the *magic value* ``dynamic_extent`` .
     future proof.
 
 
-**Foundation for the Future**
+Introduce vocabulary of *domain index space* and *codomain element space* .
+
+
+Precedence 
+----------------------------------------------------------------------------
+
+There is solid precedence for declaring static and dynamic array
+template arguments as ``ElementType[N]`` and ``ElementType[]``
+
+  - ``std::shared_ptr<T[]>`` and ``std::unique_ptr<T[]>``
+    denote a dynamic extent array through the incomplete type ``T[]``
+  - P0674 denotes ``make_shared<T[][N1][N2]>`` to allocate
+    a ``shared_ptr`` to a C style multidimensional array.
+
+
+Foundation for the Future
+----------------------------------------------------------------------------
 
 The proposed changes prepare ``span`` to be an extensible
 foundation for future higher performance access intentions.
@@ -174,12 +196,12 @@ Changes to Class template span [views.span]
   contiguous sequence (array) of objects.  Note that a ``span``
   does not own the storage of that sequence.
 
-  **2** Requires: ``remove_all_extents_t<ArrayType>`` is a complete
-  object type that is not an abstract class type.
-  ``rank_v<ArrayType> <= 1``, which may be relaxed in a future
-  extension of ``span``.
-  ``sizeof...(AccessProperties) == 0``, which may be relaxed in a future
-  extension of ``span``.
+  | **2** Requires: ``remove_all_extents_t<ArrayType>`` is a complete
+    object type that is not an abstract class type.
+  | ``rank_v<ArrayType> <= 1``, which may be relaxed in a future
+    extension of ``span``.
+  | ``sizeof...(AccessProperties) == 0``, which may be relaxed in a future
+    extension of ``span``.
 
   **3** ``span`` has a *domain index space* and a *codomain element space*.
   The domain index space is the integral values *[ 0 .. extent() )*.
@@ -256,10 +278,10 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 
 ..
 
-  Requires: ``static_extent() == 0`` or ``static_extent() == count``.
-  If ``ptr`` is null then ``count == 0``.
-  If ``ptr`` is not null then it shall point to the beginning of a
-  valid sequence of objects of at least ``count`` length.
+  | Requires: ``static_extent() == 0`` or ``static_extent() == count``.
+  | If ``ptr`` is null then ``count == 0``.
+  | If ``ptr`` is not null then it shall point to the beginning of a
+    valid sequence of objects of at least ``count`` length.
 
 
 .. code-block:: c++
@@ -268,8 +290,9 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 
 ..
 
-  Requires: ``distance(firstElem,lastElem) >= 0``.
-  ``static_extent() == 0`` or ``static_extent() == distance(firstElem,lastElem)``.
+  | Requires: ``distance(firstElem,lastElem) >= 0``.
+  | ``static_extent() == 0`` or
+    ``static_extent() == distance(firstElem,lastElem)``.
 
 
 .. code-block:: c++
@@ -298,8 +321,8 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 
 ..
 
-  Requires: ``static_extent() == 0`` or ``static_extent() == other.size()``.
-  ``is_same_v< element_type , remove_extent_t< OtherArrayType >``
+  | Requires: ``static_extent() == 0`` or ``static_extent() == other.size()``.
+  | ``is_same_v< element_type , remove_extent_t< OtherArrayType >``
 
   Effects: Constructs ``span`` on the same
   sequence of objects referenced by ``other``.
@@ -319,7 +342,8 @@ Changes to span subviews [span.sub]
 
 ..
 
-  Requires: ``0 < Count && Count <= size()``. ``rank() == 1``.
+  | Requires: ``0 < Count && Count <= size()``.
+  | ``rank() == 1``.
 
 
 .. code-block:: c++
@@ -339,9 +363,9 @@ Changes to span subviews [span.sub]
 
 ..
 
-  Requires: ``0 <= offset && offset <= size()``.
-  ``count == -1 || offset + count <= size()``.
-  ``rank() == 1``.
+  | Requires: ``0 <= offset && offset <= size()``.
+  | ``count == -1 || offset + count <= size()``.
+  | ``rank() == 1``.
 
   Returns: ``span( data() + offset , ( count == -1 ? size() - offset : count ))``
 
