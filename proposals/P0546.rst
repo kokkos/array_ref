@@ -1,10 +1,10 @@
 ===================================================================
-P0546r0 : Span - foundation for the future
+D0546r1 : Span - foundation for the future
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0546r0
-:Date: 2017-01-26
+:Number: D0546r1
+:Date: 2017-08-14
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -339,8 +339,8 @@ Changes to span subviews [span.sub]
 
 ..
 
-  Requires: ``0 <= offset && offset < size()``.
-  ``count == -1 || offset + count < size()``.
+  Requires: ``0 <= offset && offset <= size()``.
+  ``count == -1 || offset + count <= size()``.
   ``rank() == 1``.
 
   Returns: ``span( data() + offset , ( count == -1 ? size() - offset : count ))``
