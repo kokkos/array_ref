@@ -98,8 +98,10 @@ multispan ,
 multi_span
 
 ----------------------------------------------------------------------------
-D0009r4
+P0009r4 - For 2017-11-Albuquerque Meeting
 ----------------------------------------------------------------------------
+
+Changes from P0009r3:
 
   - Rename to ``mdspan``, multidimensional span,
     to align with P0122r5 ``span``.
@@ -108,19 +110,29 @@ D0009r4
   - Expose codomain as a std::span
   - Elaborate layout mapping
 
+Requested full-LEWG straw polls at Albuquerque Nov'2017 meeting:
+
+  - Acceptability of exclusively using signed integer ``index_type``
+    and omitting the traditional container unsigned integer ``size_type``.
+  - Embedding the domain-to-codomain mapping observers within
+    the ``mdspan`` class or moving these into a
+    ``mdspan::mapping`` class.
+  - Given authors' update in response to previous two straw polls,
+    is this ready to advance to LWG?
+  - If not, what specific modifications are required for consensus?
+
+
 ******************************************************************
 Description
 ******************************************************************
 
 The proposed polymorphic multidimensional array reference (``mdspan``)
 defines types and functions for mapping indices from a
-multidimensional index space (the domain)
+**multidimensional index space** (the domain)
 to members of a contiguous span of objects (the codomain).
-A domain multidimensional index space is defined by
-the Cartesian product of integer extents;
-
-Multidimensional Index Space
-  [0..N0) X [0..N1) X [0..N2) ...
+A multidimensional index space is defined as the
+Cartesian product of integer extents,
+**[0..N0) X [0..N1) X [0..N2) ...**
 
 This **layout mapping** is one *property* of the
 ``mdspan`` that may be specified through a template parameter.
@@ -662,8 +674,9 @@ type and object.
     using layout  = /* extracted from Properties... */ ;
     using mapping = /* implementation defined */ ;
 
-    /* mdspan mapping concept, for exposition: */
-    struct mapping {
+    const mapping & map() const noexcept ;
+
+    struct mapping /* for exposition */ {
   
       using index_type = ptrdiff_t ;
 
@@ -710,22 +723,12 @@ Example:
 
 .. code-block:: c++
 
-  using matrix = mdspan<double,extents<std::dynamic_extent,std::dynamic_extent>> ;
+  using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>> ;
 
 ..
 
-Note that the preferred mechanism for declaring rank and static extents
-is given in the appendix of this paper.
-
-.. code-block:: c++
-
-  using matrix = mdspan<double[][]> ;
-
-..
-
-
-Without the preferred mechanism, template class ``extents``.
-
+Note: A `preferred, concise, and intuitive syntax`_ for declaring 
+the multidimensional index space of an ``mdspan`` is proposed in P0332.
 
 .. code-block:: c++
 
@@ -1028,30 +1031,32 @@ codomain member reference generation.
 
 
 ***********************************************************************
-Appendix: Prefered declaration mechanism for multi-index space domain
+Appendix: Preferred declaration syntax for multi-index space domain
 ***********************************************************************
+
+.. _`preferred, concise, and intuitive syntax` :
 
 The proposed declaration mechanism for the multi-index domain space is
 verbose and unwieldy.
 
 .. code-block:: c++
 
-  using matrix = mdspan<double,extents<std::dynamic_extent,std::dynamic_extent>> ;
+  using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>> ;
 
 ..
 
-The preferred mechanism for declaring rank and static extents
-is compact, intuitive, LEWG has staw-polled strong preference,
-and users of strong expressed preference.
+The preferred mechanism is compact, is intuitive,
+LEWG has staw-polled strong preference,
+and users have voiced strong expressed preference.
 
 .. code-block:: c++
 
-  using matrix = mdspan<double[][]> ;
+  using tensor = mdspan<double[][][]> ;
 
 ..
 
-However, this mechanism requires a trivial, non-functional language change
-to relax the definition of an incomplete array type.
+However, this syntax requires the trivial, non-functional language change
+proposed in P0332 to relax the definition of an incomplete array type.
 
 **Precedence:**
 
@@ -1072,15 +1077,25 @@ Impact on this proposal
   Each omitted static extent in the incomplete array type, ``[]``,
   denotes a *dynamic* extent.
 
-  | ``element_type`` is ``std::remove_all_extents<DataType>::type ;``
-  | ``rank()`` is ``std::rank<DataType>::value``
+  | ``using element_type = std::remove_all_extents<DataType>::type ;``
+  |
+  | ``constexpr int rank() const { return std::rank<DataType>::value ; }``
+  |
   | ``static_extent(i)`` is ``std::extent_v<DataType,i>``
-  | A dynamic extent is indicated when ``std::extent_v<DataType,i> == 0``
-  | The use of ``std::dynamic_extent`` is removed.
+  |
+  | A dynamic extent is denoted when ``std::extent_v<DataType,i> == 0``.
+  |
+  | The need for the magic number ``std::dynamic_extent`` is removed.
 
-----------------------------------------------------------------------
-Potentially related impact: P0546, prepare ``span`` for the future
-----------------------------------------------------------------------
+
+***********************************************************************
+Appendix: Alignment or Merging with P0122 ``span`` (see P0456)
+***********************************************************************
+
+A minor revision of P0122 ``span`` is proposed in P0456 that
+would more closely align ``span`` with ``mdspan`` and
+enable ``span`` to have a similar extensibility for 
+access properties.
 
 .. code-block:: c++
 
@@ -1090,20 +1105,24 @@ Potentially related impact: P0546, prepare ``span`` for the future
     // change element_type declaration:
     using element_type = std::remove_extent_t< DataType > ;
 
-    // replace extent declaration with static_extent
-    // for clarity and consistency.
-    constexpr static index_type static_extent()
-      { return std::extent_v<DataType> ; }
   };
 
-  // remove dynamic_extent from specification
-
 ..
+
+Given P0456 the proposed ``span`` and ``mdspan`` could be merged into
+a single template class by simply requiring that all members specific
+to a one-dimensional span **Requre** that ``rank() == 1``.
 
 
 ***********************************************************************
 Appendix: Reference is potentially a proxy
 ***********************************************************************
+
+The ``reference`` type may be a proxy for accessing an ``element_type`` object.
+For example, if an ``atomic_access`` property were defined with the
+meaning that all access operations on codomain objects are atomic
+then the ``reference`` type must be an atomic reference type
+(paper P0019).
 
 .. code-block:: c++
 
@@ -1112,12 +1131,6 @@ Appendix: Reference is potentially a proxy
   static_assert( std::is_same_v< delctype(a(i)) , atomic_ref<int> > );
 
 ..
-
-The ``reference`` type may be a proxy for accessing an ``element_type`` object.
-For example, if an ``atomic_access`` property were defined with the
-meaning that all access operations on codomain objects are atomic
-then the ``reference`` type must be an atomic reference type
-(paper P0019).
 
 
 ***********************************************************************
@@ -1154,16 +1167,16 @@ Related papers
 
 ISOCPP issue: https://issues.isocpp.org/show_bug.cgi?id=80
 
-- **P0546 : Preparing ``span`` for the future**
 - **P0122 : span: bounds-safe views for sequences of objects**
   The ``mdspan`` codomain concept of *span* is well-aligned with this paper.
-- **P0687 : Data Movement in C++**
-- **P0567 : Asynchronous Managed Pointer for Hetergeneous ...**
 - **P0367 : Accessors**
   The P0367 Accessors proposal includes polymorphic mechanisms for 
   accessing the memory an object or span of objects.
   The ``Properties...`` extension point in this proposal is intended
   to include such memroy access properties.
-- **P0454 : Wording for a Minimal ``mdspan``**
+- **P0454 : Wording for a Minimal ``mdspan``** (withdrawn)
+- **P0546 : Preparing ``span`` for the future**
+- **P0567 : Asynchronous Managed Pointer for Hetergeneous ...**
+- **P0687 : Data Movement in C++**
 
 

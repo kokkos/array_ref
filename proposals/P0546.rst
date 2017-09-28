@@ -322,7 +322,7 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 ..
 
   | Requires: ``static_extent() == 0`` or ``static_extent() == other.size()``.
-  | ``is_same_v< element_type , remove_extent_t< OtherArrayType >``
+  | ``is_same_v< element_type , remove_extent_t< OtherArrayType > >``
 
   Effects: Constructs ``span`` on the same
   sequence of objects referenced by ``other``.

@@ -14,10 +14,6 @@ P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
 :Contact: crtrott@sandia.gov
 :Author: Mauro Bianco
 :Contact: mbianco@cscs.ch
-:Author: Robin Maffeo
-:Contact: Robin.Maffeo@amd.com
-:Author: Ben Sander
-:Contact: ben.sander@amd.com
 :Audience: Library Evolution Working Group (LEWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0332.rst
 
@@ -31,7 +27,9 @@ P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
 |            | and allow unbounded rank through variadic arguments.        |
 +------------+-------------------------------------------------------------+
 | P0332r0    | Relaxed array declaration moved from P0009.                 |
-| *(current*)|                                                             |
++------------+-------------------------------------------------------------+
+| P0332r1    | Align with updates to P0009.                                |
+| *(current*)| Add examples of precedents.                                 |
 +------------+-------------------------------------------------------------+
 | **References**                                                           |
 +------------+-------------------------------------------------------------+
@@ -48,78 +46,96 @@ P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
 Motivation
 ******************************************************************
 
-The dimensions of multidimensional array reference class ``array_ref``
-(P0009r2) are declared through either the data type or array properties
-template arguments.
+The dimensions of multidimensional array reference ``mdspan``
+(P0009) are declared a syntactically verbose property argument.
+We propose a trivial, non-breaking relaxation of the
+array type declaration in **11.3.4p3** to allow a concise
+and intuitive syntax for multidimensional declarations.
 
 .. code-block:: c++
 
   template< typename DataType , typename Properties... >
-  struct array_ref ;
+  struct mdspan ;
+
+  // Three dimensional tensor type declaration with verbose syntax
+
+  using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>> ;
+
+  // Three dimensional tensor type declaration with concise syntax
+
+  using tensor = std::mdspan<double[][][]> ;
 
 ..
-
-``DataType`` may be an array type (8.3.4.p3).
-For example, ``array_ref<double[ ][3][8]>``
-declares a rank-three array with a dynamic extent
-in dimension coordinate zero.
-This compact and intutive syntax is currently limited to a declaring a
-single dynamic extent in the array's leading coordinate.
-Removing this limitation allows declaration of an arbitrary
-number of dynamic extents in any coordinate.
-
 
 ******************************************************************************
 Proposal
 ******************************************************************************
 
-The current array type declarator constraints are defined in in **n4567 8.3.4.p3** as follows.
+The current array type declarator constraints are
+defined in in **11.3.4.p3** as follows.
 
-  *When several “array of” specifications are adjacent,
+  When several “array of” specifications are adjacent,
   a multidimensional array type is created;
-  only the first of the constant expressions that
-  specify the bounds of the arrays may be omitted.
-  In addition to declarations in which an incomplete
-  object type is allowed, an array bound may be omitted
-  in some cases in the declaration of a function parameter (8.3.5).
-  An array bound may also be omitted when the declarator is
-  followed by an initializer (8.5).
-  In this case the bound is calculated from the
-  number of initial elements (say, N) supplied (8.5.1),
+  only the first of the constant expressions
+  that specify the bounds of the arrays may be omitted.
+  In addition to declarations in which an
+  incomplete object type is allowed,
+  an array bound may be omitted in some cases
+  in the declaration of a function parameter (11.3.5).
+  An array bound may also be omitted when the declarator
+  is followed by an initializer (11.6)
+  or when a declarator for a static data member
+  is followed by a brace-or-equal-initializer (12.2).
+  In both cases the bound is calculated from the
+  number of initial elements (say, N) supplied (11.6.1),
   and the type of the identifier of D is “array of N T”.
   Furthermore, if there is a preceding declaration
   of the entity in the same scope in which the bound was specified,
   an omitted array bound is taken to be the same as in that
-  earlier declaration, and similarly for the definition
-  of a static data member of a class.*
+  earlier declaration, and similarly for the definition of
+  a static data member of a class.
 
-The preferred syntax requires a relaxation of
-array type declarator constraints defined in **n4567 8.3.4.p3**
-exclusively for an incomplete object type.
+For ``mdspan`` to have a concise and intuitive syntax
+the array type declarator constraints must be relaxed.
 The following wording change is proposed.
 
-  *When several “array of” specifications are adjacent,
+  When several “array of” specifications are adjacent,
   a multidimensional array type is created.
-  The first of the constant expressions that
-  specify the bounds of the array may be omitted
-  in some cases in the declaration of a function parameter (8.3.5).
-  The first array bound may also be omitted when the declarator is
-  followed by an initializer (8.5).
-  In this case the first bound is calculated from the
-  number of initial elements (say, N) supplied (8.5.1),
+  In declarations in which an incomplete object type is allowed
+  any of the constant expressions that
+  specify the bounds of the arrays may be omitted.
+  The first of the constant expressions
+  that specify the bounds of the arrays may be omitted
+
+    - in some cases in the declaration of a function parameter (11.3.5),
+    - when the declarator is followed by an initializer (11.6),
+    - when a declarator for a static data member
+      is followed by a brace-or-equal-initializer (12.2), or
+    - if there is a preceding declaration
+      of the entity in the same scope in which the bound was specified.
+
+  In the initializer cases the bound is calculated from the
+  number of initial elements (say, N) supplied (11.6.1),
   and the type of the identifier of D is “array of N T”.
-  Furthermore, if there is a preceding declaration
-  of the entity in the same scope in which the first bound was specified,
-  an omitted array first bound is taken to be the same as in that
-  earlier declaration, and similarly for the definition
-  of a static data member of a class.*
-  **In declarations in which an incomplete object type is allowed
-  any of the constant expressions that specify the bounds of the array
-  may be ommitted.**
+  In the preceding declaration case
+  an omitted array bound is taken to be the same as in that
+  earlier declaration, and similarly for the definition of
+  a static data member of a class.
 
 
-**This minor language specification change has been implemented with
+******************************************************************************
+Precedence and Feasibility
+******************************************************************************
+
+An incomplete array type ``T[]`` to concisely indicate
+an array of runtime length is used by
+``std::unique_ptr<T[]>`` (23.11.1.3),
+``std::shared_ptr<T>`` where ``T`` is ``U[]`` (23.11.2.2),
+and P0674 ``make_shared<T[][N1][N2]>``.
+
+
+This minor language specification change has been implemented with
 a trivial (one line) patch to Clang and was permissible in gcc prior to
-version 5.**
+version 5.
 
 
