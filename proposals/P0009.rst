@@ -4,7 +4,7 @@ D0009r4 : Polymorphic Multidimensional Array Reference
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
 :Number: D0009r4
-:Date: 2017-07-xx
+:Date: 2017-10-xx
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -14,10 +14,12 @@ D0009r4 : Polymorphic Multidimensional Array Reference
 :Contact: crtrott@sandia.gov
 :Author: Mauro Bianco
 :Contact: mbianco@cscs.ch
-:Author: Robin Maffeo
-:Contact: Robin.Maffeo@amd.com
 :Author: Ben Sander
 :Contact: ben.sander@amd.com
+:Author: Athanasios Iliopoulos
+:Contact: athanasios.iliopoulos@nrl.navy.mil
+:Author: John Michopoulos
+:Contact: john.michopoulos@nrl.navy.mil
 :Audience: Library Evolution Working Group (LEWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
