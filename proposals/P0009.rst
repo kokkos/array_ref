@@ -1,10 +1,10 @@
 ===================================================================
-D0009r4 : Polymorphic Multidimensional Array Reference
+P0009r4 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0009r4
-:Date: 2017-10-xx
+:Number: P0009r4
+:Date: 2017-10-11
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -100,7 +100,7 @@ multispan ,
 multi_span
 
 ----------------------------------------------------------------------------
-P0009r4 - For 2017-11-Albuquerque Meeting
+P0009r4 : For 2017-11-Albuquerque Meeting
 ----------------------------------------------------------------------------
 
 Changes from P0009r3:
