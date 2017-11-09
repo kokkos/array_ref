@@ -1,0 +1,41 @@
+===================================================================
+D0856r0 : Restrict and Atomic Access Properties
+===================================================================
+
+:Project: ISO JTC1/SC22/WG21: Programming Language C++
+:Number: D0856r0
+:Date: 2017-11-xx
+:Reply-to: hcedwar@sandia.gov
+:Author: H\. Carter Edwards
+:Contact: hcedwar@sandia.gov
+:Author: Christian Trott
+:Contact: crtrott@sandia.gov
+:Audience: Library Evolution Working Group (LEWG)
+:URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0856.rst
+
+
+.. sectnum::
+
+
+******************************************************************
+Revision History
+******************************************************************
+
+----------------------------------------------------------------------------
+D0856r0
+----------------------------------------------------------------------------
+
+2017-11-08 Albuquerque LEWG Review of P0009, P0019, and P0546
+
+  - Extract atomic array reference to a separate paper from P0019
+  - Generate paper for desirable access properties for P0009 and P0546
+
+
+******************************************************************
+Description
+******************************************************************
+
+
+
+
+
