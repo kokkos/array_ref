@@ -1,10 +1,10 @@
 ========================================================================
-P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
+D0332r2 : Relaxed Incomplete Multidimensional Array Type Declaration
 ========================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0332r1
-:Date: 2017-10-11
+:Number: D0332r2
+:Date: 2017-10-091
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
