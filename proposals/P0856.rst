@@ -113,5 +113,19 @@ Open Questions for Extending Access Properties
 
 
 
+******************************************************************
+Open Questions
+******************************************************************
 
+Allow only one required (semantic changing) property?
+  - Benefit: avoid combinatorical implementation requirement
+  - Drawback: requires combination-properties, if two semantic changes are required
+
+Make reference_type property order independend?
+  - Benefit: no surprising behavior
+  - Drawback: we need to define a priority order, but the best priority order may be hardware dependend, it also makes it hard to allow user-defined properties
+
+Make pointer_type property dependent?
+  - Benefit: allows properties which require expensive setup phase, or handles which need to be initializes ones for the whole memory span
+  - Drawback: We need to add yet another concept besides the reference_type, and implementation of new properties becomes harder
 
