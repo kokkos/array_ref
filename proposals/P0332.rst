@@ -81,8 +81,10 @@ and intuitive syntax for multidimensional declarations.
 The motivating ``mdspan`` library moved by LEWG to LWG in 2017-Albuquerque.
 
 ----------------------------------------------------------------------
-Why not ``mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,LayoutLeft>``
+Why Not
 ----------------------------------------------------------------------
+
+``mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,LayoutLeft>``
 
   - Does not allow LayoutLeft or other properties to be a type.
   - Still requires ``dynamic_extent`` magic number
@@ -177,7 +179,7 @@ or functions declared with these things as arguments.*
 
 **6.9p5**
 
-  *Objects shall not be defined to have an incomplete type.
+  *Objects shall not be defined to have an incomplete type.*
 
 ``S`` can never be used to declare an object.
 
@@ -212,7 +214,15 @@ and therefore can never be used to declare an object.
   decay_t<S> // is an incomplete type
 
 ..
+ 
+*10.1.1p7*
 
+  *The name of a declared but undefined class can be used
+  in an extern declaration. Such a declaration can
+  only be used in ways that do not require a complete class type.*
+
+Incomplete array types cannot be used as the return type
+of a function.
 
 
 
