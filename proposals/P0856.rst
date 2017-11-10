@@ -77,18 +77,18 @@ A given access property may appear at most once in the
 When the ``AccessProperties...`` parameter pack of *S*
 contains ``atomic_access`` then
 
-  - *S*``::reference_type`` is ``atomic_ref<``*S*``::element_type>``,
-  - *S*``::element_type`` is restricted to satisfy requirements of
-    ``atomic_ref<``*S*``::element_type>``,
+  - *S* ``::reference_type`` is ``atomic_ref<`` *S* ``::element_type>``,
+  - *S* ``::element_type`` is restricted to satisfy requirements of
+    ``atomic_ref<`` *S* ``::element_type>``,
   - ``AccessProperties...`` shall not contain any other
-    access property that modifies *S*``::reference_type``
+    access property that modifies *S* ``::reference_type``
 
 When the ``AccessProperties...`` parameter pack of *S*
 contains ``restrict_access`` and not ``atomic_access`` then
 
   - the codomain of *S* can be assumed non-aliased in the
     current scope of execution
-  - *S*::``reference_type`` behaves as if *S*``::element_type &``.
+  - *S*:: ``reference_type`` behaves as if *S* ``::element_type &``.
 
 
 ******************************************************************
