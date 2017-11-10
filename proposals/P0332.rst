@@ -177,9 +177,18 @@ I'd like to see some more holistic view of this,
 I don't want to see pointers or references to these,
 or functions declared with these things as arguments.*
 
+
+Let ``S`` be an incomplete multdimensional array type
+greater than rank 1 rom which an extent other than the
+leading extent is ommitted.
+
 **6.9 Types, p5**
 
-  *Objects shall not be defined to have an incomplete type.*
+  *A class that has been declared but not defined, an enumeration type
+  in certain contexts (10.2), or an array of unknown bound or of
+  incomplete element type, is an incompletely-defined object type.
+  Incompletely-defined object types and cv void are incomplete types (6.9.1).
+  Objects shall not be defined to have an incomplete type.*
 
 ``S`` can never be used to declare an object.
 
@@ -211,7 +220,7 @@ and therefore can never be used to declare an object.
   temporary object as its result object, and produces an xvalue
   denoting the temporary object. T shall be a complete type.*
 
-The decay of ``int[][M][]`` is ``(int[M][])*`` which is an incomplete type 
+The decay of ``int[][M][]`` is ``int(*)[M][])`` which is an incomplete type 
 and objects cannot be declared for an incomplete type.
 Therefore converting ``int[][M][]`` to a pointer is an error.
 
@@ -222,25 +231,6 @@ Therefore converting ``int[][M][]`` to a pointer is an error.
   is adjusted to be “pointer to T”.*
 
 
-.. code-block:: c++
-
-  using S = double[10][20][] ;
-  rank_v<S> == 3``
-  extent_v<S,0> == 10``
-  extent_v<S,1> == 20``
-  extent_v<S,2> == 0``
-
-  is_same_v< remove_extent_t<S> , double[20][] >
-  remove_extent_t<S> // is an incomplete type
-
-  is_same_v< remove_extent_t< remove_extent_t<S> > , double[] >
-  remove_extent_t< remove_extent_t<S> > // is an incomplete type
-
-  is_same_v< decay_t<S> , double*[20][] >
-  decay_t<S> // is an incomplete type
-
-..
- 
 *10.1.1p7*
 
   *The name of a declared but undefined class can be used
@@ -250,9 +240,32 @@ Therefore converting ``int[][M][]`` to a pointer is an error.
 Incomplete array types cannot be used as the return type
 of a function.
 
+------------------------------------------------------------------------------
+type_traits interaction
+------------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  using S = double[10][20][] ;
+  rank_v<S> == 3``
+  extent_v<S,0> == 10``
+  extent_v<S,1> == 20``
+  extent_v<S,2> == 0``
+
+  remove_extent_t<S> // is an incomplete type
+  is_same_v< remove_extent_t<S> , double[20][] >
+
+  remove_extent_t< remove_extent_t<S> > // is an incomplete type
+  is_same_v< remove_extent_t< remove_extent_t<S> > , double[] >
+
+  decay_t<S> // is an incomplete type
+  is_same_v< decay_t<S> , double(*)[20][] >
+
+..
+ 
 
 ------------------------------------------------------------------------------
-Type Deduction Concerns
+Type Deduction Non-Issue
 ------------------------------------------------------------------------------
 
 .. code-block:: c++
@@ -274,21 +287,21 @@ Type Deduction Concerns
 
   template <typename T>
   void f( T[][3][5] ); // F
-    // adjusted to pointer (T[3][5])*
+    // adjusted to pointer T(*)[3][5]
 
   template <typename T>
   void f( T[][][5] ); // G
-    // adjusted to pointer (T[][5])*
+    // adjusted to pointer T(*)[][5]
     // invalid due to T[][5] incomplete array type
 
   template <typename T, std::size_t M >
   void f( T[][M][] ) // H
-    // adjusted to pointer (T[M][])*
+    // adjusted to pointer T(*)[M][]
     // invalid due to T[][5] incomplete array type
 
   template <typename T, std::size_t M, std::size_t N>
   void f( T[][N][M] ); // I
-    // adjusted to pointer (T[M][N])*
+    // adjusted to pointer T(*)[M][N]
 
 
   int foo( span<int[1][3][5]> x )
