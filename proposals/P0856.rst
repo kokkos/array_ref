@@ -105,27 +105,14 @@ Open Questions for Extending Access Properties
 
   - Rules for resolving potentially conflicting properties?
     For example, resolving the ``reference_type``?
-    Only accept one access property in the ``AccessProperties...``
-    that specifies the ``reference_type``?
-    Establish priorities for which access property
-    in the ``AccessProperties...`` specifies the ``reference_type``?
 
+    - Only accept one access property in the ``AccessProperties...``
+      that specifies the ``reference_type``?
+      Ignore if too many?  Generate error if too many?
 
+    - Establish priorities for which access property
+      in the ``AccessProperties...`` specifies the ``reference_type``?
+      Required to be honored property?
+      Ignorable / hint property?
 
-
-******************************************************************
-Open Questions
-******************************************************************
-
-Allow only one required (semantic changing) property?
-  - Benefit: avoid combinatorical implementation requirement
-  - Drawback: requires combination-properties, if two semantic changes are required
-
-Make reference_type property order independend?
-  - Benefit: no surprising behavior
-  - Drawback: we need to define a priority order, but the best priority order may be hardware dependend, it also makes it hard to allow user-defined properties
-
-Make pointer_type property dependent?
-  - Benefit: allows properties which require expensive setup phase, or handles which need to be initializes ones for the whole memory span
-  - Drawback: We need to add yet another concept besides the reference_type, and implementation of new properties becomes harder
 
