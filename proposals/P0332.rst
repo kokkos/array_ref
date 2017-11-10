@@ -25,6 +25,8 @@ P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
 +------------+-------------------------------------------------------------+
 | **Revision History**                                                     |
 +------------+-------------------------------------------------------------+
+| N4356      | Original proposal                                           |
++------------+-------------------------------------------------------------+
 | P0009r0    | Original multidimensional array reference paper with        |
 |            | motivation, specification, and examples.                    |
 +------------+-------------------------------------------------------------+
@@ -34,13 +36,15 @@ P0332r1 : Relaxed Incomplete Multidimensional Array Type Declaration
 | P0332r0    | Relaxed array declaration moved from P0009.                 |
 +------------+-------------------------------------------------------------+
 | P0332r1    | Align with updates to P0009.                                |
-| *(current*)| Add examples of precedents.                                 |
+|            | Add examples of precedents.                                 |
+|            | P0009 moved by LEWG to LWG                                  |
+|            | Reviewed by EWG in 2017 Albuquerque                         |
++------------+-------------------------------------------------------------+
+| P0332r2    | Fully address scope of EWG feedback on N4356                |
 +------------+-------------------------------------------------------------+
 | **References**                                                           |
 +------------+-------------------------------------------------------------+
-| P0454r0    | Wording for a Minimal ``mdspan``                            |
-+------------+-------------------------------------------------------------+
-| P0009r2    | Multidimensional array reference specification              |
+| P0009      | Multidimensional array reference specification              |
 +------------+-------------------------------------------------------------+
 | P0331      | Multidimensional array reference motivation and examples    |
 +------------+-------------------------------------------------------------+
@@ -62,17 +66,26 @@ and intuitive syntax for multidimensional declarations.
   template< typename DataType , typename Properties... >
   struct mdspan ;
 
-  // Three dimensional tensor type declaration with verbose syntax
+  // Three dimensional tensor type declaration with
+  // verbose syntax and left-to-right increasing stride.
 
-  using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>> ;
+  using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>,LayoutLeft> ;
 
   // Three dimensional tensor type declaration with concise syntax
+  // and left-to-right increasing stride.
 
-  using tensor = std::mdspan<double[][][]> ;
+  using tensor = mdspan<double[][][],LayoutLeft> ;
 
 ..
 
-This paper (P0332) is submitted to EWG when P0009 advances from LEWG to LWG.
+The motivating ``mdspan`` library moved by LEWG to LWG in 2017-Albuquerque.
+
+----------------------------------------------------------------------
+Why not ``mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,LayoutLeft>``
+----------------------------------------------------------------------
+
+  - Does not allow LayoutLeft or other properties to be a type.
+  - Still requires ``dynamic_extent`` magic number
 
 ******************************************************************************
 Proposal
@@ -144,5 +157,62 @@ and P0674 ``make_shared<T[][N1][N2]>``.
 This minor language specification change has been implemented with
 a trivial (one line) patch to Clang and was permissible in gcc prior to
 version 5.
+
+
+******************************************************************************
+Holistic View
+******************************************************************************
+
+From 2015-Lenexa notes on N4356:
+*Stepping back for a second, I think this is a small change
+but there are a whole bunch of ways of constructing types and
+we disallow many because they would give uninhabited types.
+But then look at std::result_of, after this change you can use
+std::result_of on a whole bunch of types,
+but not on a function type (ironically).
+I think there may be some sense in this,
+I'd like to see some more holistic view of this,
+I don't want to see pointers or references to these,
+or functions declared with these things as arguments.*
+
+**6.9p5**
+
+  *Objects shall not be defined to have an incomplete type.
+
+``S`` can never be used to declare an object.
+
+**6.9p6**
+
+  *The declared type of an array object might be an array of
+  unknown bound and therefore be incomplete at one point in a
+  translation unit and complete later on; the array types at
+  those two points (“array of unknown bound of T” and “array of N T”)
+  are different types. The type of a pointer to array of unknown bound,
+  or of a type defined by a typedef declaration to be an array of
+  unknown bound, cannot be completed.*
+
+The type of a pointer to ``S`` is an incomplete type,
+and therefore can never be used to declare an object.
+
+.. code-block:: c++
+
+  using S = double[10][20][] ;
+  rank_v<S> == 3``
+  extent_v<S,0> == 10``
+  extent_v<S,1> == 20``
+  extent_v<S,2> == 0``
+
+  is_same_v< remove_extent_t<S> , double[20][] >
+  remove_extent_t<S> // is an incomplete type
+
+  is_same_v< remove_extent_t< remove_extent_t<S> > , double[] >
+  remove_extent_t< remove_extent_t<S> > // is an incomplete type
+
+  is_same_v< decay_t<S> , double*[20][] >
+  decay_t<S> // is an incomplete type
+
+..
+
+
 
 
