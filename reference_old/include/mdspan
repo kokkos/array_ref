@@ -1,0 +1,251 @@
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (c) 2015-2016 Bryce Adelstein Lelbach aka wash
+//
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
+//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+///////////////////////////////////////////////////////////////////////////////
+
+#if !defined(STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0)
+#define STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+
+#include "detail/fwd.hpp"
+#include "detail/meta.hpp"
+#include "detail/dimensions.hpp"
+
+#include "detail/layout_left.hpp"
+#include "detail/layout_right.hpp"
+#include "detail/accessor_native.hpp"
+
+//#warning Unify Dims/Dimensions terminology
+
+//#warning Make layout constructors/dimensions constructors work with initializer lists
+
+//#warning Mixed layout tests may not give full coverage - they only try 2D with the first parameter as dynamic
+
+//#warning Writing dimensions<dyn, Y>(X) is uninitutive. Let's have a make_dimensions() facility that uses compile time numbers
+
+//#warning Lift and refactor layout tests
+
+//#warning Add rank_static()?
+
+namespace std { namespace experimental {
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+struct mdspan
+{
+    ///////////////////////////////////////////////////////////////////////////
+    // TYPES
+
+    using layout_type   = Layout;
+    using mapping_type  = typename layout_type::template mapping<Dims>;
+    using accessor_type = Accessor;
+
+    using value_type    = typename accessor_type::value_type;
+    using reference     = typename accessor_type::reference;
+    using pointer       = typename accessor_type::pointer;
+    using size_type     = typename mapping_type::size_type;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+
+    constexpr mdspan() noexcept;
+
+    constexpr mdspan(mdspan const& b) noexcept = default;
+    constexpr mdspan(mdspan&& b) noexcept = default;
+    mdspan& operator=(mdspan const& b) noexcept = default;
+    mdspan& operator=(mdspan&& b) noexcept = default;
+
+    template < typename... Integers
+             , typename = typename enable_if<
+                   detail::is_integral_pack<Integers...>::value
+               >::type
+             >
+    explicit constexpr mdspan(
+        pointer p, Integers... implicit_dims
+        ) noexcept;
+
+    explicit constexpr mdspan(
+        pointer p, layout_type l
+        ) noexcept;
+
+    explicit constexpr mdspan(
+        pointer p, layout_type l, accessor_type a
+        ) noexcept;
+
+    // TODO: Conversion constructor and assignment operator (omitted due to
+    // incomplete specification).
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // RANK, SIZE AND EXTENT 
+
+    static constexpr size_type rank() noexcept;
+    static constexpr size_type rank_dynamic() noexcept;
+
+    constexpr size_type size() const noexcept;
+
+    constexpr size_type extent(size_type rank) const noexcept;
+
+    constexpr mapping_type mapping() const noexcept;
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // LAYOUT INTERFACE 
+
+    static constexpr bool is_regular() noexcept;
+
+    constexpr size_type stride(size_type rank) const noexcept;
+
+    constexpr size_type span() const noexcept;    
+
+    /////////////////////////////////////////////////////////////////////////// 
+    // ELEMENT AND DATA ACCESS 
+
+    template <typename... Integers>
+    typename std::enable_if<
+        Dims::rank() == sizeof...(Integers)
+        && detail::is_integral_pack<Integers...>::value
+      , reference
+    >::type operator()(Integers... indices) const noexcept;
+
+    reference operator[](size_type idx) const noexcept;
+
+  private:
+    pointer ptr_;
+    mapping_type mapping_;
+    accessor_type accessor_;
+};
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+constexpr
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan() noexcept
+  : ptr_(nullptr)
+  , mapping_()
+  , accessor_()
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+template <typename... Integers, typename>
+constexpr
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
+    pointer p, Integers... implicit_dims
+    ) noexcept
+  : ptr_(p)
+  , mapping_(implicit_dims...) // dimensions<> does the relevant static_asserts.
+  , accessor_()
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+constexpr
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
+    pointer p, layout_type l
+    ) noexcept
+  : ptr_(p)
+  , mapping_(l)
+  , accessor_()
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+constexpr
+mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
+    pointer p, layout_type l, accessor_type a
+    ) noexcept
+  : ptr_(p)
+  , mapping_(l)
+  , accessor_(a)
+{}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::rank() noexcept
+{
+    return mapping_type::rank();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
+{
+    return mapping_type::rank_dynamic();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::size() const noexcept
+{
+    return mapping_.size();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::extent(
+    size_type rank
+    ) const noexcept
+{
+    return mapping_[rank];
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::mapping_type
+mdspan<ValueType, Dims, Layout, Accessor>::mapping() const noexcept
+{
+    return mapping_;
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr bool
+mdspan<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
+{
+    return mapping_type::is_regular();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::stride(
+    size_type rank
+    ) const noexcept
+{
+    return mapping_.stride(rank);
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+inline constexpr typename
+    mdspan<ValueType, Dims, Layout, Accessor>::size_type
+mdspan<ValueType, Dims, Layout, Accessor>::span() const noexcept
+{
+    return mapping_.span();
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+template <typename... Integers>
+inline typename std::enable_if<
+       Dims::rank() == sizeof...(Integers)
+    && detail::is_integral_pack<Integers...>::value
+  , typename mdspan<ValueType, Dims, Layout, Accessor>::reference
+>::type mdspan<ValueType, Dims, Layout, Accessor>::operator()(
+    Integers... indices
+    ) const noexcept
+{
+    size_type const raw_idx = mapping_.index(indices...);
+    return accessor_.access(ptr_, raw_idx);
+}
+
+template <typename ValueType, typename Dims, typename Layout, typename Accessor>
+typename mdspan<ValueType, Dims, Layout, Accessor>::reference
+mdspan<ValueType, Dims, Layout, Accessor>::operator[](
+    size_type idx
+    ) const noexcept
+{
+    return accessor_.access(ptr_, idx);
+}
+
+}} // std::experimental
+
+#endif // STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+

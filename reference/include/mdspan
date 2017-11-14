@@ -1,251 +1,609 @@
-///////////////////////////////////////////////////////////////////////////////
-//  Copyright (c) 2015-2016 Bryce Adelstein Lelbach aka wash
+/*
+//@HEADER
+// ************************************************************************
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying
-//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-///////////////////////////////////////////////////////////////////////////////
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
+// 
+// ************************************************************************
+//@HEADER
+*/
 
-#if !defined(STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0)
-#define STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+#ifndef STD_EXPERIMENTAL_MDSPAN_HEADER
+#define STD_EXPERIMENTAL_MDSPAN_HEADER
 
-#include "detail/fwd.hpp"
-#include "detail/meta.hpp"
-#include "detail/dimensions.hpp"
+#include <type_traits>
+#include <algorithm>
+#include <initializer_list>
 
-#include "detail/layout_left.hpp"
-#include "detail/layout_right.hpp"
-#include "detail/accessor_native.hpp"
+#include <iostream>
 
-//#warning Unify Dims/Dimensions terminology
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
-//#warning Make layout constructors/dimensions constructors work with initializer lists
+namespace std {
+namespace experimental {
 
-//#warning Mixed layout tests may not give full coverage - they only try 2D with the first parameter as dynamic
+constexpr ptrdiff_t dynamic_extent = -1 ;
 
-//#warning Writing dimensions<dyn, Y>(X) is uninitutive. Let's have a make_dimensions() facility that uses compile time numbers
+struct all_type { constexpr all_type() noexcept {} };
 
-//#warning Lift and refactor layout tests
+constexpr all_type all ;
 
-//#warning Add rank_static()?
+template< ptrdiff_t ... StaticExtents >
+class extents ;
 
-namespace std { namespace experimental {
+template< typename DataType , class ... Properties >
+class mdspan ;
 
-///////////////////////////////////////////////////////////////////////////////
+struct layout_right ;
+struct layout_left ;
+struct layout_stride ;
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-struct mdspan
-{
-    ///////////////////////////////////////////////////////////////////////////
-    // TYPES
+template< class T >
+struct is_extents : public std::false_type {};
 
-    using layout_type   = Layout;
-    using mapping_type  = typename layout_type::template mapping<Dims>;
-    using accessor_type = Accessor;
+template< ptrdiff_t ... StaticExtents >
+struct is_extents< extents< StaticExtents ... > > : public std::true_type {};
 
-    using value_type    = typename accessor_type::value_type;
-    using reference     = typename accessor_type::reference;
-    using pointer       = typename accessor_type::pointer;
-    using size_type     = typename mapping_type::size_type;
+template< class T >
+struct is_layout : public std::false_type {};
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+template<>
+struct is_layout< layout_right > : public std::true_type {};
 
-    constexpr mdspan() noexcept;
+template<>
+struct is_layout< layout_left > : public std::true_type {};
 
-    constexpr mdspan(mdspan const& b) noexcept = default;
-    constexpr mdspan(mdspan&& b) noexcept = default;
-    mdspan& operator=(mdspan const& b) noexcept = default;
-    mdspan& operator=(mdspan&& b) noexcept = default;
+template<>
+struct is_layout< layout_stride > : public std::true_type {};
 
-    template < typename... Integers
-             , typename = typename enable_if<
-                   detail::is_integral_pack<Integers...>::value
-               >::type
-             >
-    explicit constexpr mdspan(
-        pointer p, Integers... implicit_dims
-        ) noexcept;
+}} // std::experimental
 
-    explicit constexpr mdspan(
-        pointer p, layout_type l
-        ) noexcept;
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
-    explicit constexpr mdspan(
-        pointer p, layout_type l, accessor_type a
-        ) noexcept;
+#include <detail/mdspan_helper>
 
-    // TODO: Conversion constructor and assignment operator (omitted due to
-    // incomplete specification).
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // RANK, SIZE AND EXTENT 
+namespace std {
+namespace experimental {
 
-    static constexpr size_type rank() noexcept;
-    static constexpr size_type rank_dynamic() noexcept;
+template< ptrdiff_t ... StaticExtents >
+class extents : private detail::extents_impl<0,StaticExtents...> {
+private:
 
-    constexpr size_type size() const noexcept;
+  typedef detail::extents_impl<0,StaticExtents...> impl ;
 
-    constexpr size_type extent(size_type rank) const noexcept;
+public:
 
-    constexpr mapping_type mapping() const noexcept;
+  using index_type = ptrdiff_t ;
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // LAYOUT INTERFACE 
+  static constexpr int rank() noexcept { return impl::Rank ; }
+  static constexpr int rank_dynamic() noexcept { return impl::RankDynamic ; }
 
-    static constexpr bool is_regular() noexcept;
+  static constexpr index_type static_extent(int k) noexcept
+    { return impl::static_extent(k); }
 
-    constexpr size_type stride(size_type rank) const noexcept;
+  constexpr index_type extent(int k) const noexcept
+    { return impl::extent(k); }
 
-    constexpr size_type span() const noexcept;    
+  constexpr index_type size() const noexcept
+    { return impl::size(); }
 
-    /////////////////////////////////////////////////////////////////////////// 
-    // ELEMENT AND DATA ACCESS 
+  ~extents() = default ;
+  constexpr extents() = default ;
+  constexpr extents( extents const & ) = default ;
+  extents & operator = ( extents const & ) = default ;
 
-    template <typename... Integers>
-    typename std::enable_if<
-        Dims::rank() == sizeof...(Integers)
-        && detail::is_integral_pack<Integers...>::value
-      , reference
-    >::type operator()(Integers... indices) const noexcept;
-
-    reference operator[](size_type idx) const noexcept;
-
-  private:
-    pointer ptr_;
-    mapping_type mapping_;
-    accessor_type accessor_;
+  template< class ... IndexType >
+  constexpr extents( IndexType ... DynamicExtents ) noexcept
+    : impl( DynamicExtents... ) {}
 };
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-constexpr
-mdspan<ValueType, Dims, Layout, Accessor>::mdspan() noexcept
-  : ptr_(nullptr)
-  , mapping_()
-  , accessor_()
-{}
+}} // std::experimental
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-template <typename... Integers, typename>
-constexpr
-mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
-    pointer p, Integers... implicit_dims
-    ) noexcept
-  : ptr_(p)
-  , mapping_(implicit_dims...) // dimensions<> does the relevant static_asserts.
-  , accessor_()
-{}
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-constexpr
-mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
-    pointer p, layout_type l
-    ) noexcept
-  : ptr_(p)
-  , mapping_(l)
-  , accessor_()
-{}
+namespace std {
+namespace experimental {
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-constexpr
-mdspan<ValueType, Dims, Layout, Accessor>::mdspan(
-    pointer p, layout_type l, accessor_type a
-    ) noexcept
-  : ptr_(p)
-  , mapping_(l)
-  , accessor_(a)
-{}
+struct layout_right {
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::size_type
-mdspan<ValueType, Dims, Layout, Accessor>::rank() noexcept
+  template< ptrdiff_t ... StaticExtents >
+  class mapping : private detail::extents_impl< 0 , StaticExtents... > {
+  private:
+
+    typedef detail::extents_impl<0,StaticExtents...> impl ;
+
+  public:
+
+    using index_type = ptrdiff_t ;
+
+    constexpr mapping() noexcept = default ;
+    constexpr mapping( mapping const & ) noexcept = default ;
+    mapping & operator = ( mapping const & ) noexcept = default ;
+
+    template< class ... IndexType >
+    constexpr mapping( IndexType ... DynamicExtents ) noexcept
+      : impl( DynamicExtents... ) {}
+
+    static constexpr int rank() noexcept { return impl::Rank ; }
+    static constexpr int rank_dynamic() noexcept { return impl::RankDynamic ; }
+
+    static constexpr index_type static_extent(int k) noexcept
+      { return impl::static_extent(k); }
+
+    constexpr index_type extent(int k) const noexcept
+      { return impl::extent(k); }
+
+    constexpr index_type size() const noexcept
+      { return impl::size(); }
+
+    constexpr index_type span_size() const noexcept
+      { return impl::size(); }
+
+    static constexpr bool is_always_unique     = true ;
+    static constexpr bool is_always_contiguous = true ;
+    static constexpr bool is_always_strided    = true ;
+
+    constexpr bool is_unique()     const noexcept { return true ; }
+    constexpr bool is_contiguous() const noexcept { return true ; }
+    constexpr bool is_strided()    const noexcept { return true ; }
+
+    constexpr index_type stride(int k) const noexcept
+      { return impl::next::size(k+1); }
+
+  private:
+
+    template< class ExtentsImpl >
+    static constexpr index_type
+    offset( ExtentsImpl const & , index_type sum ) noexcept
+      { return sum ; }
+
+    // ( ( ( ( i0 ) * N1 + i1 ) * N2 + i2 ) * N3 + i3 ) ...
+
+    template< class ExtentsImpl , class ... IndexType >
+    static constexpr index_type
+    offset( ExtentsImpl const & x
+          , index_type sum
+          , index_type ir , IndexType const & ... indices ) noexcept
+      {
+        return mapping::offset( (typename ExtentsImpl::next const &) x
+                              , sum * x.N + ir
+                              , indices... );
+      }
+
+  public:
+
+    constexpr index_type operator()() const noexcept
+      { return 0 ; }
+
+    template< class ... IndexType >
+    constexpr index_type
+    operator()( IndexType const & ... indices ) const noexcept
+      { return mapping::offset( (typename impl::next const &) *this
+                              , indices... ); }
+
+  }; // struct mapping
+
+}; // struct layout_right
+
+//----------------------------------------------------------------------------
+
+struct layout_left {
+
+  template< ptrdiff_t ... StaticExtents >
+  class mapping : private detail::extents_impl< 0 , StaticExtents... > {
+  private:
+
+    typedef detail::extents_impl<0,StaticExtents...> impl ;
+
+  public:
+
+    using index_type = ptrdiff_t ;
+
+    constexpr mapping() noexcept = default ;
+    constexpr mapping( mapping const & ) noexcept = default ;
+    mapping & operator = ( mapping const & ) noexcept = default ;
+
+    template< class ... IndexType >
+    constexpr mapping( IndexType ... DynamicExtents ) noexcept
+      : impl( DynamicExtents... ) {}
+
+    static constexpr int rank() noexcept { return impl::Rank ; }
+    static constexpr int rank_dynamic() noexcept { return impl::RankDynamic ; }
+
+    static constexpr index_type static_extent(int k) noexcept
+      { return impl::static_extent(k); }
+
+    constexpr index_type extent(int k) const noexcept
+      { return impl::extent(k); }
+
+    constexpr index_type size() const noexcept
+      { return impl::size(); }
+
+    constexpr index_type span_size() const noexcept
+      { return impl::size(); }
+
+    static constexpr bool is_always_unique     = true ;
+    static constexpr bool is_always_contiguous = true ;
+    static constexpr bool is_always_strided    = true ;
+
+    constexpr bool is_unique()     const noexcept { return true ; }
+    constexpr bool is_contiguous() const noexcept { return true ; }
+    constexpr bool is_strided()    const noexcept { return true ; }
+
+  private:
+
+    template< class ExtentsImpl >
+    static constexpr index_type
+    stride( ExtentsImpl const & x , int k ) noexcept
+      { return k ? ( x.N * stride( (typename ExtentsImpl::next const &) x , k - 1 ) ) : 1 ; }
+
+    template< class ExtentsImpl >
+    static constexpr index_type
+    offset( ExtentsImpl const & ) noexcept
+      { return 0 ; }
+
+    // ( i0 + N0 * ( i1 + N1 * ( i2 + N2 * ( ... ) ) ) )
+
+    template< class ExtentsImpl , class ... IndexType >
+    static constexpr index_type
+    offset( ExtentsImpl const & x
+          , index_type ir , IndexType const & ... indices ) noexcept
+      {
+        return ir + x.N *
+          mapping::offset( (typename ExtentsImpl::next const &) x
+                         , indices... );
+      }
+
+  public:
+
+    constexpr index_type stride(int k) const noexcept
+      { return stride( (impl const &) *this , k ); }
+
+    template< class ... IndexType >
+    constexpr index_type
+    operator()( IndexType const & ... indices ) const noexcept
+      { return mapping::offset( (impl const &) *this , indices... ); }
+
+  }; // struct mapping
+
+}; // struct layout_left
+
+//----------------------------------------------------------------------------
+
+struct layout_stride {
+
+  template< ptrdiff_t ... StaticExtents >
+  class mapping : private detail::extents_impl< 0 , StaticExtents... > {
+  public:
+
+    using index_type = ptrdiff_t ;
+
+  private:
+
+    typedef detail::extents_impl<0,StaticExtents...> impl ;
+
+    ptrdiff_t m_stride[ impl::Rank + 1 ] = { 0 };
+    int       m_unique ;
+    int       m_contig ;
+
+    template< int K >
+    constexpr index_type offset() const noexcept { return 0 ; }
+
+    template< int K , class ... IndexType >
+    constexpr index_type
+    offset( index_type ir , IndexType const & ... indices ) const noexcept
+      {
+        return K < impl::Rank
+          ? ir * m_stride[K] + mapping::template offset<K+1>(indices...)
+          : 0 ;
+      }
+
+  public:
+
+    constexpr mapping() noexcept = default ;
+    constexpr mapping( mapping const & ) noexcept = default ;
+    mapping & operator = ( mapping const & ) noexcept = default ;
+
+    template< class D , class S >
+    mapping( D const * const DynamicExtents
+           , S const * const Strides ) noexcept
+      : impl( DynamicExtents )
+      , m_stride{0}
+      , m_unique{0}
+      , m_contig{0}
+      {
+        int index[ impl::Rank ? impl::Rank : 1 ];
+
+        m_stride[ impl::Rank ] = 1 ;
+
+        for ( int k = 0 ; k < impl::Rank ; ++k ) {
+          m_stride[k] = Strides[k] ;
+          m_stride[ impl::Rank ] += m_stride[k] * ( impl::extent(k) - 1 );
+        }
+
+        // Fill permutation such that
+        //   m_stride[ index[i] ] <= m_stride[ index[i+1] ]
+        //
+        for ( int i = 0 ; i < impl::Rank ; ++i ) {
+
+           int j = i ;
+
+           for ( ; j && m_stride[i] < m_stride[ index[j-1] ] ; --j ) { index[j] = index[j-1] ; }
+
+           index[j] = i ;
+         }
+
+         m_unique = 1 ;
+         m_contig = 1 ;
+
+         for ( int i = 1 ; i < impl::Rank ; ++i ) {
+           const int j = index[i-1];
+           const int k = index[i];
+           const index_type prev = m_stride[j] * impl::extent(j);
+           if ( m_stride[k] != prev ) { m_contig = 0 ; }
+           if ( m_stride[k] <  prev ) { m_unique = 0 ; }
+         }
+       }
+
+  // OPERATOR
+
+    static constexpr int rank() noexcept { return impl::Rank ; }
+    static constexpr int rank_dynamic() noexcept { return impl::RankDynamic ; }
+
+    static constexpr index_type static_extent(int k) noexcept
+      { return impl::static_extent(k); }
+
+    constexpr index_type extent(int k) const noexcept
+      { return impl::extent(k); }
+
+    constexpr index_type size() const noexcept
+      { return impl::size(); }
+
+    constexpr index_type span_size() const noexcept
+      { return m_stride[ impl::Rank ]; }
+
+    static constexpr bool is_always_unique     = false ;
+    static constexpr bool is_always_contiguous = false ;
+    static constexpr bool is_always_strided    = true ;
+
+    constexpr bool is_unique()     const noexcept { return m_unique ; }
+    constexpr bool is_contiguous() const noexcept { return m_contig ; }
+    constexpr bool is_strided()    const noexcept { return true ; }
+
+    constexpr index_type stride(int k) const noexcept
+      { return k < impl::Rank ? m_stride[k] : 0 ; }
+
+    template< class ... IndexType >
+    constexpr index_type
+    operator()( IndexType const & ... indices ) const noexcept
+      { return mapping::template offset<0>( indices... ); }
+
+  }; // struct mapping
+
+}; // struct layout_stride
+
+
+//--------------------------------------------------------------------------
+
+}} // std::experimental
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+namespace std {
+namespace experimental {
+
+//--------------------------------------------------------------------------
+// Properties = extents , layout
+
+template < typename DataType , class ... Properties >
+class mdspan
 {
-    return mapping_type::rank();
-}
+private:
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::size_type
-mdspan<ValueType, Dims, Layout, Accessor>::rank_dynamic() noexcept
-{
-    return mapping_type::rank_dynamic();
-}
+  template< typename , class ... > friend class mdspan ;
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::size_type
-mdspan<ValueType, Dims, Layout, Accessor>::size() const noexcept
-{
-    return mapping_.size();
-}
+  typedef typename detail::template mdspan_prop< Properties ... > prop ;
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::size_type
-mdspan<ValueType, Dims, Layout, Accessor>::extent(
-    size_type rank
-    ) const noexcept
-{
-    return mapping_[rank];
-}
+  typedef typename
+    detail::mdspan_mapping< typename prop::extents
+                          , typename prop::layout >::type
+      mapping ;
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::mapping_type
-mdspan<ValueType, Dims, Layout, Accessor>::mapping() const noexcept
-{
-    return mapping_;
-}
+public:
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr bool
-mdspan<ValueType, Dims, Layout, Accessor>::is_regular() noexcept
-{
-    return mapping_type::is_regular();
-}
+  // TYPES
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::size_type
-mdspan<ValueType, Dims, Layout, Accessor>::stride(
-    size_type rank
-    ) const noexcept
-{
-    return mapping_.stride(rank);
-}
+  using element_type     = DataType ;
+  using value_type       = typename std::remove_cv< element_type >::type ;
+  using index_type       = ptrdiff_t ;
+  using difference_type  = ptrdiff_t ;
+  using pointer          = element_type * ;
+  using reference        = element_type & ;
+  using layout           = layout_right ;
+  using properties       = detail::template mdspan_prop< Properties ... > ;
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-inline constexpr typename
-    mdspan<ValueType, Dims, Layout, Accessor>::size_type
-mdspan<ValueType, Dims, Layout, Accessor>::span() const noexcept
-{
-    return mapping_.span();
-}
+private:
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-template <typename... Integers>
-inline typename std::enable_if<
-       Dims::rank() == sizeof...(Integers)
-    && detail::is_integral_pack<Integers...>::value
-  , typename mdspan<ValueType, Dims, Layout, Accessor>::reference
->::type mdspan<ValueType, Dims, Layout, Accessor>::operator()(
-    Integers... indices
-    ) const noexcept
-{
-    size_type const raw_idx = mapping_.index(indices...);
-    return accessor_.access(ptr_, raw_idx);
-}
+  pointer  m_ptr ;
+  mapping  m_map ;
 
-template <typename ValueType, typename Dims, typename Layout, typename Accessor>
-typename mdspan<ValueType, Dims, Layout, Accessor>::reference
-mdspan<ValueType, Dims, Layout, Accessor>::operator[](
-    size_type idx
-    ) const noexcept
+public:
+
+  // CONSTRUCTORS AND ASSIGNMENT OPERATORS
+
+  constexpr mdspan() noexcept : m_ptr(0), m_map() {}
+  constexpr mdspan(mdspan const& b) noexcept = default;
+  constexpr mdspan(mdspan&& b) noexcept = default;
+  mdspan& operator=(mdspan const& b) noexcept = default;
+  mdspan& operator=(mdspan&& b) noexcept = default;
+
+  template< typename D , typename ... P > 
+  constexpr mdspan( mdspan<D,P...> const & rhs ) noexcept
+    : m_ptr( rhs.m_ptr )
+    , m_map( rhs.m_map )
+    {}
+
+  template< typename D , typename ... P >
+  mdspan & operator = ( mdspan<D,P...> const & rhs ) noexcept
+    {
+      m_ptr = rhs.m_ptr ;
+      m_map = rhs.m_map ;
+      return *this ;
+    }
+
+  template < class ... IndexType >
+  explicit constexpr mdspan
+    ( pointer ptr , IndexType ... DynamicExtents ) noexcept
+    : m_ptr(ptr), m_map( DynamicExtents... ) {}
+
+  constexpr mdspan( pointer ptr , mapping m ) noexcept
+    : m_ptr(ptr), m_map( m ) {}
+
+  // DOMAIN OBSERVERS
+
+  static constexpr int rank() noexcept
+    { return mapping::rank(); }
+
+  static constexpr int rank_dynamic() noexcept
+    { return mapping::rank_dynamic(); }
+
+  constexpr index_type static_extent( int coord ) const noexcept
+    { return m_map.static_extent( coord ); }
+
+  constexpr index_type extent( int coord ) const noexcept
+    { return m_map.extent( coord ); }
+
+  constexpr index_type size() const noexcept
+    { return m_map.size(); }
+
+  // CODOMAIN OBSERVERS
+
+  constexpr pointer data() const noexcept { return m_ptr ; }
+
+  constexpr index_type span_size() const noexcept
+    { return m_ptr ? m_map.span_size() : 0 ; }
+
+  template< class ... IndexType >
+  static constexpr index_type
+  required_span_size( IndexType ... DynamicExtents ) noexcept
+    { return mapping( DynamicExtents... ).span_size(); }
+
+  // MAPPING OBSERVERS
+
+  static constexpr bool is_always_unique = mapping::is_always_unique ;
+  static constexpr bool is_always_regular = mapping::is_always_regular ;
+  static constexpr bool is_always_contiguous = mapping::is_always_contiguous ;
+
+  constexpr bool is_unique() const noexcept  { return m_map.is_unique(); }
+  constexpr bool is_regular() const noexcept { return m_map.is_regular(); }
+  constexpr bool is_contiguous() const noexcept {return m_map.is_contiguous();}
+
+  constexpr index_type stride( index_type i ) const noexcept
+    { return m_map.stride(i); }
+
+  template< class ... IndexType >
+  constexpr index_type offset( IndexType ... indices ) const noexcept
+    { return m_map( indices... ); }
+
+  // MEMBER ACCESS 
+
+  // Enforce rank() <= sizeof...(IndexType)
+  template< class ... IndexType >
+  constexpr reference
+  operator()( IndexType ... indices) const noexcept
+    { return m_ptr[ m_map( indices... ) ]; }
+
+  // Enforce rank() == 1
+  constexpr reference
+  operator[]( index_type idx ) const noexcept
+    { return m_ptr[ m_map( idx ) ]; }
+
+};
+
+//--------------------------------------------------------------------------
+
+template< class MDSPAN , typename ... SliceSpecs >
+mdspan< typename MDSPAN::element_type
+      , typename detail::sub_extents_deduction
+          < typename MDSPAN::properties::extents
+          , SliceSpecs...
+          >::type
+      , layout_stride
+      >
+subspan( MDSPAN const & a , SliceSpecs const & ... slice_specs )
 {
-    return accessor_.access(ptr_, idx);
+  typedef typename MDSPAN::properties::extents
+    extents_input ;
+
+  typedef detail::sub_extents_deduction< extents_input , SliceSpecs...  >
+    deduction ;
+
+  typedef typename deduction::type
+    extents_output ;
+
+  typedef
+    mdspan< typename MDSPAN::element_type
+          , extents_output
+          , layout_stride
+          > return_type ;
+
+  constexpr int output_rank = extents_output::rank();
+
+  ptrdiff_t offset = a.offset( detail::slices_begin( slice_specs )... );
+
+  ptrdiff_t dyn[ output_rank ? output_rank : 1 ];
+  ptrdiff_t str[ output_rank ? output_rank : 1 ];
+
+  deduction::get( dyn , str , a , slice_specs... );
+
+  typedef typename
+    detail::mdspan_mapping< extents_output , layout_stride >::type
+      mapping ;
+  
+  return return_type( a.data() + offset , mapping( dyn , str ) );
 }
 
 }} // std::experimental
 
-#endif // STD_CF36957A_A9C6_44BF_ABF1_7CD6BDEC6CF0
+#endif // #ifndef STD_EXPERIMENTAL_MDSPAN_HEADER
 
