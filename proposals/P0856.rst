@@ -1,5 +1,5 @@
 ===================================================================
-D0856r0 : Restrict and Atomic Access Properties
+D0856r0 : Restrict Access Properties for span and mdspan
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
