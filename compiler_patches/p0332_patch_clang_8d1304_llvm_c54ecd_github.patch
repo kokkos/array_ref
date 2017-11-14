@@ -1,0 +1,165 @@
+diff --git a/include/clang/AST/Type.h b/include/clang/AST/Type.h
+index e195647..ad3e173 100644
+--- a/include/clang/AST/Type.h
++++ b/include/clang/AST/Type.h
+@@ -2543,6 +2543,51 @@ public:
+     return ArrayTypeBits.IndexTypeQuals;
+   }
+ 
++  //==========================================================================
++  // BEGIN PATCH FOR P0332
++  bool canDecayToPointerToCompletableType() const {
++    // We don't care if the outermost type (i.e., this) is complete, but if we
++    // want to decay to a pointer to a complete type, the element type (and all
++    // of its element types, recursively) must be complete.
++    auto EType = getElementType();
++    if(EType->isArrayType())
++      return EType->getAsArrayTypeUnsafe()->fullTypeIsCompletable();
++    else
++      // It shouldn't be possible for EType to be void here, but strictly speaking we should check
++      return !EType->isVoidType();
++  }
++
++  bool fullTypeIsCompletable() const {
++    if(isIncompleteArrayType()) return false;
++    // Could be implemented recursively, but isn't for performance reasons
++    ArrayType const* CArray = this;
++    while(CArray) {
++      QualType EType = CArray->getElementType();
++      if (EType->isIncompleteArrayType())
++        return false;
++      else if(EType->isVoidType())
++        // It shouldn't be possible for EType to be void here, but
++        // strictly speaking we should check
++        return false;
++      CArray = EType->getAsArrayTypeUnsafe();
++    }
++    return true;
++  }
++
++  QualType getFirstNonArrayElementType() const {
++    // Could be implemented recursively, but isn't for performance reasons
++    ArrayType const* CArray = this;
++    QualType EType;
++    while(CArray) {
++      EType = CArray->getElementType();
++      CArray = EType->getAsArrayTypeUnsafe();
++    }
++    return EType;
++  }
++
++  // END PATCH FOR P0332
++  //==========================================================================
++
+   static bool classof(const Type *T) {
+     return T->getTypeClass() == ConstantArray ||
+            T->getTypeClass() == VariableArray ||
+@@ -2604,6 +2649,8 @@ public:
+ /// Represents a C array with an unspecified size.  For example 'int A[]' has
+ /// an IncompleteArrayType where the element type is 'int' and the size is
+ /// unspecified.
++/// P0332: Also types like 'int[3][][5][]' and 'int[][]' are valid incomplete types,
++///        but they can't be decayed to pointers to complete types.
+ class IncompleteArrayType : public ArrayType {
+ 
+   IncompleteArrayType(QualType et, QualType can,
+@@ -2615,6 +2662,7 @@ public:
+   bool isSugared() const { return false; }
+   QualType desugar() const { return QualType(this, 0); }
+ 
++
+   static bool classof(const Type *T) {
+     return T->getTypeClass() == IncompleteArray;
+   }
+diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
+index c27b495..b21c996 100644
+--- a/include/clang/Basic/DiagnosticSemaKinds.td
++++ b/include/clang/Basic/DiagnosticSemaKinds.td
+@@ -6038,6 +6038,10 @@ def warn_cxx98_compat_non_static_member_use : Warning<
+   "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
+ def err_invalid_incomplete_type_use : Error<
+   "invalid use of incomplete type %0">;
++def err_invalid_incomplete_array_type_use : Error<
++  "Invalid use of incomplete array type %0">;
++def err_invalid_incomplete_array_type_dereference : Error<
++  "Invalid dereference of pointer to incomplete array type %0">;
+ def err_builtin_func_cast_more_than_one_arg : Error<
+   "function-style cast to a builtin type can only take one argument">;
+ def err_value_init_for_array_type : Error<
+diff --git a/lib/AST/ExprConstant.cpp b/lib/AST/ExprConstant.cpp
+index c09c993..2352329 100644
+--- a/lib/AST/ExprConstant.cpp
++++ b/lib/AST/ExprConstant.cpp
+@@ -5750,6 +5750,7 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
+     }
+     // The result is a pointer to the first element of the array.
+     auto *AT = Info.Ctx.getAsArrayType(SubExpr->getType());
++
+     if (auto *CAT = dyn_cast<ConstantArrayType>(AT))
+       Result.addArray(Info, E, CAT);
+     else
+diff --git a/lib/Sema/SemaDecl.cpp b/lib/Sema/SemaDecl.cpp
+index ab1a66a..66d9780 100644
+--- a/lib/Sema/SemaDecl.cpp
++++ b/lib/Sema/SemaDecl.cpp
+@@ -7549,6 +7549,25 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous) {
+       checkForConflictWithNonVisibleExternC(*this, NewVD, Previous))
+     Previous.setShadowed();
+ 
++  //==========================================================================
++  // BEGIN PATCH FOR P0332
++  QualType CType = NewVD->getCanonicalDecl()->getType();
++  // Only, e.g., T[][1][2][3] can be declared
++  if (CType->isArrayType()) {
++    auto AType = Context.getAsArrayType(CType);
++    if (!AType->canDecayToPointerToCompletableType()) {
++      Diag(NewVD->getLocation(), diag::err_invalid_incomplete_array_type_use) << CType;
++      NewVD->setInvalidDecl();
++    }
++    // Also, T must be a complete type
++    if (AType->getFirstNonArrayElementType()->isIncompleteType()) {
++      Diag(NewVD->getLocation(), diag::err_invalid_incomplete_array_type_use) << CType;
++      NewVD->setInvalidDecl();
++    }
++  }
++  // END PATCH FOR P0332
++  //==========================================================================
++
+   if (!Previous.empty()) {
+     MergeVarDecl(NewVD, Previous);
+     return true;
+diff --git a/lib/Sema/SemaExpr.cpp b/lib/Sema/SemaExpr.cpp
+index d5a7bc3..56c3884 100644
+--- a/lib/Sema/SemaExpr.cpp
++++ b/lib/Sema/SemaExpr.cpp
+@@ -11346,6 +11346,13 @@ static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
+     S.Diag(OpLoc, diag::ext_typecheck_indirection_through_void_pointer)
+       << OpTy << Op->getSourceRange();
+ 
++  //==========================================================================
++  // BEGIN PATCH FOR P0332
++  if (Result->isArrayType() && !Result->getAsArrayTypeUnsafe()->canDecayToPointerToCompletableType())
++    S.Diag(OpLoc, diag::err_invalid_incomplete_array_type_dereference) << OpTy;
++  // END PATCH FOR P0332
++  //==========================================================================
++
+   // Dereferences are usually l-values...
+   VK = VK_LValue;
+ 
+diff --git a/lib/Sema/SemaType.cpp b/lib/Sema/SemaType.cpp
+index ec0d93c..9b21ee8 100644
+--- a/lib/Sema/SemaType.cpp
++++ b/lib/Sema/SemaType.cpp
+@@ -2043,7 +2043,11 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
+       return QualType();
+     }
+ 
+-    if (T->isVoidType() || T->isIncompleteArrayType()) {
++    //==========================================================================
++    // PATCHED FOR P0332
++    // Replaced: if (T->isVoidType() || T->isIncompleteArrayType()) {
++    //   with the following line:
++    if (T->isVoidType()) {
+       Diag(Loc, diag::err_illegal_decl_array_incomplete_type) << T;
+       return QualType();
+     }
