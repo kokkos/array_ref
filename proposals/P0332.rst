@@ -8,10 +8,10 @@ D0332r2 : Relaxed Incomplete Multidimensional Array Type Declaration
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
-:Author: Bryce Lelbach 
-:Contact: balelbach@lbl.gov
 :Author: Christian Trott
 :Contact: crtrott@sandia.gov
+:Author: David Hollman
+:Contact: dshollm@sandia.gov
 :Author: Mauro Bianco
 :Contact: mbianco@cscs.ch
 :Author: Athanasios Iliopoulos
@@ -24,36 +24,35 @@ D0332r2 : Relaxed Incomplete Multidimensional Array Type Declaration
 
 
 ******************************************************************
-Motivation
+Revision History
 ******************************************************************
 
-+------------+-------------------------------------------------------------+
-| **Revision History**                                                     |
-+------------+-------------------------------------------------------------+
-| N4356      | Original proposal                                           |
-+------------+-------------------------------------------------------------+
-| P0009r0    | Original multidimensional array reference paper with        |
-|            | motivation, specification, and examples.                    |
-+------------+-------------------------------------------------------------+
-| P0009r1    | Revised with renaming from ``view`` to ``array_ref``        |
-|            | and allow unbounded rank through variadic arguments.        |
-+------------+-------------------------------------------------------------+
-| P0332r0    | Relaxed array declaration moved from P0009.                 |
-+------------+-------------------------------------------------------------+
-| P0332r1    | Align with updates to P0009.                                |
-|            | Add examples of precedents.                                 |
-|            | P0009 moved by LEWG to LWG                                  |
-|            | Reviewed by EWG in 2017 Albuquerque                         |
-+------------+-------------------------------------------------------------+
-| P0332r2    | Fully address scope of EWG feedback on N4356                |
-+------------+-------------------------------------------------------------+
-| **References**                                                           |
-+------------+-------------------------------------------------------------+
-| P0009      | Multidimensional array reference specification              |
-+------------+-------------------------------------------------------------+
-| P0331      | Multidimensional array reference motivation and examples    |
-+------------+-------------------------------------------------------------+
+----------------------------------------------------------------------
+N4356 : Original proposal
+----------------------------------------------------------------------
 
+----------------------------------------------------------------------
+P0332r0
+----------------------------------------------------------------------
+
+  - Relaxed array declaration extracted from P0009
+
+----------------------------------------------------------------------
+P0332r1
+----------------------------------------------------------------------
+
+  - Align with updates to P0009
+  - Add examples of precedents
+  - Reviews at 2017-Albuquerque
+
+    - LEWG: moves P0009 to LWG
+    - EWG: P0332r1 fails to address concerns raised with N4356
+
+----------------------------------------------------------------------
+P0332r2
+----------------------------------------------------------------------
+
+  - Fully address scope of EWG feedback on N4356
 
 
 ******************************************************************
@@ -61,7 +60,7 @@ Motivation
 ******************************************************************
 
 The dimensions of multidimensional array reference ``mdspan``
-(P0009) are declared a syntactically verbose property argument.
+(P0331 and P0009) are declared a syntactically verbose property argument.
 We propose a trivial, non-breaking relaxation of the
 array type declaration in **11.3.4p3** to allow a concise
 and intuitive syntax for multidimensional declarations.
@@ -183,11 +182,16 @@ I don't want to see pointers or references to these,
 or functions declared with these things as arguments.*
 
 
+The following impact analysis is with respect to Working Draft N4700.
+
+
 Let ``S`` be an incomplete multdimensional array type
-greater than rank 1 rom which an extent other than the
+greater than rank 1 from which an extent other than the
 leading extent is ommitted.
 
-**6.9 Types, p5**
+**[types.basic] 6.9 Types, p5**
+
+  **incompletely-defined object type**
 
   *A class that has been declared but not defined, an enumeration type
   in certain contexts (10.2), or an array of unknown bound or of
@@ -195,9 +199,15 @@ leading extent is ommitted.
   Incompletely-defined object types and cv void are incomplete types (6.9.1).
   Objects shall not be defined to have an incomplete type.*
 
+  [footnote] *The size and layout of an instance
+  of an incompletely-defined object type is unknown.*
+
+An array of unknown bound is an incomplete type,
+which in this clause, is admissible as an incomplete element type.
+
 ``S`` can never be used to declare an object.
 
-**6.9 Types, p6**
+**[types.basic] 6.9 Types, p6**
 
   *The declared type of an array object might be an array of
   unknown bound and therefore be incomplete at one point in a
@@ -210,14 +220,25 @@ leading extent is ommitted.
 The type of a pointer to ``S`` is an incomplete type,
 and therefore can never be used to declare an object.
 
-**7.2 Array-to-pointer conversion**
+**[basic.fundamental] 6.9.1 Fundamental types, p9** 
+
+  *A type cv void is an incomplete type that cannot be completed;
+  such a type has an empty set of values.*
+
+An incomplete multidimensional array type in which an extent
+other than the first extent is ommitted cannot be completed.
+
+**[conf.array] 7.2 Array-to-pointer conversion**
 
   *An lvalue or rvalue of type “array of N T” or
   “array of unknown bound of T” can be converted to a prvalue of
   type “pointer to T”. The temporary materialization conversion (7.4)
   is applied. The result is a pointer to the first element of the array.*
 
-**7.4 Temporary materialization conversion [conv.rval]**
+Conversion of "array of unknown bound of T" must be constrained
+such that T is a complete type or incomplete class type.
+
+**[conv.rval] 7.4 Temporary materialization conversion [conv.rval]**
 
   *A prvalue of type T can be converted to an xvalue of type T.
   This conversion initializes a temporary object (15.2) of type T
@@ -229,11 +250,25 @@ The decay of ``int[][M][]`` is ``int(*)[M][])`` which is an incomplete type
 and objects cannot be declared for an incomplete type.
 Therefore converting ``int[][M][]`` to a pointer is an error.
 
-**11.3.5 Functions, p5**
+**[expr.call] 8.2.2 Function call, p4]**
+
+  *When a function is called, the parameters that have object type
+  shall have completely-defined object type.
+  [Note: this still allows a parameter to be a pointer or reference
+  to an incomplete class type. However, it prevents a passed-by-value
+  parameter to have an incomplete class type. —end note]*
+
+A parameter is not allowed to be a pointer or reference to an
+incomplete array type.
+
+**[dlc.fct] 11.3.5 Functions, p5**
 
   *After determining the type of each parameter,
   any parameter of type “array of T” or of function type T
   is adjusted to be “pointer to T”.*
+
+Constrain such that T is a complete type or an incomplete class type.
+
 
 
 *10.1.1p7*
