@@ -18,8 +18,7 @@ D0332r2 : Relaxed Incomplete Multidimensional Array Type Declaration
 :Contact: athanasios.iliopoulos@nrl.navy.mil
 :Author: John Michopoulos
 :Contact: john.michopoulos@nrl.navy.mil
-:Audience: Library Evolution Working Group (LEWG)
-:Audience: Evolution Working Group (LEWG)
+:Audience: Evolution Working Group (EWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0332.rst
 
 
@@ -53,6 +52,7 @@ P0332r2
 ----------------------------------------------------------------------
 
   - Fully address scope of EWG feedback on N4356
+  - Introduce clarification for loosely defined *incomplete type*
 
 
 ******************************************************************
@@ -62,7 +62,7 @@ Motivation
 The dimensions of multidimensional array reference ``mdspan``
 (P0331 and P0009) are declared a syntactically verbose property argument.
 We propose a trivial, non-breaking relaxation of the
-array type declaration in **11.3.4p3** to allow a concise
+array type declaration in **[decl.array]** to allow a concise
 and intuitive syntax for multidimensional declarations.
 
 .. code-block:: c++
@@ -82,7 +82,8 @@ and intuitive syntax for multidimensional declarations.
 
 ..
 
-The motivating ``mdspan`` library moved by LEWG to LWG in 2017-Albuquerque.
+The motivating ``mdspan`` proposal (P0009)
+moved by LEWG to LWG in 2017-Albuquerque.
 
 ----------------------------------------------------------------------
 Why Not
@@ -90,15 +91,89 @@ Why Not
 
 ``mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,LayoutLeft>``
 
-  - Does not allow LayoutLeft or other properties to be a type.
-  - Still requires ``dynamic_extent`` magic number
+  - Does not allow LayoutLeft or other properties to be types.
+  - Still requires ``dynamic_extent`` magic number.
 
 ******************************************************************************
 Proposal
 ******************************************************************************
 
-The current array type declarator constraints are
-defined in in **11.3.4.p3** as follows.
+------------------------------------------------------------------------------
+Clarification of incomplete types
+------------------------------------------------------------------------------
+
+**[types.basic] 6.9 Types, p5-p6**
+
+An *incomplete class type* is a class that has been declared but not defined.
+A class type (such as "``class X``") might be incomplete
+at one point in a translation unit and completed later in the
+translation unit; the type "``class X``" is the same type at both points.
+
+When the element type ``T`` of an "array of ``N T``"
+(such as "``T[N]``")
+is an incomplete class type the array type is incomplete;
+if the class type is later completed in the translation unit
+the array type becomes complete and the array type
+at those two points is the same type.
+
+When the declared type of an array object is of unknown bound
+(such as "``T obj[]``") at one point in a translation unit and 
+is later completed in the translation unit (such as "``T obj[N]``)
+the array types at those two points (respectively "``T[]``" and "``T[N]``")
+are different types.
+
+The type of a pointer to array of unknown bound,
+or of a type defined to be an array of unknown bound,
+cannot be completed.
+
+An *incompletely-defined object type* is
+
+  - an incomplete class type,
+  - an enumeration type in certain contexts (10.2),
+  - an array (11.3.4) of an incomplete class type, or
+  - an array of an unknown bound (11.3.4). 
+
+An *incomplete type that cannot be completed* is
+
+  - *cv* ``void``,
+  - a type of an array of unknown bound,
+  - a type of a pointer to an array of unknown bound, or
+  - an array of element type that is an array of unknown bound.
+
+An *incomplete type* is
+
+  - an incompletely-defined object type or
+  - an incomplete type that cannot be completed.
+
+Objects shall not be defined to have an incomplete type.
+
+
+.. code-block:: c++
+
+  typedef int UNKA[];     // UNKA is an incomplete type
+  typedef UNKA UNKAA[N];  // UNKAA is an incomplete type that cannot be completed
+  UNKA  arrn[N];          // ill-formed, UNKA cannot be completed
+  UNKA* arrp;             // ill-formed, UNKA* cannot be completed
+
+..
+
+
+**[types.basic] 6.9 Types, p8**
+
+An *object type* is a (possibly cv-qualified) type that is not
+
+  - a function type,
+  - a reference type, or
+  - incomplete type that cannot be completed.
+
+
+------------------------------------------------------------------------------
+Relaxation of Array type
+------------------------------------------------------------------------------
+
+**[dcl.array] 11.3.4 Arrays, p3**
+
+The current array type declarator constraints are defined as follows.
 
   When several “array of” specifications are adjacent,
   a multidimensional array type is created;
@@ -121,14 +196,12 @@ defined in in **11.3.4.p3** as follows.
   earlier declaration, and similarly for the definition of
   a static data member of a class.
 
-For ``mdspan`` to have a concise and intuitive syntax
-the array type declarator constraints must be relaxed.
-The following wording change is proposed.
+The following relaxed constraint is proposed.
 
   When several “array of” specifications are adjacent,
   a multidimensional array type is created.
-  In declarations in which an incomplete object type is allowed
-  any of the constant expressions that
+  In declarations in which an *incomplete type*
+  is allowed any of the constant expressions that
   specify the bounds of the arrays may be omitted.
   The first of the constant expressions
   that specify the bounds of the arrays may be omitted
@@ -169,7 +242,10 @@ version 5.
 Holistic View
 ******************************************************************************
 
-From 2015-Lenexa notes on N4356:
+------------------------------------------------------------------------------
+2015-Lenexa EWG discussion on N4356
+------------------------------------------------------------------------------
+
 *Stepping back for a second, I think this is a small change
 but there are a whole bunch of ways of constructing types and
 we disallow many because they would give uninhabited types.
@@ -181,13 +257,26 @@ I'd like to see some more holistic view of this,
 I don't want to see pointers or references to these,
 or functions declared with these things as arguments.*
 
-
-The following impact analysis is with respect to Working Draft N4700.
-
+------------------------------------------------------------------------------
+Analysis with respect to N4700 working draft
+------------------------------------------------------------------------------
 
 Let ``S`` be an incomplete multdimensional array type
 greater than rank 1 from which an extent other than the
 leading extent is ommitted.
+
+**[basic.link] 6.5 Program and linkage, p10**
+
+  *After all adjustments of types
+  (during which typedefs (10.1.3) are replaced by their definitions),
+  the types specified by all declarations referring to a given variable
+  or function shall be identical, except that declarations for an
+  array object can specify array types that differ by the
+  presence or absence of a major array bound (11.3.4).
+  A violation of this rule on type identity does not require a diagnostic.*
+
+Array declarations restricted to absence of only the leading array bound.
+
 
 **[types.basic] 6.9 Types, p5**
 
@@ -203,7 +292,7 @@ leading extent is ommitted.
   of an incompletely-defined object type is unknown.*
 
 An array of unknown bound is an incomplete type,
-which in this clause, is admissible as an incomplete element type.
+which in this clause, is admissible as an incomplete *element* type.
 
 ``S`` can never be used to declare an object.
 
@@ -228,6 +317,13 @@ and therefore can never be used to declare an object.
 An incomplete multidimensional array type in which an extent
 other than the first extent is ommitted cannot be completed.
 
+**[basic.type.qualifier] 6.9.3 CV-qualifiers, p1**
+
+  *Each type which is a cv-unqualified complete or
+  incomplete object type or is void (6.9)* ...
+
+CV-qualifiers apply to complete or incomplete types.
+
 **[conf.array] 7.2 Array-to-pointer conversion**
 
   *An lvalue or rvalue of type “array of N T” or
@@ -235,8 +331,7 @@ other than the first extent is ommitted cannot be completed.
   type “pointer to T”. The temporary materialization conversion (7.4)
   is applied. The result is a pointer to the first element of the array.*
 
-Conversion of "array of unknown bound of T" must be constrained
-such that T is a complete type or incomplete class type.
+``T`` cannot be an *incomplete type that cannot be completed*.
 
 **[conv.rval] 7.4 Temporary materialization conversion [conv.rval]**
 
@@ -246,8 +341,9 @@ such that T is a complete type or incomplete class type.
   temporary object as its result object, and produces an xvalue
   denoting the temporary object. T shall be a complete type.*
 
-The decay of ``int[][M][]`` is ``int(*)[M][])`` which is an incomplete type 
-and objects cannot be declared for an incomplete type.
+The decay of ``int[][M][]`` is ``int(*)[M][]`` which is an
+incomplete type that cannot be completed,
+and objects cannot be declared of this type.
 Therefore converting ``int[][M][]`` to a pointer is an error.
 
 **[expr.call] 8.2.2 Function call, p4]**
@@ -261,6 +357,22 @@ Therefore converting ``int[][M][]`` to a pointer is an error.
 A parameter is not allowed to be a pointer or reference to an
 incomplete array type.
 
+**[expr.throw] 8.17 Throwing an exception, p2**
+
+  *Evaluating a throw-expression with an operand throws an exception (18.1);
+  the type of the exception object is determined by removing any top-level
+  cv-qualifiers from the static type of the operand and adjusting the
+  type from “array of T” or function type T to “pointer to T”.*
+
+**[dcl.array] 11.3.4 Arrays, p2**
+
+  *An array can be constructed from one of the
+  fundamental types (except void), from a pointer,
+  from a pointer to member, from a class,
+  from an enumeration type, or from another array.*
+
+"Another array" may be an array of unknown bound.
+
 **[dlc.fct] 11.3.5 Functions, p5**
 
   *After determining the type of each parameter,
@@ -270,15 +382,13 @@ incomplete array type.
 Constrain such that T is a complete type or an incomplete class type.
 
 
-
-*10.1.1p7*
+**[dcl.stc] Storage class specifiers, p7**
 
   *The name of a declared but undefined class can be used
   in an extern declaration. Such a declaration can
   only be used in ways that do not require a complete class type.*
 
-Incomplete array types cannot be used as the return type
-of a function.
+Incomplete array types cannot be used as the return type of a function.
 
 ------------------------------------------------------------------------------
 type_traits interaction
@@ -362,10 +472,5 @@ Type Deduction Non-Issue
   }
 
 ..
-
-
-
-
-
 
 
