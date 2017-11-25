@@ -118,7 +118,7 @@ at those two points is the same type.
 
 When the declared type of an array object is of unknown bound
 (such as "``T obj[]``") at one point in a translation unit and 
-is later completed in the translation unit (such as "``T obj[N]``)
+is later completed in the translation unit (such as "``T obj[N]``")
 the array types at those two points (respectively "``T[]``" and "``T[N]``")
 are different types.
 
@@ -136,9 +136,9 @@ An *incompletely-defined object type* is
 An *incomplete type that cannot be completed* is
 
   - *cv* ``void``,
-  - a type of an array of unknown bound,
-  - a type of a pointer to an array of unknown bound, or
-  - an array of element type that is an array of unknown bound.
+  - an array of unknown bound,
+  - a pointer to an array of unknown bound, or
+  - an array with element type that is an array of unknown bound.
 
 An *incomplete type* is
 
@@ -397,10 +397,10 @@ type_traits interaction
 .. code-block:: c++
 
   using S = double[10][20][] ;
-  rank_v<S> == 3``
-  extent_v<S,0> == 10``
-  extent_v<S,1> == 20``
-  extent_v<S,2> == 0``
+  rank_v<S> == 3
+  extent_v<S,0> == 10
+  extent_v<S,1> == 20
+  extent_v<S,2> == 0
 
   remove_extent_t<S> // is an incomplete type
   is_same_v< remove_extent_t<S> , double[20][] >
