@@ -59,6 +59,10 @@ P0332r2
 Motivation
 ******************************************************************
 
+----------------------------------------------------------------------
+Array type for ``mdspan``
+----------------------------------------------------------------------
+
 The dimensions of multidimensional array reference ``mdspan``
 (P0331 and P0009) are declared a syntactically verbose property argument.
 We propose a trivial, non-breaking relaxation of the
@@ -94,9 +98,24 @@ Why Not
   - Does not allow LayoutLeft or other properties to be types.
   - Still requires ``dynamic_extent`` magic number.
 
+------------------------------------------------------------------------------
+Clarifying difference between an array type and array object declarations
+------------------------------------------------------------------------------
+
+The current specification conflates rules for
+array type and and array object declarations.  
+This proposal disambiguates the relaxed array type declaration rules
+and the constrained array object declaration rules.
+
 ******************************************************************************
 Proposal
 ******************************************************************************
+
+This proposal has two themes:
+(1) clarification of incomplete and array types
+versus array declarations and
+(2) relaxation of extent expressions for incomplete array types,
+but not array declarations.
 
 ------------------------------------------------------------------------------
 Clarification of incomplete types
@@ -168,8 +187,58 @@ An *object type* is a (possibly cv-qualified) type that is not
 
 
 ------------------------------------------------------------------------------
-Relaxation of Array type
+Clarification and relaxation of array type
 ------------------------------------------------------------------------------
+
+**[dcl.array] 11.3.4 Arrays, p1**
+
+Clarify the difference between an *array type declaration*
+and *array declaration*.
+
+  An *array type declaration* has the form
+
+    ``T[`` *constant-expression*\_\ *opt* ``]``
+
+  ``T`` is the array *element type*;
+  this type shall not be
+  a reference type,
+  a function type,
+  an abstract class, or
+  *cv* void.
+  If the *constant-expression* (8.20) is present,
+  it is a converted constant expression of type ``std::size_t``.
+  If the value of the constant expression is ``N``, the array type
+  is "array of ``N T``".
+  The constant expression specifies the *bound* of (number of elements in)
+  objects of the array type.
+  If the constant expression is omitted the type is an
+  "*array of unknown bound of* ``T``"
+  and is an incomplete type that cannot be completed.
+  Any type of the form "*cv-qualifier-seq* array of ``N T``"
+  is adjusted to "array of ``N`` *cv-qualifier-seq* ``T``",
+  similarly for "array of unknown bound of ``T``".
+  If the element type is an incomplete type that cannot be completed
+  then the array type is an incomplete type that cannot be completed.
+
+  An *array declaration* has the form
+
+    ``T D[`` *constant-expression*\_\ *opt* ``]`` *attribute-specifier-seq*\_\ *opt*
+
+  the type of the identifier ``D`` is an array type.
+  ``T`` is the array *element type*;
+  this type shall not be
+  a reference type,
+  a function type,
+  an abstract class, or
+  an incomplete type that cannot be completed.
+  Except as noted below, the constant expression shall not be omitted.
+  The array type of ``D`` is ``T[``\ *constant-expression*\_\ *opt*\ ``]``.
+  The optional *attribute-specifier-seq* appertains to the array.
+
+  An object of an array type contains a contiguous non-empty set of
+  ``N`` subobjects of type ``T`` numbered ``0`` to ``N-1``.
+
+ 
 
 **[dcl.array] 11.3.4 Arrays, p3**
 
@@ -221,6 +290,29 @@ The following relaxed constraint is proposed.
   earlier declaration, and similarly for the definition of
   a static data member of a class.
 
+------------------------------------------------------------------------------
+type_traits interaction
+------------------------------------------------------------------------------
+
+.. code-block:: c++
+
+  using S = double[10][20][] ;
+  rank_v<S> == 3
+  extent_v<S,0> == 10
+  extent_v<S,1> == 20
+  extent_v<S,2> == 0
+
+  remove_extent_t<S> // is an incomplete type
+  is_same_v< remove_extent_t<S> , double[20][] >
+
+  remove_extent_t< remove_extent_t<S> > // is an incomplete type
+  is_same_v< remove_extent_t< remove_extent_t<S> > , double[] >
+
+  decay_t<S> // is an incomplete type
+  is_same_v< decay_t<S> , double(*)[20][] >
+
+..
+ 
 
 ******************************************************************************
 Precedence and Feasibility
@@ -390,29 +482,6 @@ Constrain such that T is a complete type or an incomplete class type.
 
 Incomplete array types cannot be used as the return type of a function.
 
-------------------------------------------------------------------------------
-type_traits interaction
-------------------------------------------------------------------------------
-
-.. code-block:: c++
-
-  using S = double[10][20][] ;
-  rank_v<S> == 3
-  extent_v<S,0> == 10
-  extent_v<S,1> == 20
-  extent_v<S,2> == 0
-
-  remove_extent_t<S> // is an incomplete type
-  is_same_v< remove_extent_t<S> , double[20][] >
-
-  remove_extent_t< remove_extent_t<S> > // is an incomplete type
-  is_same_v< remove_extent_t< remove_extent_t<S> > , double[] >
-
-  decay_t<S> // is an incomplete type
-  is_same_v< decay_t<S> , double(*)[20][] >
-
-..
- 
 
 ------------------------------------------------------------------------------
 Type Deduction Non-Issue
