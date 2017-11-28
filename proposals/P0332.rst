@@ -27,7 +27,7 @@ Revision History
 ******************************************************************
 
 ----------------------------------------------------------------------
-N4356 : Original proposal
+N4356 : Original proposal, 2015-Lenexa
 ----------------------------------------------------------------------
 
 ----------------------------------------------------------------------
@@ -45,13 +45,14 @@ P0332r1
   - Reviews at 2017-Albuquerque
 
     - LEWG: moves P0009 to LWG
-    - EWG: P0332r1 fails to address concerns raised with N4356
+    - EWG feedback: P0332r1 fails to address concerns raised
+      at 2015-Lenexa regarding N4356
 
 ----------------------------------------------------------------------
 P0332r2
 ----------------------------------------------------------------------
 
-  - Fully address scope of EWG feedback on N4356
+  - Fully address scope of 2015-Lenexa EWG feedback on N4356
   - Introduce clarification for loosely defined *incomplete type*
 
 
@@ -99,21 +100,21 @@ Why Not
   - Still requires ``dynamic_extent`` magic number.
 
 ------------------------------------------------------------------------------
-Clarifying difference between an array type and array object declarations
+Clarifying difference between array type and array object declarations
 ------------------------------------------------------------------------------
 
-The current specification conflates rules for
+The current working draft (N4700) conflates rules for
 array type and and array object declarations.  
-This proposal disambiguates the relaxed array type declaration rules
-and the constrained array object declaration rules.
+This proposal also disambiguates the relaxed array type declaration rules
+versus the constrained array object declaration rules.
 
 ******************************************************************************
 Proposal
 ******************************************************************************
 
 This proposal has two themes:
-(1) clarification of incomplete and array types
-versus array declarations and
+(1) clarification of incomplete types, array type declarations,
+and array object declarations and
 (2) relaxation of extent expressions for incomplete array types,
 but not array declarations.
 
@@ -121,51 +122,87 @@ but not array declarations.
 Clarification of incomplete types
 ------------------------------------------------------------------------------
 
-**[types.basic] 6.9 Types, p5-p6**
+**N4700: [types.basic] 6.9 Types, p5-p6**
 
-An *incomplete class type* is a class that has been declared but not defined.
-A class type (such as "``class X``") might be incomplete
-at one point in a translation unit and completed later in the
-translation unit; the type "``class X``" is the same type at both points.
+  A class that has been declared but not defined,
+  an enumeration type in certain contexts (10.2), or
+  an array of unknown bound or of incomplete element type,
+  is an incompletely-defined object type.
+  Incompletely-defined object types and cv void are incomplete types (6.9.1).
+  Objects shall not be defined to have an incomplete type.
 
-When the element type ``T`` of an "array of ``N T``"
-(such as "``T[N]``")
-is an incomplete class type the array type is incomplete;
-if the class type is later completed in the translation unit
-the array type becomes complete and the array type
-at those two points is the same type.
+  A class type (such as “class X”) might be incomplete
+  at one point in a translation unit and complete later on;
+  the type “class X” is the same type at both points.
+  The declared type of an array object might be
+  an array of incomplete class type and therefore incomplete;
+  if the class type is completed later on in the
+  translation unit, the array type becomes complete;
+  the array type at those two points is the same type.
+  The declared type of an array object might be
+  an array of unknown bound and therefore be incomplete
+  at one point in a translation unit and complete later on;
+  the array types at those two points
+  (“array of unknown bound of T” and “array of N T”)
+  are different types.
+  The type of a pointer to array of unknown bound,
+  or of a type defined by a typedef declaration
+  to be an array of unknown bound, cannot be completed.
 
-When the declared type of an array object is of unknown bound
-(such as "``T obj[]``") at one point in a translation unit and 
-is later completed in the translation unit (such as "``T obj[N]``")
-the array types at those two points (respectively "``T[]``" and "``T[N]``")
-are different types.
 
-The type of a pointer to array of unknown bound,
-or of a type defined to be an array of unknown bound,
-cannot be completed.
+**Proposed: [types.basic] 6.9 Types, p5-p6**
 
-An *incompletely-defined object type* is
+  An *incomplete class type* is a class that has been declared but not defined.
+  A class type (such as "``class X``") might be incomplete
+  at one point in a translation unit and completed later in the
+  translation unit; the type "``class X``" is the same type at both points.
 
-  - an incomplete class type,
-  - an enumeration type in certain contexts (10.2),
-  - an array (11.3.4) of an incomplete class type, or
-  - an array of an unknown bound (11.3.4). 
+  When the element type ``T`` of an "array of ``N T``"
+  (such as "``T[N]``")
+  is an incomplete class type the array type is incomplete;
+  if the class type is later completed in the translation unit
+  the array type becomes complete and the array type
+  at those two points is the same type.
 
-An *incomplete type that cannot be completed* is
+  When the declared type of an array object is of unknown bound
+  (such as "``T obj[]``") at one point in a translation unit and 
+  is later completed in the translation unit (such as "``T obj[N]``")
+  the array types at those two points ("``T[]``" and "``T[N]``")
+  are different types.
 
-  - *cv* ``void``,
-  - an array of unknown bound,
-  - a pointer to an array of unknown bound, or
-  - an array with element type that is an array of unknown bound.
+  The type of a pointer to array of unknown bound,
+  or of a type defined to be an array of unknown bound,
+  cannot be completed.
 
-An *incomplete type* is
+  Restrictions on the element type ``T``
+  for an "array of ``N T``" and
+  "array of unknown bound of ``T``"
+  are specified in 11.3.4, Arrays.
 
-  - an incompletely-defined object type or
-  - an incomplete type that cannot be completed.
+  An *incompletely-defined object type* is
 
-Objects shall not be defined to have an incomplete type.
+    - an incomplete class type,
+    - an enumeration type in certain contexts (10.2),
+    - an array of ``N T`` (11.3.4)
+      where ``T`` is an incomplete class type, or
+    - an array of unknown bound of ``T`` (11.3.4)
+      where ``T`` is an object type.
 
+  An *incomplete type that cannot be completed* is
+
+    - *cv* ``void`` (6.9.1),
+    - an array of unknown bound of ``T``,
+    - a pointer to an array of unknown bound of ``T``, or
+    - an array of ``T`` where element type ``T`` is an
+      incomplete type that cannot be completed.
+
+  An *incomplete type* is
+
+    - an incompletely-defined object type or
+    - an incomplete type that cannot be completed.
+
+
+Add to example:
 
 .. code-block:: c++
 
@@ -177,27 +214,65 @@ Objects shall not be defined to have an incomplete type.
 ..
 
 
-**[types.basic] 6.9 Types, p8**
+**N4700: [types.basic] 6.9 Types, p8**
 
-An *object type* is a (possibly cv-qualified) type that is not
+  An object type is a (possibly cv-qualified) type
+  that is not a function type, not a reference type,
+  and not cv void.
 
-  - a function type,
-  - a reference type, or
-  - incomplete type that cannot be completed.
+**Proposed: [types.basic] 6.9 Types, p8**
+
+  An *object type* is a (possibly cv-qualified) type
+  that is not a function type, not a reference type,
+  and not an incomplete type that cannot be completed.
+
 
 
 ------------------------------------------------------------------------------
 Clarification and relaxation of array type
 ------------------------------------------------------------------------------
 
-**[dcl.array] 11.3.4 Arrays, p1**
+**N4700: [dcl.array] 11.3.4 Arrays, p1**
 
+  In a declaration ``T D`` where ``D`` has the form
+
+    ``D1 [`` *constant-expression*\_\ *opt* ``]`` *attribute-specifier-seq*\_\ *opt*
+
+  and the type of the identifier in the declaration T D1
+  is “derived-declarator-type-list T”, then the type of the
+  identifier of D is an array type; if the type of the
+  identifier of D contains the auto type-specifier, the program
+  is ill-formed. T is called the array element type;
+  this type shall not be a reference type, cv void, a function
+  type or an abstract class type.
+  If the constant-expression (8.20) is present,
+  it shall be a converted constant expression of type std::size_t
+  and its value shall be greater than zero. The constant expression specifies
+  the bound of (number of elements in) the array.
+  If the value of the constant expression is N, the array has N
+  elements numbered 0 to N-1, and the type of the identifier of
+  D is “derived-declarator-type-list array of N T”.
+  An object of array type contains a contiguously allocated
+  non-empty set of N subobjects of type T. Except as
+  noted below, if the constant expression is omitted,
+  the type of the identifier of D is “derived-declarator-type-list
+  array of unknown bound of T”, an incomplete object type.
+  The type “derived-declarator-type-list array of N T”
+  is a different type from the type
+  “derived-declarator-type-list array of unknown bound of T”, see 6.9.
+  Any type of the form “cv-qualifier-seq array of N T” is adjusted to
+  “array of N cv-qualifier-seq T”, and similarly for
+  “array of unknown bound of T”.
+  The optional attribute-specifier-seq appertains to the array.
+
+**Proposed: [dcl.array] 11.3.4 Arrays, p1**;
 Clarify the difference between an *array type declaration*
-and *array declaration*.
+and *array object declaration*.
 
-  An *array type declaration* has the form
+  In an *array type declaration* 
 
-    ``T[`` *constant-expression*\_\ *opt* ``]``
+    | ``T[`` *constant-expression*\_\ *opt* ``]``
+    | ``typedef T D1 [`` *constant-expression*\_\ *opt* ``]``
 
   ``T`` is the array *element type*;
   this type shall not be
@@ -208,41 +283,70 @@ and *array declaration*.
   If the *constant-expression* (8.20) is present,
   it is a converted constant expression of type ``std::size_t``.
   If the value of the constant expression is ``N``, the array type
-  is "array of ``N T``".
+  is "*array of* ``N T``".
   The constant expression specifies the *bound* of (number of elements in)
   objects of the array type.
   If the constant expression is omitted the type is an
   "*array of unknown bound of* ``T``"
-  and is an incomplete type that cannot be completed.
+  and is an incomplete type that cannot be completed (6.9).
+  The type "array of ``N T``"
+  is a different type from the type
+  "array of unknown bound of ``T``" (6.9).
   Any type of the form "*cv-qualifier-seq* array of ``N T``"
   is adjusted to "array of ``N`` *cv-qualifier-seq* ``T``",
   similarly for "array of unknown bound of ``T``".
   If the element type is an incomplete type that cannot be completed
   then the array type is an incomplete type that cannot be completed.
 
-  An *array declaration* has the form
 
-    ``T D[`` *constant-expression*\_\ *opt* ``]`` *attribute-specifier-seq*\_\ *opt*
+  In an *array object declaration* ``T D`` where ``D`` has the form
 
-  the type of the identifier ``D`` is an array type.
-  ``T`` is the array *element type*;
+    ``D1 [`` *constant-expression*\_\ *opt* ``]`` *attribute-specifier-seq*\_\ *opt*
+
+  and the type of the identifier in the declaration ``T D1``
+  is “*derived-declarator-type-list* ``T``”,
+  then the type of the identifier ``D`` is an array type
+  ``T[``\ *constant-expression*\_\ *opt*\ ``]``.
+  If the type of the identifier of D contains the auto type-specifier,
+  the program is ill-formed.
+  ``T`` is called the array *element type*;
   this type shall not be
   a reference type,
   a function type,
   an abstract class, or
   an incomplete type that cannot be completed.
   Except as noted below, the constant expression shall not be omitted.
-  The array type of ``D`` is ``T[``\ *constant-expression*\_\ *opt*\ ``]``.
-  The optional *attribute-specifier-seq* appertains to the array.
-
-  An object of an array type contains a contiguous non-empty set of
+  The optional *attribute-specifier-seq* appertains to the array object.
+  If the value of the constant expression is N, the array has N
+  elements numbered 0 to N-1, and the type of the identifier of
+  D is “*derived-declarator-type-list* array of ``N T``”.
+  An array object contains a contiguous non-empty set of
   ``N`` subobjects of type ``T`` numbered ``0`` to ``N-1``.
 
+
+**N4700: [dcl.array] 11.3.4 Arrays, p2**
+
+  An array can be constructed from one of the fundamental types (except void),
+  from a pointer, from a pointer to member, from a class,
+  from an enumeration type, or from another array.
+
+**Proposed: [dcl.array] 11.3.4 Arrays, p2**
+
+  An array type can be declared with element type of
+  one of the fundamental types (except void),
+  a pointer, a pointer to member,
+  a class, an enumeration type, or
+  another array type.
+
+  An array object can be declared with element type of
+  one of the fundamental types (except void),
+  a pointer, a pointer to member,
+  a class, an enumeration type, or
+  another array type that is not
+  an incomplete type that cannot be completed.
  
 
-**[dcl.array] 11.3.4 Arrays, p3**
-
-The current array type declarator constraints are defined as follows.
+**N4700: [dcl.array] 11.3.4 Arrays, p3**
 
   When several “array of” specifications are adjacent,
   a multidimensional array type is created;
@@ -265,13 +369,16 @@ The current array type declarator constraints are defined as follows.
   earlier declaration, and similarly for the definition of
   a static data member of a class.
 
-The following relaxed constraint is proposed.
+
+**Proposed: [dcl.array] 11.3.4 Arrays, p3**
 
   When several “array of” specifications are adjacent,
   a multidimensional array type is created.
   In declarations in which an *incomplete type*
   is allowed any of the constant expressions that
-  specify the bounds of the arrays may be omitted.
+  specify the bounds of the arrays may be omitted;
+  if any of the constant expressions are omitted
+  the type is an incomplete type that cannot be completed.
   The first of the constant expressions
   that specify the bounds of the arrays may be omitted
 
@@ -338,16 +445,16 @@ Holistic View
 2015-Lenexa EWG discussion on N4356
 ------------------------------------------------------------------------------
 
-*Stepping back for a second, I think this is a small change
-but there are a whole bunch of ways of constructing types and
-we disallow many because they would give uninhabited types.
-But then look at std::result_of, after this change you can use
-std::result_of on a whole bunch of types,
-but not on a function type (ironically).
-I think there may be some sense in this,
-I'd like to see some more holistic view of this,
-I don't want to see pointers or references to these,
-or functions declared with these things as arguments.*
+  "*Stepping back for a second, I think this is a small change
+  but there are a whole bunch of ways of constructing types and
+  we disallow many because they would give uninhabited types.
+  But then look at std::result_of, after this change you can use
+  std::result_of on a whole bunch of types,
+  but not on a function type (ironically).
+  I think there may be some sense in this,
+  I'd like to see some more holistic view of this,
+  I don't want to see pointers or references to these,
+  or functions declared with these things as arguments.*"
 
 ------------------------------------------------------------------------------
 Analysis with respect to N4700 working draft
@@ -357,7 +464,7 @@ Let ``S`` be an incomplete multdimensional array type
 greater than rank 1 from which an extent other than the
 leading extent is ommitted.
 
-**[basic.link] 6.5 Program and linkage, p10**
+**N4700 [basic.link] 6.5 Program and linkage, p10**
 
   *After all adjustments of types
   (during which typedefs (10.1.3) are replaced by their definitions),
@@ -367,10 +474,10 @@ leading extent is ommitted.
   presence or absence of a major array bound (11.3.4).
   A violation of this rule on type identity does not require a diagnostic.*
 
-Array declarations restricted to absence of only the leading array bound.
+Array object declarations restricted to absence of only the leading array bound.
 
 
-**[types.basic] 6.9 Types, p5**
+**N4700 [types.basic] 6.9 Types, p5**
 
   **incompletely-defined object type**
 
@@ -388,7 +495,7 @@ which in this clause, is admissible as an incomplete *element* type.
 
 ``S`` can never be used to declare an object.
 
-**[types.basic] 6.9 Types, p6**
+**N4700 [types.basic] 6.9 Types, p6**
 
   *The declared type of an array object might be an array of
   unknown bound and therefore be incomplete at one point in a
@@ -398,10 +505,11 @@ which in this clause, is admissible as an incomplete *element* type.
   or of a type defined by a typedef declaration to be an array of
   unknown bound, cannot be completed.*
 
-The type of a pointer to ``S`` is an incomplete type,
+The type of a pointer to ``S`` is
+an incomplete type that cannot be completed
 and therefore can never be used to declare an object.
 
-**[basic.fundamental] 6.9.1 Fundamental types, p9** 
+**N4700 [basic.fundamental] 6.9.1 Fundamental types, p9** 
 
   *A type cv void is an incomplete type that cannot be completed;
   such a type has an empty set of values.*
@@ -409,14 +517,14 @@ and therefore can never be used to declare an object.
 An incomplete multidimensional array type in which an extent
 other than the first extent is ommitted cannot be completed.
 
-**[basic.type.qualifier] 6.9.3 CV-qualifiers, p1**
+**N4700 [basic.type.qualifier] 6.9.3 CV-qualifiers, p1**
 
   *Each type which is a cv-unqualified complete or
   incomplete object type or is void (6.9)* ...
 
 CV-qualifiers apply to complete or incomplete types.
 
-**[conf.array] 7.2 Array-to-pointer conversion**
+**N4700 [conf.array] 7.2 Array-to-pointer conversion**
 
   *An lvalue or rvalue of type “array of N T” or
   “array of unknown bound of T” can be converted to a prvalue of
@@ -425,7 +533,7 @@ CV-qualifiers apply to complete or incomplete types.
 
 ``T`` cannot be an *incomplete type that cannot be completed*.
 
-**[conv.rval] 7.4 Temporary materialization conversion [conv.rval]**
+**N4700 [conv.rval] 7.4 Temporary materialization conversion [conv.rval]**
 
   *A prvalue of type T can be converted to an xvalue of type T.
   This conversion initializes a temporary object (15.2) of type T
@@ -438,7 +546,7 @@ incomplete type that cannot be completed,
 and objects cannot be declared of this type.
 Therefore converting ``int[][M][]`` to a pointer is an error.
 
-**[expr.call] 8.2.2 Function call, p4]**
+**N4700 [expr.call] 8.2.2 Function call, p4]**
 
   *When a function is called, the parameters that have object type
   shall have completely-defined object type.
@@ -449,14 +557,15 @@ Therefore converting ``int[][M][]`` to a pointer is an error.
 A parameter is not allowed to be a pointer or reference to an
 incomplete array type.
 
-**[expr.throw] 8.17 Throwing an exception, p2**
+**N4700 [expr.throw] 8.17 Throwing an exception, p2**
 
   *Evaluating a throw-expression with an operand throws an exception (18.1);
   the type of the exception object is determined by removing any top-level
   cv-qualifiers from the static type of the operand and adjusting the
   type from “array of T” or function type T to “pointer to T”.*
 
-**[dcl.array] 11.3.4 Arrays, p2**
+
+**N4700 [dcl.array] 11.3.4 Arrays, p2**
 
   *An array can be constructed from one of the
   fundamental types (except void), from a pointer,
@@ -465,7 +574,7 @@ incomplete array type.
 
 "Another array" may be an array of unknown bound.
 
-**[dlc.fct] 11.3.5 Functions, p5**
+**N4700 [dlc.fct] 11.3.5 Functions, p5**
 
   *After determining the type of each parameter,
   any parameter of type “array of T” or of function type T
@@ -474,7 +583,7 @@ incomplete array type.
 Constrain such that T is a complete type or an incomplete class type.
 
 
-**[dcl.stc] Storage class specifiers, p7**
+**N4700 [dcl.stc] Storage class specifiers, p7**
 
   *The name of a declared but undefined class can be used
   in an extern declaration. Such a declaration can
@@ -510,12 +619,12 @@ Type Deduction Non-Issue
 
   template <typename T>
   void f( T[][][5] ); // G
-    // adjusted to pointer T(*)[][5]
+    // adjusted to pointer T(*)[][5] which is
     // invalid due to T[][5] incomplete array type
 
   template <typename T, std::size_t M >
   void f( T[][M][] ) // H
-    // adjusted to pointer T(*)[M][]
+    // adjusted to pointer T(*)[M][] which is
     // invalid due to T[][5] incomplete array type
 
   template <typename T, std::size_t M, std::size_t N>
