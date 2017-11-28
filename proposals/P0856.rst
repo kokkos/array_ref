@@ -1,5 +1,5 @@
 ===================================================================
-D0856r0 : Restrict Access Properties for span and mdspan
+D0856r0 : Restrict Access Property for span and mdspan
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
@@ -25,35 +25,29 @@ Revision History
 D0856r0
 ----------------------------------------------------------------------------
 
-2017-11-08 Albuquerque LEWG feedback for P0009, P0019, and P0546
+  2017-11-08 Albuquerque LEWG feedback for P0009
 
-  - Extract atomic array reference from P0019 to a separate paper
-  - Generate paper for *restrict* access property for P0009 and P0546
+  - Generate paper for *restrict* access property for ``span`` and ``mdspan``
 
 
 ******************************************************************
-Description
+Motivation
 ******************************************************************
-
-We define the first two access properties for ``span`` and ``mdspan``
-as ``atomic_access`` and ``restrict_access``.
-
-Atomic access functionality is extracted from prior paper P0019
-at the direction of LEWG.
-Instead of creating a new ``atomic_array_ref`` class we propose
-specifying this functionality through an access property.
 
 The restrict (non-aliasing) property is a widely useful mechanism
 to enable array access optimization.  This functionality is part
-of the C standard, several C++ compilers' extensions, and built into
-FORTRAN array semantics.
+of the C standard, several C++ compilers' extensions, and native
+to FORTRAN array semantics.
+
+We propose to add the ``restrict_access`` property to the
+set of admissible access properties of ``span`` and ``mdspan``.
 
 This paper does not propose a strategy for subsequent extensibility.
 We identify open questions that must be addressed in the design
 of such a strategy.
 
 ******************************************************************
-Access Properties
+Proposal
 ******************************************************************
 
 .. code-block:: c++
@@ -62,57 +56,60 @@ Access Properties
   namespace experimental {
   inline namespace fundamentals_v3 {
 
-    struct atomic_access ;
     struct restrict_access ;
 
   }}}
 
 ..
 
-Let *S* be either an instantiation of ``span`` or ``mdspan``.
+  Let *S* be an object of either a ``span`` or ``mdspan`` type.
 
-A given access property may appear at most once in the
-``AccessProperties...`` parameter pack.
+  The ``restrict_access`` property may appear at most once in the
+  ``span`` or ``mdspan`` ``AccessProperties...`` parameter pack.
+  When the ``AccessProperties...`` parameter pack of *S*
+  contains ``restrict_access`` then
 
-When the ``AccessProperties...`` parameter pack of *S*
-contains ``atomic_access`` then
+  - during each execution of a block in which *S* is declared
+    (typically each execution of a function body
+    in which *S* is a function parameter),
+    if some object in the codomain of *S* is accessed and modified,
+    by any means, then all accesses to that object (both reads and writes)
+    during the execution of that block,
+    including other concurrently executing code,
+    must occur through *S*, otherwise the behavior is undefined; 
+  - if objects in the codomain of *S* are never modified,
+    they may be aliased and accessed through different
+    instances of restrict-qualified instances of ``span`` or ``mdspan``.
 
-  - *S* ``::reference_type`` is ``atomic_ref<`` *S* ``::element_type>``,
-  - *S* ``::element_type`` is restricted to satisfy requirements of
-    ``atomic_ref<`` *S* ``::element_type>``,
-  - ``AccessProperties...`` shall not contain any other
-    access property that modifies *S* ``::reference_type``
 
-When the ``AccessProperties...`` parameter pack of *S*
-contains ``restrict_access`` and not ``atomic_access`` then
+  **Notes**
 
-  - the codomain of *S* can be assumed non-aliased in the
-    current scope of execution
-  - *S*:: ``reference_type`` behaves as if *S* ``::element_type &``.
+  The intended use of the ``restrict_access`` property
+  is to promote optimization, and deleting all instances
+  of the property from all instantiations of ``span`` and ``mdspan``
+  composing a conforming program does not change its meaning
+  (i.e., observable behavior).
+
+  The compiler is free to ignore any or all aliasing implications
+  of uses of ``restrict_access``.
+
+  To avoid undefined behavior, the programmer must ensure
+  that the aliasing assertions made by the restrict-qualified
+  ``span`` and ``mdspan`` objects are not violated.
 
 
 ******************************************************************
 Open Questions for Extending Access Properties
 ******************************************************************
 
-  - Only library providers?
+  - Only through the standard?
 
-  - What are the rules for library writers to extend
-    the set of access properties?
+  - Also through hardware/compiler-specific instrinsics?
 
-  - How could compiler-specific instrinsics be supported
-    through access properties?
+  - Also by library providers?
 
-  - Rules for resolving potentially conflicting properties?
-    For example, resolving the ``reference_type``?
+  - Rules for extending the set of access properties?
 
-    - Only accept one access property in the ``AccessProperties...``
-      that specifies the ``reference_type``?
-      Ignore if too many?  Generate error if too many?
-
-    - Establish priorities for which access property
-      in the ``AccessProperties...`` specifies the ``reference_type``?
-      Required to be honored property?
-      Ignorable / hint property?
+  - Rules for resolving combinations of potentially conflicting properties?
 
 
