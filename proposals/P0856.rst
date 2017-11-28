@@ -77,9 +77,10 @@ Proposal
     during the execution of that block,
     including other concurrently executing code,
     must occur through *S*, otherwise the behavior is undefined; 
-  - if objects in the codomain of *S* are never modified,
+  - if the element type of *S* is ``const`` qualified
+    and thus the objects in the codomain of *S* are never modified,
     they may be aliased and accessed through different
-    instances of restrict-qualified instances of ``span`` or ``mdspan``.
+    ``const``- and restrict-qualified instances of ``span`` or ``mdspan``.
 
 
   **Notes**
