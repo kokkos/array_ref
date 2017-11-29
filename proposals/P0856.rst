@@ -58,6 +58,12 @@ Proposal
 
     struct restrict_access ;
 
+    template< class , class >
+    struct has_access_property ;
+
+    template< class S , class P >
+    inline constexpr bool has_access_property_v = has_access_property<S,P>::value ;
+
   }}}
 
 ..
@@ -82,7 +88,6 @@ Proposal
     they may be aliased and accessed through different
     ``const``- and restrict-qualified instances of ``span`` or ``mdspan``.
 
-
   **Notes**
 
   The intended use of the ``restrict_access`` property
@@ -98,6 +103,12 @@ Proposal
   that the aliasing assertions made by the restrict-qualified
   ``span`` and ``mdspan`` objects are not violated.
 
+``has_access_property<S,P>::value``
+
+  Evaluates to true if ``S`` is instantiation of  ``span`` or ``mdspan``,
+  ``P`` is ``restrict_access``, and 
+  the ``AccessProperties...`` parameter pack of ``S`` contains
+  ``restrict_access``.
 
 ******************************************************************
 Open Questions for Extending Access Properties
@@ -105,7 +116,7 @@ Open Questions for Extending Access Properties
 
   - Only through the standard?
 
-  - Also through hardware/compiler-specific instrinsics?
+  - Also through hardware/compiler-specific extensions?
 
   - Also by library providers?
 
