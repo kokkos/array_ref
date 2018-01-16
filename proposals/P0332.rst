@@ -18,6 +18,8 @@ D0332r2 : Relaxed Incomplete Multidimensional Array Type Declaration
 :Contact: athanasios.iliopoulos@nrl.navy.mil
 :Author: John Michopoulos
 :Contact: john.michopoulos@nrl.navy.mil
+:Author: Mark Hoemmen
+:Contact: mhoemme@sandia.gov
 :Audience: Evolution Working Group (EWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0332.rst
 
