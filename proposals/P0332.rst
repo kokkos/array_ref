@@ -491,9 +491,7 @@ Array object declarations restricted to absence of only the leading array bound.
   [footnote] *The size and layout of an instance
   of an incompletely-defined object type is unknown.*
 
-An array of unknown bound is an incomplete type,
-which in this clause, is admissible as an incomplete *element* type.
-
+An array of unknown bound is an incomplete type, so
 ``S`` can never be used to declare an object.
 
 **N4700 [types.basic] 6.9 Types, p6**
@@ -532,7 +530,8 @@ CV-qualifiers apply to complete or incomplete types.
   type “pointer to T”. The temporary materialization conversion (7.4)
   is applied. The result is a pointer to the first element of the array.*
 
-``T`` cannot be an *incomplete type that cannot be completed*.
+As is, ``T`` cannot be an *incomplete type that cannot be completed*, such as ``void``.
+This proposal does not change this fact.
 
 **N4700 [conv.rval] 7.4 Temporary materialization conversion [conv.rval]**
 
