@@ -195,7 +195,8 @@ Clarification of incomplete types
 
     - *cv* ``void`` (6.9.1),
     - an array of unknown bound of ``T``,
-    - a pointer to an array of unknown bound of ``T``, or
+    - a pointer to an incomplete type that cannot be completed other
+      than *cv* ``void``, or
     - an array of ``T`` where element type ``T`` is an
       incomplete type that cannot be completed.
 
@@ -276,6 +277,7 @@ and *array object declaration*.
 
     | ``T[`` *constant-expression*\_\ *opt* ``]``
     | ``typedef T D1 [`` *constant-expression*\_\ *opt* ``]``
+    | ``using D1 = T [`` *constant-expression*\_\ *opt* ``]``
 
   ``T`` is the array *element type*;
   this type shall not be
@@ -291,7 +293,7 @@ and *array object declaration*.
   objects of the array type.
   If the constant expression is omitted the type is an
   "*array of unknown bound of* ``T``"
-  and is an incomplete type that cannot be completed (6.9).
+  and is an incomplete type (6.9).
   The type "array of ``N T``"
   is a different type from the type
   "array of unknown bound of ``T``" (6.9).
@@ -299,6 +301,7 @@ and *array object declaration*.
   is adjusted to "array of ``N`` *cv-qualifier-seq* ``T``",
   similarly for "array of unknown bound of ``T``".
   If the element type is an incomplete type that cannot be completed
+  or an *array of unknown bound of U*, where ``U`` is any type,
   then the array type is an incomplete type that cannot be completed.
 
 
@@ -341,13 +344,10 @@ and *array object declaration*.
   a class, an enumeration type, or
   another array type.
 
-  An array object can be declared with element type of
-  one of the fundamental types (except void),
-  a pointer, a pointer to member,
-  a class, an enumeration type, or
-  another array type that is not
-  an incomplete type that cannot be completed.
- 
+  An array object can be declared with any array type
+  except one that is an incomplete type that
+  cannot be completed.
+
 
 **N4700: [dcl.array] 11.3.4 Arrays, p3**
 
@@ -382,7 +382,7 @@ and *array object declaration*.
   specify the bounds of the arrays may be omitted;
   if any of the constant expressions are omitted
   the type is an incomplete type that cannot be completed.
-  The first of the constant expressions
+  In addition, the first of the constant expressions
   that specify the bounds of the arrays may be omitted
 
     - in some cases in the declaration of a function parameter (11.3.5),
@@ -436,7 +436,7 @@ and P0674 ``make_shared<T[][N1][N2]>``.
 
 
 This minor language specification change has been implemented with
-a trivial (one line) patch to Clang and was permissible in gcc prior to
+a minor patch to Clang and was permissible in gcc prior to
 version 5.
 
 
@@ -493,9 +493,7 @@ Array object declarations restricted to absence of only the leading array bound.
   [footnote] *The size and layout of an instance
   of an incompletely-defined object type is unknown.*
 
-An array of unknown bound is an incomplete type,
-which in this clause, is admissible as an incomplete *element* type.
-
+An array of unknown bound is an incomplete type, so
 ``S`` can never be used to declare an object.
 
 **N4700 [types.basic] 6.9 Types, p6**
@@ -534,7 +532,8 @@ CV-qualifiers apply to complete or incomplete types.
   type “pointer to T”. The temporary materialization conversion (7.4)
   is applied. The result is a pointer to the first element of the array.*
 
-``T`` cannot be an *incomplete type that cannot be completed*.
+As is, ``T`` cannot be an *incomplete type that cannot be completed*, such as ``void``.
+This proposal does not change this fact.
 
 **N4700 [conv.rval] 7.4 Temporary materialization conversion [conv.rval]**
 
