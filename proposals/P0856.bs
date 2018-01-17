@@ -1,0 +1,260 @@
+<pre class='metadata'>
+Title: Restrict Access Property for span and mdspan
+Abstract:  TODO Write abstract
+Shortname: P0856
+Revision: 0
+Date:   2018-02-12
+Editor: H. Carter Edwards, hcedwar@sandia.gov
+Editor: Christian Trott, crtrott@sandia.gov
+Editor: David S. Hollman, dshollm@sandia.gov
+Audience: LEWG
+URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0856.bs
+Group: WG21
+Status: D
+Markup Shorthands: markdown yes
+Default Highlight: c++
+</pre>
+
+Revision History
+================
+
+## D0856r0
+
+2017-11-08 Albuquerque LEWG feedback for [[P0009r3]]:
+
+-   Generate paper for *restrict* access property for `span` and `mdspan`
+
+Motivation
+==========
+
+The restrict (non-aliasing) property is a widely useful mechanism to
+enable array access optimization. This functionality is part of the C
+standard, several C++ compilers' extensions, and native to FORTRAN
+array semantics.
+
+We propose to add the `restrict_access` property to the set of
+admissible access properties of `span` and `mdspan`.
+
+This paper does not propose a strategy for subsequent extensibility. We
+identify open questions that must be addressed in the design of such a
+strategy.
+
+Background and Precedent
+========================
+
+[[N3538]] and [[N3988]] previously proposed restrict-like semantics as a language feature rather than
+a library feature.  A discussion of how presenting `restrict` semantics as a library feature addresses
+many of the concerns previously raised about these papers is given below in [[#whylib]]
+
+## ISO C Language Standard
+
+The C language standard provides the `restrict` keyword in 6.7.3 of
+the WG14 document [[WG14-N1570]].  An informal definition is given in paragraph 8 of 6.7.3:
+
+<blockquote>
+An object that is accessed through a restrict-qualified pointer has a special association
+with that pointer. This association, defined in 6.7.3.1 below, requires that all accesses to
+that object use, directly or indirectly, the value of that particular pointer. The intended
+use of the `restrict` qualifier (like the `register` storage class) is to promote
+optimization, and deleting all instances of the qualifier from all preprocessing translation
+units composing a conforming program does not change its meaning (i.e., observable
+behavior).
+</blockquote>
+
+A formal definition of `restrict` follows in 6.7.3.1 of [[WG14-N1570]]:
+
+<blockquote>
+Let `D` be a declaration of an ordinary identifier that provides a means of designating an
+object P as a restrict-qualified pointer to type `T`.
+
+If `D` appears inside a block and does not have storage class extern, let `B` denote the
+block. If `D` appears in the list of parameter declarations of a function definition, let `B`
+denote the associated block. Otherwise, let `B` denote the block of main (or the block of
+whatever function is called at program startup in a freestanding environment).
+
+In what follows, a pointer expression `E` is said to be *based on* object `P` if (at some
+sequence point in the execution of `B` prior to the evaluation of `E`) modifying `P` to point to
+a copy of the array object into which it formerly pointed would change the value of `E`.
+Note that "based" is defined only for expressions with pointer types.
+
+During each execution of `B`, let `L` be any lvalue that has `&L` based on `P`. If `L` is used to
+access the value of the object `X` that it designates, and `X` is also modified (by any means),
+then the following requirements apply: `T` shall not be const-qualified. Every other lvalue
+used to access the value of `X` shall also have its address based on `P`. Every access that
+modifies `X` shall be considered also to modify `P`, for the purposes of this subclause. If `P`
+is assigned the value of a pointer expression `E` that is based on another restricted pointer
+object `P2`, associated with block `B2`, then either the execution of `B2` shall begin before
+the execution of `B`, or the execution of `B2` shall end prior to the assignment. If these
+requirements are not met, then the behavior is undefined.
+
+Here an execution of `B` means that portion of the execution of the program that would
+correspond to the lifetime of an object with scalar type and automatic storage duration
+associated with `B`.
+
+A translator is free to ignore any or all aliasing implications of uses of `restrict`.
+</blockquote>
+
+### Dependence of N4700 on ISO C `restrict`
+
+Note that [[N4700]] already references the ISO C `restrict` keyword in paragraph 2 of [library.c], implying that C++ 
+implementations should already be aare of its semantics (though, as stated in [[WG14-N1570]], conforming implementations can 
+completely ignore `restrict`):
+
+<blockquote>
+The descriptions of many library functions rely on the C standard library for the semantics of those functions.
+In some cases, the signatures specified in this document may be different from the signatures in the C
+standard library, and additional overloads may be declared in this document, but the behavior and the
+preconditions (including any preconditions implied by the use of an ISO C `restrict` qualifier) are the same
+unless otherwise stated.
+</blockquote>
+
+## GCC's `__restrict__`
+
+GCC implements restricted access in C++ via the `__restrict__` (or `__restrict`) compiler-specific extension.  The compiler documentation [[GCCRestrictDoc]] provides the following description:
+
+<blockquote>
+In addition to allowing restricted pointers, you can specify restricted references, which indicate that the reference is not aliased in the local context.
+
+<pre>
+void fn (int *__restrict__ rptr, int &__restrict__ rref)
+{
+  /* … */
+}
+</pre>
+
+In the body of `fn`, `rptr` points to an unaliased integer and `rref` refers to a (different) unaliased integer.
+
+You may also specify whether a member function’s this pointer is unaliased by using `__restrict__` as a member function qualifier.
+
+<pre>
+void T::fn () __restrict__
+{
+  /* … */
+}
+</pre>
+
+Within the body of `T::fn`, this has the effective definition `T *__restrict__ const this`. Notice that the interpretation of a `__restrict__` member function qualifier is different to that of `const` or `volatile` qualifier, in that it is applied to the pointer rather than the object. This is consistent with other compilers that implement restricted pointers.
+
+As with all outermost parameter qualifiers, `__restrict__` is ignored in function definition matching. This means you only need to specify `__restrict__` in a function definition, rather than in a function prototype as well.
+</blockquote>
+
+It is clear that GCC's implementation of this extension would be sufficient to implement the proposed feature trivially.
+
+## MSVC's `__declspec(restrict)`
+
+MSVC provides a couple of similar compiler-specific extensions via the syntaxes `__declspec(restrict)`
+and `__restrict`.  The compiler documentation [[MSVCRestrictDoc]] gives the following description of
+`__declspec(restrict)`:
+
+<blockquote>
+Applied to a function declaration or definition that returns a pointer type and tells the compiler that the function returns an object that will not be aliased with any other pointers.
+</blockquote>
+
+The compiler documentation's description for `__restrict` indicates that it is similar to `__declspec(restrict)`, and, indeed, to ISO C `restrict`:
+
+<blockquote>
+`__restrict` is similar to restrict from the C99 spec, but `__restrict` can be used in C++ or C programs.
+</blockquote>
+
+It is clear that MSVC's implementation of this extension would be sufficient to implement the proposed feature trivially.
+
+## IBM XL C++
+
+The documentation for IBM XL C++ [[XLCRestrictDoc]] indicates that it supports ISO C `restrict` semantics in C++ via the `__restrict` or `__restrict__` extensions.
+
+Most other modern C++ compilers implement something analogous to `restrict` as a compiler-specific extension.
+
+Proposal
+========
+
+<pre>
+namespace std {
+namespace experimental {
+inline namespace fundamentals_v3 {
+
+  // Trait common to all span and mdspan property proposals, as given in e.g., P0009r4
+  template< class T, class P >
+  struct has_access_property;
+
+  // Variable template for has_access_property
+  template< class T, class P >
+  inline constexpr bool has_access_property_v = has_access_property<T, P>::value ;
+
+  // Tag class for indicating restrict access
+  struct restrict_access ;
+
+  // Specialization of has_access_property for restrict_access
+  template< class T >
+  struct has_access_property<T, restrict_access> {
+    inline constexpr bool value = /* see below */;
+  };
+
+}}}
+</pre>
+
+## `has_access_property<T, restrict_access>::value`
+
+Evaluates to true if `T` is instantiation of `span` or `mdspan` and the `AccessProperties...`
+parameter pack of `T` contains `restrict_access`.
+
+Discussion
+==========
+
+Why a library feature? {#whylib}
+--------------------------------
+
+From [[N3988]] itself and from the on-the-record discussion of it at the Rapperswil meeting in 2014, here are some of the objections raised about restrict-like semantics in C++:
+
+- Unclear whether it should affect name mangling
+    - As a library feature, the name mangling behavior is well-defined and obvious
+- Unclear whether it should affect overloading
+    - As a library feature, the overload behavior is well-defined and obvious.  It can also be manipulated in the same way as any other template parameter, for instance using SFINAE.
+- `restrict`, as given in ISO C, has insufficient expressiveness (you cannot precisely enough describe what is restricted)
+    - The extensibility of `AccessProperties...` for `span` and `mdspan` as a library feature provides a clear path forward towards addressing this.
+- It is unclear, even in C, how `restrict` applies to struct members.  Moreover, from [[N3988]], "In the case of member declarations, it's more useful to the compiler if the restrict promise is an exclusive handle to memory for the lifetime of the owning object."
+    - ???
+- It is unclear how to use restrict when it is desired to consider only one pointer in a chain of pointers to have restrict-like semantics
+    - ???
+- In C, the lifetime of the `restrict` contract is awkward to express and therefore is restricted to initialization.
+    - Object lifetime of a library wrapper provides clear bounds for the contract.
+- Semantics for implicit or explicit capture of `restrict` pointers in lambdas is unclear.
+    - As a library feature, the object will not change type during capture, therefore the transfer of the restrict contract is immediately clear.
+
+
+
+
+
+Open Questions for Extending Access Properties
+==============================================
+
+-   Only through the standard?
+-   Also through hardware/compiler-specific extensions?
+-   Also by library providers?
+-   Rules for extending the set of access properties?
+-   Rules for resolving combinations of potentially conflicting
+    properties?
+-   Rules for casting away `AccessProperties...`?
+    - For that matter, rules for casting to reordered properties, and how does this relate to object lifetime?
+-   Relationship with `std::get_pointer_safety`?
+-   Chandler comment at Rapperswil 2014 meeting: "I want to make sure we find something that works for [the Eigen library] use case."
+
+<pre class=biblio>
+{
+  "WG14-N1570": {
+    "href": "http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf",
+    "title": "Committee Draft, Programming Languages — C"
+  },
+  "GCCRestrictDoc": {
+    "href": "https://gcc.gnu.org/onlinedocs/gcc/Restricted-Pointers.html",
+    "title": "Restricted Pointer Aliasing"
+  },
+  "MSVCRestrictDoc": {
+    "href": "https://docs.microsoft.com/en-us/cpp/cpp/restrict",
+    "title": "restrict"
+  },
+  "XLCRestrictDoc": {
+    "href": "https://www.ibm.com/support/knowledgecenter/en/SS2LWA_12.1.0/com.ibm.xlcpp121.bg.doc/language_ref/restrict_type_qualifier.html",
+    "title": "The restrict type qualifier"
+  }
+}
+</pre>
