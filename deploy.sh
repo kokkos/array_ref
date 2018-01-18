@@ -62,7 +62,7 @@ openssl aes-256-cbc -K $encrypted_ebf51a80cd1a_key -iv $encrypted_ebf51a80cd1a_i
 ls -al ..
 chmod 600 ../deploy_key
 eval `ssh-agent -s`
-ssh-add deploy_key
+ssh-add ../deploy_key
 
 # Now that we're all set up, we can push.
 git push $SSH_REPO $TARGET_BRANCH
