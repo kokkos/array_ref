@@ -8,9 +8,15 @@ Editor: H. Carter Edwards, hcedwar@sandia.gov
 Editor: Christian Trott, crtrott@sandia.gov
 Editor: David S. Hollman, dshollm@sandia.gov
 Audience: LEWG
-URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0856.bs
 Group: WG21
 Status: D
+Repository: https://github.com/kokkos/array_ref.git
+URL: https://kokkos.github.io/array_ref/proposals/P0856.html
+Warning: Custom
+Custom Warning Title: Work in Progress
+Custom Warning Text: This document is a work in progress that has not yet been
+                     submitted to the committee for discussion in its current
+                     form. 
 Markup Shorthands: markdown yes
 Default Highlight: c++
 </pre>
@@ -131,12 +137,12 @@ In addition to allowing restricted pointers, you can specify
 restricted references, which indicate that the reference is not aliased in the
 local context.
 
-<pre>
+```
 void fn (int *__restrict__ rptr, int &__restrict__ rref)
 {
   /* … */
 }
-</pre>
+```
 
 In the body of `fn`, `rptr` points to an unaliased integer and `rref` refers to
 a (different) unaliased integer.
@@ -144,12 +150,12 @@ a (different) unaliased integer.
 You may also specify whether a member function’s this pointer is unaliased by
 using `__restrict__` as a member function qualifier.
 
-<pre>
+```
 void T::fn () __restrict__
 {
   /* … */
 }
-</pre>
+```
 
 Within the body of `T::fn`, this has the effective definition
 `T *__restrict__ const this`. Notice that the interpretation of a
@@ -213,7 +219,7 @@ GPU and (as long as the underlying CPU compiler supports it) the CPU.
 Proposal
 ========
 
-<pre>
+```
 namespace std {
 namespace experimental {
 inline namespace fundamentals_v3 {
@@ -236,7 +242,7 @@ inline namespace fundamentals_v3 {
   };
 
 }}}
-</pre>
+```
 
 `has_access_property<T, restrict_access>::value`
 ------------------------------------------------
