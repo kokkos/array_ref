@@ -182,10 +182,10 @@ An *incomplete type* is
 Add to example:
 
 ```
-typedef int UNKA[];     // UNKA is an incomplete type
+typedef int UNKA[];      // UNKA is an incomplete type
 typedef UNKA UNKAA\[N];  // UNKAA is an incomplete type that cannot be completed
 UNKA  arrn\[N];          // ill-formed, UNKA cannot be completed
-UNKA* arrp;             // ill-formed, UNKA* cannot be completed
+UNKA* arrp;              // ill-formed, UNKA* cannot be completed
 ```
 
 **N4700: [types.basic] 6.9 Types, p8**
@@ -514,8 +514,6 @@ Constrain such that T is a complete type or an incomplete class type.
 > require a complete class type.
 
 Incomplete array types cannot be used as the return type of a function.
-
-
 
 ## Type Deduction Non-Issue
 

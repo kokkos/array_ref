@@ -254,7 +254,7 @@ Application of the Restriction to `span`
 ----------------------------------------
 
 Working relative to [[P0122r5]], a preliminary attempt at wording the
-restriction proposed herein is as follows (in addition to those proposed by
+restriction proposed herein is as follows (in addition to the changes proposed by
 [[P0546r1]]): 
 
 <blockquote>
@@ -346,9 +346,6 @@ restrict-like semantics in C++:
         therefore the transfer of the restrict contract is immediately clear.
 
 
-
-
-
 Open Questions for Extending Access Properties
 ==============================================
 
@@ -372,6 +369,7 @@ TODOs/To Address/To Think About
     something that works for [the Eigen library] use case."
 -   Relationship with `std::get_pointer_safety`?
 -   Wording of applicability to `mdspan`
+-   TODO: Wording for subspan
 
 <pre class=biblio>
 {
