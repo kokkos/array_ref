@@ -29,7 +29,6 @@ D0856r0
 2017-11-08 Albuquerque LEWG feedback for P0009, P0019, and P0546
 
   - Extract atomic array reference from P0019 to a separate paper
-  - Generate paper for *restrict* access property for P0009 and P0546
 
 
 ******************************************************************
