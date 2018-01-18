@@ -1,0 +1,14 @@
+language: python
+sudo: false
+python:
+  - "2.7"
+install:
+  - git clone https://github.com/tabatkins/bikeshed.git
+  - pip install --editable $PWD/bikeshed
+  - bikeshed update
+script:
+  - bash ./deploy.sh
+env:
+  global:
+    - ENCRYPTION_LABEL: "ebf51a80cd1a"
+    - COMMIT_AUTHOR_EMAIL: "dshollm@sandia.gov"
