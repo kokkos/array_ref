@@ -51,7 +51,7 @@ propose a trivial, non-breaking relaxation of the array type declaration
 in [decl.array] to allow a concise and intuitive syntax for
 multidimensional declarations.
 
-<pre>
+```
 template< typename DataType , typename Properties... >
 struct mdspan ;
 
@@ -64,7 +64,7 @@ using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_
 // and left-to-right increasing stride.
 
 using tensor = mdspan<double[][][],LayoutLeft> ;
-</pre>
+```
 
 The motivating `mdspan` proposal ([[P0009r3]]) was moved by LEWG to LWG in
 2017-Albuquerque. The desire in LEWG was to have a core language solution
@@ -72,7 +72,9 @@ rather than something like `std::extents` as shown above.
 
 ## Why Not
 
-`mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,std::LayoutLeft>`
+```
+mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,std::LayoutLeft>
+```
 
 -   Does not allow LayoutLeft or other properties to be types.
 -   Still requires `dynamic_extent` magic number.
@@ -174,12 +176,12 @@ An *incomplete type* is
 
 Add to example:
 
-<pre>
+```
 typedef int UNKA[];     // UNKA is an incomplete type
 typedef UNKA UNKAA\[N];  // UNKAA is an incomplete type that cannot be completed
 UNKA  arrn\[N];          // ill-formed, UNKA cannot be completed
 UNKA* arrp;             // ill-formed, UNKA* cannot be completed
-</pre>
+```
 
 **N4700: [types.basic] 6.9 Types, p8**
 
@@ -339,22 +341,22 @@ numbered `0` to `N-1`.
 
 ## type_traits interaction
 
-<pre>
-using T = double[10][20][] ;
-rank_v<T> == 3
-extent_v<T,0> == 10
-extent_v<T,1> == 20
-extent_v<T,2> == 0
+```
+using S = double[10][20][] ;
+rank_v<S> == 3
+extent_v<S,0> == 10
+extent_v<S,1> == 20
+extent_v<S,2> == 0
 
-remove_extent_t<T> // is an incomplete type
-is_same_v< remove_extent_t<T> , double[20][] >
+remove_extent_t<S> // is an incomplete type
+is_same_v< remove_extent_t<S> , double[20][] >
 
-remove_extent_t< remove_extent_t<T> > // is an incomplete type
-is_same_v< remove_extent_t< remove_extent_t<T> > , double[] >
+remove_extent_t< remove_extent_t<S> > // is an incomplete type
+is_same_v< remove_extent_t< remove_extent_t<S> > , double[] >
 
-decay_t<T> // is an incomplete type
-is_same_v< decay_t<T> , double(*)[20][] >
-</pre>
+decay_t<S> // is an incomplete type
+is_same_v< decay_t<S> , double(*)[20][] >
+```
 
 Precedence and Feasibility
 ==========================
@@ -516,7 +518,7 @@ TODO note that array to pointer decay is unchanged
 
 ## Type Deduction Non-Issue
 
-<pre>
+```
 template <typename T>
 void f( span<T[3][5]> ); // A
 
@@ -567,4 +569,4 @@ int foo( int y[][3][5] )
   // DOES match F ; more specialized
   // COULD match I 
 }
-</pre>
+```
