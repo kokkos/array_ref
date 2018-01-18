@@ -9,6 +9,9 @@ function doCompile {
   for i in proposals/*.bs; do
     bikeshed spec $i out/proposals/$(basename -s .bs $i).html
   done
+  for i in proposals/*.rst; do
+    rst2html.py $i out/proposals/$(basename -s .rst $i).html
+  done
 }
 
 # Pull requests and commits to other branches shouldn't try to deploy, just build to verify
@@ -57,7 +60,7 @@ ENCRYPTED_KEY_VAR="encrypted_${ENCRYPTION_LABEL}_key"
 ENCRYPTED_IV_VAR="encrypted_${ENCRYPTION_LABEL}_iv"
 ENCRYPTED_KEY=${!ENCRYPTED_KEY_VAR}
 ENCRYPTED_IV=${!ENCRYPTED_IV_VAR}
-openssl aes-256-cbc -K $ENCRYPTED_KEY -iv $ENCRYPTED_IV -in ../deploy_key.enc -out ../deploy_key -d
+openssl aes-256-cbc -K $ENCRYPTED_KEY -iv $ENCRYPTED_IV -in ../.deploy/deploy_key.enc -out ../deploy_key -d
 ls -al ..
 chmod 600 ../deploy_key
 eval `ssh-agent -s`

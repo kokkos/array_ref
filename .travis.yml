@@ -4,9 +4,10 @@ python:
 install:
   - git clone https://github.com/tabatkins/bikeshed.git
   - pip install --editable $PWD/bikeshed
+  - pip install docutils
   - bikeshed update
 script:
-  - bash ./deploy.sh
+  - bash .deploy/deploy.sh
 env:
   global:
     - ENCRYPTION_LABEL: "ebf51a80cd1a"
