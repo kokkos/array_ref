@@ -1,6 +1,6 @@
 
-ISO C++ Proposals and Supporting Material Related to `mdspan`
-=============================================================
+ISO C++ Proposals and Supporting Material for `mdspan`
+======================================================
 
 Proposals
 ---------
