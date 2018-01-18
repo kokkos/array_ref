@@ -73,7 +73,7 @@ We propose the ``atomic_access`` access property for
 Proposal
 ******************************************************************
 
-Modify ``span`` and ``mdspan`` specification::
+Modify ``span`` and ``mdspan`` specification:
 
 .. code-block:: c++
 
