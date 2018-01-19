@@ -8,7 +8,10 @@ install:
   - bikeshed update
 script:
   - bash .deploy/deploy.sh
-env:
-  global:
-    - ENCRYPTION_LABEL: "a8360f977eef"
-    - COMMIT_AUTHOR_EMAIL: "hcedwar@sandia.gov"
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  on:
+    branch: master
+  local-dir: out
