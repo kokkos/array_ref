@@ -10,5 +10,5 @@ script:
   - bash .deploy/deploy.sh
 env:
   global:
-    - ENCRYPTION_LABEL: "ebf51a80cd1a"
-    - COMMIT_AUTHOR_EMAIL: "dshollm@sandia.gov"
+    - ENCRYPTION_LABEL: "a8360f977eef"
+    - COMMIT_AUTHOR_EMAIL: "hcedwar@sandia.gov"
