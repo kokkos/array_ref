@@ -11,6 +11,9 @@ Editor: H. Carter Edwards, Sandia National Laboratory, hcedwar@sandia.gov
 Editor: Bryce Adelstein Lelbach, Lawrence Berkeley National Laboratory, balelbach@lbl.gov
 Date: 2016-10-10
 Markup Shorthands: markdown yes
+Warning: Custom
+Custom Warning Title: Withdrawn
+Custom Warning Text: This document has been withdrawn and is no longer applicable.
 </pre>
 
 Modified P0122R3 Wording {#spanword}

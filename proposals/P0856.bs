@@ -1,7 +1,7 @@
 <pre class='metadata'>
 Title: Restrict Access Property for span and mdspan
 Abstract:  TODO Write abstract
-Shortname: P0856
+Shortname: D0856
 Revision: 0
 Date:   2018-02-12
 Editor: H. Carter Edwards, hcedwar@sandia.gov
