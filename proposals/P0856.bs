@@ -74,7 +74,7 @@ A formal definition of `restrict` follows in 6.7.3.1 of [[WG14-N1570]]:
 
 <blockquote>
 Let `D` be a declaration of an ordinary identifier that provides a
-means of designating an object P as a restrict-qualified pointer to type `T`.
+means of designating an object `P` as a restrict-qualified pointer to type `T`.
 
 If `D` appears inside a block and does not have storage class extern, let `B`
 denote the block. If `D` appears in the list of parameter declarations of a
@@ -302,7 +302,9 @@ those derived from:
     to `s`.
 
 These restrictions apply to any accesses indeterminately sequenced with the
-beginning or end of the given restricted lifetime `L_i`.
+beginning or end of the given restricted lifetime `L_i`.  Any other accesses
+that modify the referenced memory through any other means result in undefined
+behavior.
 
 </blockquote>
 
