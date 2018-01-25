@@ -7,7 +7,7 @@ Editor: David Hollman, dshollm@sandia.gov
 Editor: Mauro Bianco, mbianco@cscs.ch
 Editor: Athanasios Iliopoulos, athanasios.iliopoulos@nrl.navy.mil
 Editor: John Michopoulos, john.michopoulos@nrl.navy.mil
-Shortname: P0332
+Shortname: D0332
 Revision: 2
 Audience: EWG
 Status: D
