@@ -74,7 +74,7 @@ A formal definition of `restrict` follows in 6.7.3.1 of [[WG14-N1570]]:
 
 <blockquote>
 Let `D` be a declaration of an ordinary identifier that provides a
-means of designating an object P as a restrict-qualified pointer to type `T`.
+means of designating an object `P` as a restrict-qualified pointer to type `T`.
 
 If `D` appears inside a block and does not have storage class extern, let `B`
 denote the block. If `D` appears in the list of parameter declarations of a
@@ -285,7 +285,7 @@ notation `L{s, p, sz}`.  The lifetime of `s` thus consists of a disjoint set of
 `has_access_property<S,restrict_access>::value` implies that during any given
 restricted lifetime `L_i{s, p_i, sz_i}` of an instance `s` of `S`, no value of a
 pointer or address of a reference may be used to form a glvalue expression that
-accesses an object with an address in the range `[p_i, p_i + sz_i)` except for
+modifies an object with an address in the range `[p_i, p_i + sz_i)` except for
 those derived from:
 
 - `s.begin()`
@@ -301,8 +301,10 @@ those derived from:
 - Any of these operations on a reference to `s` or the dereference of a pointer
     to `s`.
 
-These restrictions apply to any accesses indeterminately sequenced with the
-beginning or end of the given restricted lifetime `L_i`.
+These restrictions apply to any modifying accesses indeterminately sequenced
+with the beginning or end of the given restricted lifetime `L_i`.  Any other
+accesses that modify the referenced memory through any other means result in
+undefined behavior.
 
 </blockquote>
 
