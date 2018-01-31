@@ -51,9 +51,10 @@ Motivation
 
 ## Array type for `mdspan`
 
-The dimensions of multidimensional array reference `mdspan` ([[P0331r0]] and
-[[P0009r3]]) are declared a syntactically verbose property argument. We
-propose a trivial, non-breaking relaxation of the array type declaration
+The dimensions of multidimensional array reference `mdspan`
+([[P0331r0]] and [[P0009r3]]) are declared with a syntactically verbose
+property argument.
+We propose a minor, non-breaking relaxation of the array type declaration
 in [decl.array] to allow a concise and intuitive syntax for
 multidimensional declarations.
 
@@ -64,17 +65,77 @@ struct mdspan ;
 // Three dimensional tensor type declaration with
 // verbose syntax and left-to-right increasing stride.
 
-using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>,LayoutLeft> ;
+using tensor = std::mdspan<double,std::extents<std::dynamic_extent,std::dynamic_extent,std::dynamic_extent>,std::layout_left> ;
 
 // Three dimensional tensor type declaration with concise syntax
 // and left-to-right increasing stride.
 
-using tensor = mdspan<double[][][],LayoutLeft> ;
+using tensor = mdspan<double[][][],std::layout_left> ;
 ```
 
-The motivating `mdspan` proposal ([[P0009r3]]) was moved by LEWG to LWG in
-2017-Albuquerque. The desire in LEWG was to have a core language solution
-rather than something like `std::extents` as shown above.
+The motivating `mdspan` multidimensional array library proposal ([[P0009r3]])
+was moved by LEWG to LWG in 2017-Albuquerque.
+Throughout LEWG discussions of the multidimensional array proposal,
+the consensus in LEWG has been that the usability of the `mdspan`
+library would be significantly improved with the relaxed array type
+syntax of this proposal.
+
+
+## Explicit and Implicit Extents
+
+The `mdspan` supports declarations with both explicit (compile time)
+and implicit (runtime) extents.
+Explicit extents enables optimization of array indexing computations
+but not all extents can are explicitly known.
+For this reaason the Eigen library defines two dimensional array (matrix) types
+where either column or row extents may be explicit.
+For higher ranks the mix of explicit and implicit extents becomes
+syntactically unwieldy; which may be why n-dimensional arrays in
+the TensorFlow library does not provide this capability.
+
+
+## Usability by Mathematicians, Scientists, and Engineers
+
+Multidimensional arrays are a fundamental mathematical building block
+in science and engineering.
+As such the FORTRAN programming language created over five decades
+ago by this community for this community includes multidimensional
+arrays as a fundamental component of the language.
+Decades of investment in FORTRAN compiler technology enabled high
+levels of optimization for mathematical kernels using nested loops
+to operate on multidimensional arrays.
+
+When the C and C++ languages were created, innovators in the
+computational mathematical, scientific, and engineering disciplines
+realized the benefits of abstraction-enabling features in these languages.
+As such numerous development teams switched from FORTRAN to C++ for
+their applications.
+However, because C++ did not support multidimensional arrays as
+usable and optimizable as those in FORTRAN the
+state-of-the-practice became for C++ applications to use C++
+for higher level abstractions and call FORTRAN routines for
+lower level, performance critical kernels.
+
+Changes in computational hardware, such as the re-introduction of
+wide vector units in CPUs and mainstreaming of GPUs for computing,
+created a performance-portability problem; different architectures
+require different data layouts to achieve performance.
+The proposed multidmensional array library ([[P0009r3]]) provides
+the mechanism to solve this problem; `mdspan` with polymorphic data-layout.
+The `msdpan` library is an opportunity for C++ to solve the data-layout
+problem and reclaim performance parity with FORTRAN.
+
+The proposed `mdspan` library provides the necessary features for
+performant and portable multidimensional arrays on diverse modern computional
+hardware architectures.
+However `mdspan` has an usability Achilles heal: the current `mdspan`
+syntax for declaring a multidimensional array type is extremely verbose
+and unpalatable to the computational mathematicians, scientists, and engineers
+who are the primary users of multidimensional array data structures.
+The minor, non-breaking change for relaxed multidimensional array type
+declarations in this proposal solves the usability problem by providing
+`mdspan` with a concise, intuitive, and highly usable syntax.
+
 
 ## Why Not
 
