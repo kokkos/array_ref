@@ -40,10 +40,11 @@ Description / Motivation
 Both ``span`` and ``mdspan`` allow for additional property parameters 
 to be specified. 
 The collections of all possible property parameters form an ontology 
-(P0900) where the properties are grouped into independent catagories.
-*Access* properties allow ``span`` and ``mdspan`` to tailor how
-referenced members are accessed.
-A ``span`` or ``mdspan`` can have at most one access property.
+(P0900) where the properties are grouped into orthogonal *property-types*.
+Properties with the property-type *access* allows ``span`` and ``mdspan``
+to tailor how referenced members are accessed.
+A ``span`` or ``mdspan`` can have at most one parameter with the
+access property-type.
 
 High performance computing (HPC) applications use very large arrays.
 Computations with these arrays typically have distinct phases that
@@ -67,7 +68,7 @@ in order to perform atomic operations on that object.
 Construction of ``atomic_ref`` has potentially large overhead
 which could be performed once for an entire span.
 
-We propose the ``atomic_access`` access property for
+We propose the property ``atomic_access`` with property-type access for
 ``span`` and ``mdspan`` such that
 
   - all references to elements are ``atomic_ref``
@@ -113,6 +114,7 @@ Add to **[views]** a new **[views.atomics]** section.
   namespace experimental {
   inline namespace fundamentals_v3 {
   
+    // property-type access
     struct atomic_access;
        
   }}}
