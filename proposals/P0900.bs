@@ -1,0 +1,184 @@
+<pre class='metadata'>
+Title: An Ontology for Properties of `mdspan`
+Abstract:  TODO Write abstract
+Shortname: D0900
+Revision: 0
+Date:   2018-02-12
+Editor: David S. Hollman, dshollm@sandia.gov
+Audience: LEWG
+Group: WG21
+Status: D
+Repository: https://github.com/kokkos/array_ref.git
+URL: https://kokkos.github.io/array_ref/proposals/P0900.html
+Warning: Custom
+Custom Warning Title: Work in Progress
+Custom Warning Text: This document is a work in progress that has not yet been
+                     submitted to the committee for discussion in its current
+                     form. 
+Markup Shorthands: markdown yes
+Default Highlight: c++
+</pre>
+
+Background and Motivation
+=========================
+
+[[P0009r4]] proposes the `mdspan` class template for viewing contiguous spans
+of objects through a multidimensional index space. That paper also proposes
+that the `mdspan` class template accept `Properties...` template parameters as
+an extensible set of options for multi-index mapping and memory access:
+
+<blockquote>
+```c++
+namespace std {
+namespace experimental {
+  template< typename DataType , typename ... Properties >
+  class mdspan ;
+}}
+```
+</blockquote>
+
+[[P0546r1]] proposes that `span` should also accept a similar set of
+properties. For brevity, we will herein refer to the customization point
+expressed via the `Properties...` template parameter(s) of `mdspan` (and,
+pending [[P0546r1]], `span`) as *access properties*. LEWG recommended that
+[[P0019r5]] should be redone as an access property (on `span`, though it would
+probably also apply to `mdspan`), and P0860 does this. P0856 also explores the
+idea of such a property for expressing ISO-C `restrict`-like semantics.
+[[P0367r0]] also proposed a number of access properties in a more general
+context, but the content is relevant to `span` and `mdspan` properties as
+proposed here.
+
+And yet, with all of this activity surrounding uses of this access properties
+customization point, no paper has been written exploring the design of the
+customization point itself. In particular, the sorts of questions that need to
+be addressed in a more general context include:
+
+- What sets of properties are allowed to be given together?
+     - Does the addition of a property require the developer to define the set
+        of properties it is compatible with? How do we prevent exponential
+        explosion of work from this requirement?
+- What does it *mean* when multiple properties are given together?
+     - Again, does the addition of a property require the developer to define
+        the set of behaviors when combined with all other sets of properties? How
+        do we prevent exponential explosion of work from this requirement?
+ - Are the behaviors of a `span` or `mdspan` dependent on the order of the
+    properties given? If so, what is the meaning of the order?
+
+We try to address these questions and other related issues by sketching an
+ontology for `mdspan` and `span` properties herein.
+
+Design Principles and Decisions
+===============================
+
+What follows is a set of overarching principles for the design of the access
+property customization points. These principles suggest a set of restrictions
+to the set of features implementable via the customization point, and an
+exploration of the viability of these restrictions follows, particularly in the
+context of the access properties proposed (or suggested) thus far in other
+papers.
+
+
+Orthogonality
+-------------
+
+The issue of exponential explosion for property compatibility specification
+work is so dire (particularly with respect to vendor-supplied or user-supplied
+extensions) that we suggest taking extreme measures. Thus, we propose that
+**all** access properties should be allowed with all other access properties,
+and that any access property that cannot tolerate this level of compatibility
+should *not* use this customization point but should be implemented via some
+other mechanism. The implications of this constraint are explored below, and a
+mechanism for implementing and enforcing this constraint is also proposed
+herein. Some potential for nuance within this restriction is also discussed
+below.
+
+Property Modes
+--------------
+
+It is important to distinguish between access property "types" and their
+"values". For instance, [[P0367r0]] proposes a rich set of read/write access
+qualifiers, including the expected `read`, `write`, and `read_write`, but also
+including more specialized "values" like `discard_read` and `discard_write`. It
+is clear that these "values" are meant to be mutually exclusive; that is, it
+would be nonsensical to have an `mdspan` with both `write` and `read_write`. If
+a flat model were used for the access property customization point, this
+nonsensical mutual exclusivity would violate the orthogonality design principle
+above. However, if we instead view these as different "modes" (or "values") of
+a single "property", orthogonality can be preserved while still providing the
+mutual exclusivity needed to properly express this property. In this example,
+`read`, `write`, etc., would be "values" of a property named something like
+`access_mode`. To avoid confusion with the loaded terms "type" and "value" that
+have other meanings in C++, we will use the term "property" to refer to the
+group of mutually exclusive property "values", and "property mode" to refer to
+the "value" of that property. Note that most properties (at least of those
+proposed thus far) will have a mode type that is merely a boolean, with their
+mode indicated by their presence or abscence in the `Properties...` parameter
+pack. Another example of a non-boolean modal property is the layout property
+proposed in [[P0009r4]].
+
+Convertibility
+--------------
+
+A follow-on to the orthogonality design decision is that of convertibility (via
+construction or assignment).  In similar interest of avoiding exponential
+explosion of pairwise convertibility specification and implementation, it makes
+sense to impose the constraint that an `mdspan` with *any* set of access
+properties is always convertible to an `mdspan` with any other set of access
+properties (and likewise for `span`).  A slight nuance that could be added to
+this constraint is to allow properties to forbid interconversion between
+different *modes* within the same property.  For instance, with the access mode
+property proposed in [[P0367r0]], if the `read` mode of that property is
+specified to mean that only reads will be done from the data in the `mdspan` or
+objects derived from it, then it is a clear violation of the contract to convert
+such an `mdspan` into one with the `write` mode of that property.  It is not
+unreasonable to allow this prohibition to be made within the type system, since
+the specification complexity is always linear in the number of modes of the
+property, and since the modes of a given property are not subject to the same
+extensibility constraints as properties themselves.
+
+
+On the Importance of API Invariance
+-----------------------------------
+
+In the design of many customization points analogous to the access properties
+proposed herein, invariance of the API for members of the resulting class
+template instantiation is cricitcal to its usefulness in generic context. For
+example, the invariance of the `vector` API with respect to the `Allocator`
+template parameter customization point enables the following generic code to be
+viable:
+
+```
+template <typename T, typename Allocator>
+auto copy_odd_values(const vector<T, Allocator>& v) {
+    vector<T, Allocator> ret;
+    auto is_odd = [](T const& i) { return i % 2 != 0; };
+    std::copy_if(v.begin(), v.end(), std::back_insert_iterator(ret), is_odd);
+    return ret;
+}
+```
+
+In the context of access properties for `span` and `mdspan`, this invariance is
+actually not quite as critical for several important reasons. Most importantly,
+both `span` and `mdspan` are intended to be passed by value, and thus the need
+to template on the `Properties...` template parameters to, e.g., avoid spurious
+copies to `const` reference parameters is not as acute. In fact, some access
+properties represent a contract that would be dangerous to transmit into a
+generic context, as is the case with `restrict_access` (proposed in P0856). In
+such cases, it actually makes more sense to eschew support for a generic
+properties variadic template parameter in favor of specific enumeration of the
+properties known to be supported by the generic function.  Many
+compiler-specific access properties are likely to also represent similar sorts
+of contracts.
+
+On Transmission into Generic Contexts
+-------------------------------------
+
+Unfortunately, for other proposed properties, transmission into and through a
+generic context *is* desirable.  The `bounds_checking` and `layout` properties
+suggested in [[P0009r4]] should be transmitted without issue into most generic
+contexts.  Without loss of extensibility (i.e., without doing things like
+explicitly listing the properties that may be transmitted, which precludes the
+use of vendor-specific or user-specific properties), it is not easy to write
+code that is generic with respect to some properties but not others.  A
+potential solution for this is explored below.
+
