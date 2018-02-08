@@ -10,6 +10,8 @@ D0860r0 : Atomic Access Property for span and mdspan
 :Contact: hcedwar@sandia.gov
 :Author: Christian Trott
 :Contact: crtrott@sandia.gov
+:Author: Daniel Sunderland
+:Contact: dsunder@sandia.gov
 :Audience: Parallelism and Concurrency Study Group (SG1)
 :Audience: Library Evolution Working Group (LEWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0860.rst
@@ -35,8 +37,14 @@ D0856r0
 Description / Motivation
 ******************************************************************
 
-The intent for ``span`` and ``mdspan`` access properties is to
-allow tailoring of how referenced members are accessed.
+Both ``span`` and ``mdspan`` allow for additional property parameters 
+to be specified. 
+The collections of all possible property parameters form an ontology 
+(P0900) where the properties are grouped into orthogonal *property-types*.
+Properties with the property-type *access* allows ``span`` and ``mdspan``
+to tailor how referenced members are accessed.
+A ``span`` or ``mdspan`` can have at most one parameter with the
+access property-type.
 
 High performance computing (HPC) applications use very large arrays.
 Computations with these arrays typically have distinct phases that
@@ -60,7 +68,7 @@ in order to perform atomic operations on that object.
 Construction of ``atomic_ref`` has potentially large overhead
 which could be performed once for an entire span.
 
-We propose the ``atomic_access`` access property for
+We propose the property ``atomic_access`` with property-type access for
 ``span`` and ``mdspan`` such that
 
   - all references to elements are ``atomic_ref``
@@ -80,14 +88,14 @@ Modify ``span`` and ``mdspan`` specification:
   namespace experimental {
   inline namespace fundamentals_v3 {
 
-    template< class ArrayType , typename ... AccessProperties >
+    template< class ArrayType , typename ... Properties >
     struct span {
       // revision
       // using reference = element_type & ; // remove
       using reference = /* implementation defined */ ;
     };
 
-    template< class ArrayType , typename ... AccessProperties >
+    template< class ArrayType , typename ... Properties >
     struct mdspan {
       // revision
       // using reference = element_type & ; // remove
@@ -105,17 +113,19 @@ Add to **[views]** a new **[views.atomics]** section.
   namespace std {
   namespace experimental {
   inline namespace fundamentals_v3 {
-
-    struct atomic_access ;
-
+  
+    // property-type access
+    struct atomic_access;
+       
   }}}
 
 ..
 
 The ``atomic_access``  access property may appear at most once
-in the ``AccessProperties...`` parameter pack of ``span`` or ``mdpsan``.
+in the ``Properties...`` parameter pack of ``span`` or ``mdpsan``
+and no other access property can be given.
 Let *S* be an instantiation of ``span`` or ``mdspan`` with
-``AccessProperties...`` parameter pack containing ``atomic_access``.
+``Properties...`` parameter pack containing ``atomic_access``.
 Let *R* be ``atomic_ref<`` *S* ``::element_type>`` .
 
   *Requires:*
