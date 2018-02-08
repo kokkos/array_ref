@@ -113,9 +113,10 @@ Add to **[views]** a new **[views.atomics]** section.
   namespace experimental {
   inline namespace fundamentals_v3 {
   
-    struct access_property;
+    struct atomic_access;
     
-    struct atomic_access : public access_property ;
+    template<>
+    struct is_access_property<atomic_access> : public std::true_type {};
    
   }}}
 
