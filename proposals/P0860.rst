@@ -114,10 +114,7 @@ Add to **[views]** a new **[views.atomics]** section.
   inline namespace fundamentals_v3 {
   
     struct atomic_access;
-    
-    template<>
-    struct is_access_property<atomic_access> : public std::true_type {};
-   
+       
   }}}
 
 ..
