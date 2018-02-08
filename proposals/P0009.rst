@@ -1007,7 +1007,7 @@ and users have voiced strong expressed preference.
 
 ..
 
-However, this syntax requires the trivial, non-functional language change
+However, this syntax requires the non-functional language change
 proposed in P0332 to relax the definition of an incomplete array type.
 
 **Precedence:**
