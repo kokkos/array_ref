@@ -351,10 +351,8 @@ Fundamental Types
 |  ``using reference    = element_type & ;``
 |  ``using pointer      = element_type * ;``
 
-  [Note: If ``std::is_const<element_type>`` then references
-  to codomain members are const.
-  Extensions to access properties may cause ``reference``
-  to become a proxy type. --end note]
+If ``std::is_const<element_type>`` then references to codomain members are const.
+Extensions to access properties may cause ``reference`` to become a proxy type (see Appendix)
 
 |  ``using index_type      = ptrdiff_t ;``
 |  ``using difference_type = ptrdiff_t ;``
@@ -401,22 +399,6 @@ specified.
 ``constexpr index_type size() const ;``
 
   Returns: product of ``extent(r)`` where ``0 <= r < rank()``.
-
-
-Given ``mdspan x`` then:
-
-.. code-block:: c++
-
-  int d = 0 ;
-  index_type s = 1 ;
-  for ( int i = 0 ; i < x.rank() ; ++i ) {
-    if ( x.static_extent(i) == std::dynamic_extent ) { ++d ; }
-    s *= x.extent(i);
-  }
-  assert( d == x.rank_dynamic() );
-  assert( s == x.size() );
-
-..
 
 
 Codomain Observers
@@ -896,9 +878,9 @@ codomain member reference generation.
 
       constexpr index_type size() const noexcept;
   
-      // observers of the codomain: [0..span_size())
+      // observers of the codomain: [0..required_span_size())
 
-      constexpr index_type span_size() const noexcept;
+      constexpr index_type required_span_size() const noexcept;
   
       // observers of the mapping from domain to codomain
 
@@ -952,7 +934,7 @@ codomain member reference generation.
 | ``constexpr index_type size() const noexcept;``
 | ``constexpr index_type extent(int) const noexcept;``
 | ``constexpr index_type static_extent(int) noexcept;``
-| ``constexpr index_type span_size() const noexcept;``
+| ``constexpr index_type required_span_size() const noexcept;``
 |
 | ``template < class ... IndexType >``
 | ``static constexpr index_type required_span_size( IndexType ... DynamicExtents ) noexcept;``
@@ -1062,6 +1044,26 @@ access properties.
 Given P0456 the proposed ``span`` and ``mdspan`` could be merged into
 a single template class by simply requiring that all members specific
 to a one-dimensional span **Requre** that ``rank() == 1``.
+
+
+***********************************************************************
+Appendix: mdspan examples
+***********************************************************************
+
+Given ``mdspan x`` then:
+
+.. code-block:: c++
+
+  int d = 0 ;
+  index_type s = 1 ;
+  for ( int i = 0 ; i < x.rank() ; ++i ) {
+    if ( x.static_extent(i) == std::dynamic_extent ) { ++d ; }
+    s *= x.extent(i);
+  }
+  assert( d == x.rank_dynamic() );
+  assert( s == x.size() );
+
+..
 
 
 ***********************************************************************
