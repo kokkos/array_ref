@@ -20,6 +20,8 @@ P0009r4 : Polymorphic Multidimensional Array Reference
 :Contact: athanasios.iliopoulos@nrl.navy.mil
 :Author: John Michopoulos
 :Contact: john.michopoulos@nrl.navy.mil
+:Author: Daniel Sunderland
+:Contact: dsunder@sandia.gov
 :Audience: Library Evolution Working Group (LEWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
@@ -351,8 +353,9 @@ Fundamental Types
 |  ``using reference    = element_type & ;``
 |  ``using pointer      = element_type * ;``
 
-If ``std::is_const<element_type>`` then references to codomain members are const.
-Extensions to access properties may cause ``reference`` to become a proxy type (see Appendix)
+  [If ``std::is_const<element_type>`` then references to codomain members are const.
+  Extensions to access properties may cause ``reference`` to become a proxy type 
+  (see Appendix: Reference is potentially a proxy)]
 
 |  ``using index_type      = ptrdiff_t ;``
 |  ``using difference_type = ptrdiff_t ;``
@@ -749,24 +752,7 @@ the multidimensional index space of an ``mdspan`` is proposed in P0332.
   each integral value in ``slices...`` contracts the corresponding
   extent of ``U``.
 
-  Example:
   
-.. code-block:: c++
-
-  // given U.rank() == 4
-  void foo( mdspan< DataType , Properties ... > const & U )
-  {
-    auto V = subspan( U , make_pair(1,U.extent(0)-1) , 1 , make_pair(2,U.extent(2)-2 );
-    assert( V.extent(0) == U.extent(0) - 2 );
-    assert( V.extent(1) == U.extent(2) - 2 );
-    assert( & V(0,0) == U(1,1,2,2) );
-    assert( & V(1,0) == U(2,1,2,2) );
-    assert( & V(0,1) == U(1,1,3,2) );
-  }
-
-..
-
-
 Slice Specifier with Static Extent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1065,6 +1051,22 @@ Given ``mdspan x`` then:
 
 ..
 
+subspan:
+  
+.. code-block:: c++
+
+  // given U.rank() == 4
+  void foo( mdspan< DataType , Properties ... > const & U )
+  {
+    auto V = subspan( U , make_pair(1,U.extent(0)-1) , 1 , make_pair(2,U.extent(2)-2 );
+    assert( V.extent(0) == U.extent(0) - 2 );
+    assert( V.extent(1) == U.extent(2) - 2 );
+    assert( & V(0,0) == U(1,1,2,2) );
+    assert( & V(1,0) == U(2,1,2,2) );
+    assert( & V(0,1) == U(1,1,3,2) );
+  }
+
+..
 
 ***********************************************************************
 Appendix: Reference is potentially a proxy
