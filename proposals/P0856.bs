@@ -1,22 +1,17 @@
 <pre class='metadata'>
-Title: Restrict Access Property for span and mdspan
-Abstract:  TODO Write abstract
+Title: Restrict Access Property for <code>span</code> and <code>mdspan</code>
+Abstract: This paper proposes a semantic for the use of the access property customization point on <code>span</code> and <code>mdspan</code> to express non-aliasing semantics analogous to those of the ISO-C keyword <code>restrict</code>.  Reconceptualizing non-aliasing semantics as a customization point on a library feature addresses many of the previous ambiguities in non-aliasing semantics for C++, and the implications of this new approach are discussed.
 Shortname: D0856
 Revision: 0
 Date:   2018-02-12
+Editor: David S. Hollman, dshollm@sandia.gov
 Editor: H. Carter Edwards, hcedwar@sandia.gov
 Editor: Christian Trott, crtrott@sandia.gov
-Editor: David S. Hollman, dshollm@sandia.gov
 Audience: LEWG
 Group: WG21
 Status: D
 Repository: https://github.com/kokkos/array_ref.git
 URL: https://kokkos.github.io/array_ref/proposals/P0856.html
-Warning: Custom
-Custom Warning Title: Work in Progress
-Custom Warning Text: This document is a work in progress that has not yet been
-                     submitted to the committee for discussion in its current
-                     form. 
 Markup Shorthands: markdown yes
 Default Highlight: c++
 </pre>
@@ -37,11 +32,60 @@ The restrict (non-aliasing) property is a widely useful mechanism to enable
 array access optimization. This functionality is part of the C standard, several
 C++ compilers' extensions, and native to FORTRAN array semantics.
 
+While the utility of non-aliasing type annotations is well-established in the
+literature, it is useful to reproduce several common motivating examples here
+to illustrate the utility in the context of `span` and `mdspan`.
+
+Linear algebra produces one of the most compelling needs for non-aliasing
+semantics. Even the simplest operations, such as vector addition, suffer
+noticable degredation in the absense of a non-aliasing guarantee:
+
+```c++
+// Performce element-wise dest = a + b 
+template <typename T>
+void element_product(span<const T> a, span<const T> b, span<T> dest) {
+  assert(a.size() == b.size() && b.size() == c.size());
+  for(typename span<T>::size_type i = 0; i < a.size(); ++i) {
+    dest[i] = a[i] + b[i];
+  }
+}
+```
+
+Without `restrict` annotations, the compiler cannot vectorize this code, since
+`a` or `b` could point to the same memory as `dest`.  With `dest` being changed
+every iteration, the compiler needs to preform fresh loads `a[i]` and `b[i]`
+every iteration in case, for instance, they point to `dest[i-1]`. 
+
+Reordering for the purposes of optimizing memory operation is another example of
+an optimization that `restrict` enables.  Consider the (albeit naïve)
+implementation of a function that initializes two arrays at the start of some
+user's program:
+
+```c++
+void initialize_data(span<int> v0, span<int> v1) {
+  for(typename span<int>::size_type i = 0; i < v0.size(); ++i) {
+      v0[i] = 0;
+      v1[i] = 1;
+  }
+}
+```
+
+In the absence of `restrict` information, the compiler cannot tell at what
+point, if any, the statement `v1[i] = 1` starts to overwrite the effects of
+previous statements on `v0` (or vice versa).  With non-aliasing information
+provided, however, the compiler can transform this function into two calls to
+`memset`, which would be much more efficient on most archetectures.  (It's clear
+to most people in this example that the user should have made this
+transformation to begin with, but with intervening work in between the two
+assignments, or other increased complexity, this may not be as clear).
+
 We propose to add the `restrict_access` property to the set of admissible access
 properties of `span` and `mdspan`.
 
 This paper does not propose a strategy for subsequent extensibility. We identify
-open questions that must be addressed in the design of such a strategy.
+open questions that must be addressed in the design of such a strategy.  P0900
+addresses the design of the customization point utilized here in a more generic
+context.
 
 Background and Precedent
 ========================
@@ -169,8 +213,12 @@ function definition matching. This means you only need to specify `__restrict__`
 in a function definition, rather than in a function prototype as well.
 </blockquote>
 
-It is clear that GCC's implementation of this extension would be sufficient to
-implement the proposed feature trivially.
+ It is clear that GCC's implementation of this extension would be sufficient to
+ implement the proposed feature trivially. Tests with gcc 7.3 and subsequent
+ analysis of the machine code produced during compilation indicates that the
+ existing extension would support the semantics proposed herein and perform the
+ expected optimizations consistent with analogous non-aliasing information on
+ raw pointers.
 
 ## MSVC's `__declspec(restrict)`
 
@@ -189,6 +237,7 @@ similar to `__declspec(restrict)`, and, indeed, to ISO C `restrict`:
 `__restrict` is similar to restrict from the C99 spec, but
 `__restrict` can be used in C++ or C programs.
 </blockquote>
+
 
 Clang++ and the `noalias` Metadata in LLVM IR
 ---------------------------------------------
@@ -218,6 +267,9 @@ GPU and (as long as the underlying CPU compiler supports it) the CPU.
 
 Proposal
 ========
+
+We propose utilitzing the customization point explored in P0900 to express the
+`restrict_access` property:
 
 ```
 namespace std {
@@ -300,14 +352,20 @@ those derived from:
 - Any of these operations on a copy of `s` made during this restricted lifetime
 - Any of these operations on a reference to `s` or the dereference of a pointer
     to `s`.
+- Any of these operations on a subspan derived from `s`
 
 These restrictions apply to any modifying accesses indeterminately sequenced
 with the beginning or end of the given restricted lifetime `L_i`.  Any other
 accesses that modify the referenced memory through any other means result in
-undefined behavior.
+undefined behavior.  Additionally, accessing any object not in the range `[p_i,
+p_i + sz_i)` via a pointer or reference derived from any of the above sources
+results in undefined behavior.
 
 </blockquote>
 
+Formal wording for the application of the restriction to `mdspan` will follow
+discussion of the content in the current paper, but it likely to be similar to
+the wording for `span` above.
 
 Discussion
 ==========
@@ -330,14 +388,6 @@ restrict-like semantics in C++:
     precisely enough describe what is restricted)
     - The extensibility of `AccessProperties...` for `span` and `mdspan` as a
         library feature provides a clear path forward towards addressing this.
-- It is unclear, even in C, how `restrict` applies to struct members.  Moreover,
-    from [[N3988]], "In the case of member declarations, it's more useful to the
-    compiler if the restrict promise is an exclusive handle to memory for the
-    lifetime of the owning object."
-    - ???
-- It is unclear how to use restrict when it is desired to consider only one
-    pointer in a chain of pointers to have restrict-like semantics
-    - ???
 - In C, the lifetime of the `restrict` contract is awkward to express and
     therefore is restricted to initialization.
     - Object lifetime of a library wrapper provides clear bounds for the
@@ -348,30 +398,7 @@ restrict-like semantics in C++:
         therefore the transfer of the restrict contract is immediately clear.
 
 
-Open Questions for Extending Access Properties
-==============================================
 
--   Only through the standard?
--   Also through hardware/compiler-specific extensions?
--   Also by library providers?
--   Rules for extending the set of access properties?
--   Rules for resolving combinations of potentially conflicting
-    properties?
--   Rules for casting away `AccessProperties...`?
-    - For that matter, rules for casting to reordered properties, and how does
-        this relate to object lifetime?
--   What does it mean to copy a `span` or `mdspan` with the `restrict_access`
-      property?  What about assignment? (Partially answered, I think...)
-
-TODOs/To Address/To Think About
-===============================
-
--   TODO: Remove this section
--   Chandler comment at Rapperswil 2014 meeting: "I want to make sure we find
-    something that works for [the Eigen library] use case."
--   Relationship with `std::get_pointer_safety`?
--   Wording of applicability to `mdspan`
--   TODO: Wording for subspan
 
 <pre class=biblio>
 {
