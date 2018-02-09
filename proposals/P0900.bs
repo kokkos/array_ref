@@ -152,10 +152,9 @@ On the Importance of API Invariance
 
 In the design of many customization points analogous to the access properties
 proposed herein, invariance of the API for members of the resulting class
-template instantiation is cricitcal to its usefulness in generic context. For
+template instantiation is critical to its usefulness in a generic context. For
 example, the invariance of the `vector` API with respect to the `Allocator`
-template parameter customization point enables the following generic code to be
-viable:
+template parameter customization point makes the following generic code viable:
 
 ```
 template <typename T, typename Allocator>
@@ -169,9 +168,9 @@ auto copy_odd_values(const vector<T, Allocator>& v) {
 
 In the context of access properties for `span` and `mdspan`, this invariance is
 actually not quite as critical for several important reasons. Most importantly,
-both `span` and `mdspan` are intended to be passed by value, and thus the need
-to template on the `Properties...` template parameters to, e.g., avoid spurious
-copies to `const` reference parameters is not as acute. In fact, some access
+both `span` and `mdspan` are intended to be passed by value. Thus, there is less
+need to template on the `Properties...` template parameters, for example in order
+to avoid spurious copies to `const` reference parameters. In fact, some access
 properties represent a contract that would be dangerous to transmit into a
 generic context, as is the case with `restrict_access` (proposed in P0856).
 In such cases, it actually makes more sense to eschew support for a generic
