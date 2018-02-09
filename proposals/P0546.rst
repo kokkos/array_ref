@@ -1,9 +1,9 @@
 ===================================================================
-P0546r1 : Span - foundation for the future
+P0546r2 : Span - foundation for the future
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0546r1
+:Number: D0546r2
 :Date: 2017-10-11
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
@@ -22,7 +22,9 @@ P0546r1 : Span - foundation for the future
 + P0546r1    + Update subspan bounds requires clause.                      +
 +            + Add precedence background information.                      +
 +------------+-------------------------------------------------------------+
-
++ P0546r2    + Update AccessProperties to Properties.                      +
++            + Reference P0900 on properties ontology.                     +
++------------+-------------------------------------------------------------+
 
 +------------+-------------------------------------------------------------+
 | **References**                                                           |
@@ -36,6 +38,8 @@ P0546r1 : Span - foundation for the future
 | P0332      | Relaxed array declaration                                   |
 +------------+-------------------------------------------------------------+
 | P0367      | Accessors                                                   |
++------------+-------------------------------------------------------------+
+| P0900      | Property Ontology                                           |
 +------------+-------------------------------------------------------------+
 
 
@@ -83,7 +87,7 @@ delete the *magic value* ``dynamic_extent`` .
 
   - The need for a ``dynamic_extent`` *magic value* is entirely eliminated.
 
-  - ``Properties...`` is a well-defined extension point (P0900).
+  - ``Properties...`` is a well-defined extension point **P0900**.
     This extension point, while not exercised in this proposal, enables
     code which is templated on ``span`` to be *future proofed* with
     respect to extensions by including the ``Properties`` parameter pack.
