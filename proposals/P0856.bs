@@ -37,11 +37,60 @@ The restrict (non-aliasing) property is a widely useful mechanism to enable
 array access optimization. This functionality is part of the C standard, several
 C++ compilers' extensions, and native to FORTRAN array semantics.
 
+While the utility of non-aliasing type annotations is well-established in the
+literature, it is useful to reproduce several common motivating examples here
+to illustrate the utility in the context of `span` and `mdspan`.
+
+Linear algebra produces one of the most compelling needs for non-aliasing
+semantics. Even the simplest operations, such as vector addition, suffer
+noticable degredation in the absense of a non-aliasing guarantee:
+
+```c++
+// Performce element-wise dest = a + b 
+template <typename T>
+void element_product(span<const T> a, span<const T> b, span<T> dest) {
+  assert(a.size() == b.size() && b.size() == c.size());
+  for(typename span<T>::size_type i = 0; i < a.size(); ++i) {
+    dest[i] = a[i] + b[i];
+  }
+}
+```
+
+Without `restrict` annotations, the compiler cannot vectorize this code, since
+`a` or `b` could point to the same memory as `dest`.  With `dest` being changed
+every iteration, the compiler needs to preform fresh loads `a[i]` and `b[i]`
+every iteration in case, for instance, they point to `dest[i-1]`. 
+
+Reordering for the purposes of optimizing memory operation is another example of
+an optimization that `restrict` enables.  Consider the (albeit naïve)
+implementation of a function that initializes two arrays at the start of some
+user's program:
+
+```c++
+void initialize_spans(span<int> v0, span<int> v1) {
+  for(typename span<int>::size_type i = 0; i < v0.size(); ++i) {
+      v0[i] = 0;
+      v1[i] = 1;
+  }
+}
+```
+
+In the absence of `restrict` information, the compiler cannot tell at what
+point, if any, the statement `v1[i] = 1` starts to overwrite the effects of
+previous statements on `v0` (or vice versa).  With non-aliasing information
+provided, however, the compiler can transform this function into two calls to
+`memset`, which would be much more efficient on most archetectures.  (It's clear
+to most people in this example that the user should have made this
+transformation to begin with, but with intervening work in between the two
+assignments, or other increased complexity, this may not be as clear).
+
 We propose to add the `restrict_access` property to the set of admissible access
 properties of `span` and `mdspan`.
 
 This paper does not propose a strategy for subsequent extensibility. We identify
-open questions that must be addressed in the design of such a strategy.
+open questions that must be addressed in the design of such a strategy.  P0900
+addresses the design of the customization point utilized here in a more generic
+context.
 
 Background and Precedent
 ========================
@@ -189,6 +238,11 @@ similar to `__declspec(restrict)`, and, indeed, to ISO C `restrict`:
 `__restrict` is similar to restrict from the C99 spec, but
 `__restrict` can be used in C++ or C programs.
 </blockquote>
+
+Tests with gcc 7.3 and subsequent analysis of the machine code produced during
+compilation indicates that the existing extension would support the semantics
+proposed herein and perform the expected optimizations consistent with
+analogous non-aliasing information on raw pointers.
 
 Clang++ and the `noalias` Metadata in LLVM IR
 ---------------------------------------------
