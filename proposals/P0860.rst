@@ -25,7 +25,7 @@ Revision History
 ******************************************************************
 
 ----------------------------------------------------------------------------
-D0856r0
+P0856r0
 ----------------------------------------------------------------------------
 
 2017-11-08 Albuquerque LEWG feedback for P0009, P0019, and P0546
@@ -40,7 +40,7 @@ Description / Motivation
 Both ``span`` and ``mdspan`` allow for additional property parameters 
 to be specified. 
 The collections of all possible property parameters form an ontology 
-(P0900) where the properties are grouped into orthogonal *property-types*.
+**P0900** where the properties are grouped into orthogonal *property-types*.
 Properties with the property-type *access* allows ``span`` and ``mdspan``
 to tailor how referenced members are accessed.
 A ``span`` or ``mdspan`` can have at most one parameter with the
