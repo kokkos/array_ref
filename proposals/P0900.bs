@@ -10,11 +10,6 @@ Group: WG21
 Status: D
 Repository: https://github.com/kokkos/array_ref.git
 URL: https://kokkos.github.io/array_ref/proposals/P0900.html
-Warning: Custom
-Custom Warning Title: Work in Progress
-Custom Warning Text: This document is a work in progress that has not yet been
-                     submitted to the committee for discussion in its current
-                     form. 
 Markup Shorthands: markdown yes
 Default Highlight: c++
 </pre>
@@ -178,14 +173,14 @@ both `span` and `mdspan` are intended to be passed by value, and thus the need
 to template on the `Properties...` template parameters to, e.g., avoid spurious
 copies to `const` reference parameters is not as acute. In fact, some access
 properties represent a contract that would be dangerous to transmit into a
-generic context, as is the case with `restrict_access` (proposed in P0856). In
-such cases, it actually makes more sense to eschew support for a generic
+generic context, as is the case with `restrict_access` (proposed in P0856).
+In such cases, it actually makes more sense to eschew support for a generic
 properties variadic template parameter in favor of specific enumeration of the
 properties known to be supported by the generic function.  Many
 compiler-specific access properties are likely to also represent similar sorts
 of contracts.
 
-On Transmission into Generic Contexts
+On Transmission into Generic Contexts {#gencon}
 -------------------------------------
 
 Unfortunately, for other proposed properties, transmission into and through a
@@ -478,7 +473,7 @@ template <class MDSpanLike, class Property>
 constexpr bool is_strided(MDSpanLike s, Property p);
 
 template <typenaem MDSpanLike, class Property>
-constexpr index_type_t<MDSpanLike> stride(MDSpanLike s, Property p);
+constexpr index_type_t<MDSpanLike> stride(MDSpanLike s, Property p, int i);
 
 }}}
 ```
@@ -512,5 +507,149 @@ third approach seems sensible in light of the fact that layout properties don't
 really apply to `span`, so its inclusion in the wider ontology may be
 unnecessary.  This third strategy almost certainly makes the most sense for the
 `extents` property proposed in [[P0009r4]], since it is mandatory for `mdspan`,
-affects most of the `mdspan` implementation, and does not apply to `span`.  More
-discussion of this point is given below.
+affects most of the `mdspan` implementation, and does not apply to `span`.
+
+Traits for Propagation into or through Generic Contexts
+-------------------------------------------------------
+
+As discussed above in [[#gencon]], it is desirable for generic function
+templates to deduce and propagate some properties, while for others it is
+dangerous to do so.  One potential solution to this problem that doesn't require
+an "all-or-nothing" approach is to have individual properties specify whether or
+not they should be propagated through a generic context that otherwise makes no
+mention of the property.  For instance, a generic function template that takes
+two `mdspan` arguments should never deduce `restrict_access` as a property of
+its arguments unless that function is explicitly implemented to obey the
+`restrict_access` contract.  For instance, consider a generic,
+non-`restrict_access`-aware function template that calls a generic,
+`restrict_access`-aware dot product function (implemented with separate
+overloads for `restrict_access` arguments and non-`restrict_access` arguments):
+
+```c++
+template <class T1, class... Properties1, class T2, class... Properties2>
+auto my_generic_function(mdspan<T1, Properties1...> s1, mdspan<T2, Properties2...> s2) {
+    return generic_dot(s1, s1) + generic_dot(s2, s2);
+}
+```
+
+If `restrict_access` is deduced to be one of the properties of `s1` or `s2`,
+then `my_generic_function` has unknowingly called the incorrect overload of
+`generic_dot`, causing it to potentially violate the contract implied by the
+`restrict_access` property.  If, on the other hand, the arguments `s1` and `s2`
+have the `atomic_access` property enabled (see P0860), it is clearly the intent
+of the caller that `my_generic_function` and all of its callees make use of the
+underlying data via atomic loads, stores, etc. (likely implemented via a wrapper
+to the `reference_t`; see details in P0860).  The generic context should thus
+preserve the `atomic_access` property but discard the `restrict_access`
+property.
+
+One potential solution to this problem is to introduce a trait that returns the
+mode of the property intended for propagation through a generic interface.  The
+trait would look something like:
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class Property>
+using generic_context_propagation_mode_t = /* implementation defined */;
+
+}}}
+```
+
+Implementers could then rewrite `my_generic_function` as:
+
+```c++
+template <class T1, class... Properties1, class T2, class... Properties2>
+auto my_generic_function(mdspan<T1, Properties1...> s1, mdspan<T2, Properties2...> s2) {
+    auto s1g = mdspan<T1, access_properties::generic_context_propagation_mode_t<Properties1>...>(s1);
+    auto s2g = mdspan<T2, access_properties::generic_context_propagation_mode_t<Properties2>...>(s2);
+    return generic_dot(s1g, s1g) + generic_dot(s2g, s2g);
+}
+```
+
+Supposing that `restrict_access` is short for something like
+`restrict_access_enabled<true>`, the trait `generic_context_propagation_mode_t`
+could be specialized for `restrict_access` to return
+`restrict_access_enabled<false>`.
+
+Another option is to discourage deduction of property template parameters and
+rely on conversion and compatibility to prevent accidental failure to propagate
+a property.  For instance, the `atomic_access` property could prohibit casting
+away `atomic_access` to avoid accidental usage via non-atomic operations.  This
+means that library implementers would have to implement more overloads that they
+otherwise would, but the simplification may be worth it.  The need for
+implementation of multiple overloads when different properties are present may
+exist anyway, since `atomic_access` changes the type (and thus the API) of the
+reference returned by the subscript and call operators.  Though this option
+somewhat limits vendor-specific extensibility (and particularly limits
+user-specific extensibility), it appears to be reasonable in the contexts of the
+properties proposed thus far.
+
+Traits for Expression of Convertibility
+---------------------------------------
+
+While it seems wise to require all `mdspan` instantiations be convertible to and
+from all `mdspan` instantiations with different properties, it is reasonable for
+properties to restrict which of their modes are interconvertible.  This, then,
+requires trait customization points for expressing whether two property modes
+belong to the same property as well as whether copy operations are allowed
+between any pair of modes of the same property.
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class PropertyInMode1, class PropertyInMode2>
+inline constexpr bool modes_of_same_property_v = /* implementation defined */
+
+template <class PropertyInMode1>
+using default_mode_for_property_t = /* implementation defined */
+
+template <class PropertyInMode1, class PropertyInMode2>
+inline constexpr bool are_convertible_property_modes_v = /* implementation defined */
+
+}}}
+```
+
+With this definition, there is some question as to whether the property itself
+should be required to have some sort of identifying tag that, for instance, can
+be used with `is_same` to determine if two property modes are of the same
+property.  This topic can be discussed further as the abstractions proposed
+herein are hardened.
+
+Other Potential Traits and Hooks
+--------------------------------
+
+Other places where traits or hooks may need to be placed in the future include
+post-construction, pre- and post-assignment, pre- and post-iterator creation
+(`span` only), iterator member type (`span` only), comparison (`span` only),
+subspan creation, and `span` conversion (`mdspan` only).  Traits and hooks for
+these customization points have not been included here because there has not yet
+been a property proposed that would make use of these.  The patterns established
+herein for the other traits and hooks should be reasonably applicable to these
+cases, however.
+
+Open Questions and Straw Polls
+==============================
+
+- Should `extents` (and to a lesser extent, `layout`) from [[P0009r4]] be made
+    to fit in this property ontology, or should these be part of the `mdspan`
+    class template itself (and thus subject to different rules).  (Stated
+    differently, should the property ontology and traits proposed herein be
+    adapted to accomodate `extents` and `layout`?)
+- Straw poll: Should the customization of the same trait/hook by multiple
+    properties be allowed (with conflicts resolved via order dependence), or
+    should customization point conflicts be used as an indicator of
+    incompatibility?
+- Straw poll: If customization of the same trait/hook by multiple properties is
+    allowed, should a trait like `is_unique_customization_v` be provided that 
+    prohibits multiple customization on a case-by-case basis?
+- Straw poll: Should the traits customization points proposed here be
+    implemented at namespace scope or as part of a monolithic traits class?
+- Straw poll: Should the guidance be to propagate properties via the
+    instructions of a trait like `generic_context_propagation_mode_t`, or should
+    the guidance be to not propagate access properties via template argument
+    deduction?
