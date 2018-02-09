@@ -1,6 +1,11 @@
 <pre class='metadata'>
 Title: An Ontology for Properties of <code>mdspan</code>
-Abstract:  TODO Write abstract
+Abstract:  This paper explores the pros and cons of several different approaches
+           to general specification of the access properties customization point
+           for `mdspan` and `span`, as proposed by [[P0009r4]] and [[P0546r1]] 
+           and already utilized by several other proposals.  Various aspects of
+           and constraints on the interaction between disperate property
+           customizations are examined.
 Shortname: D0900
 Revision: 0
 Date:   2018-02-12
