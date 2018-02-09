@@ -358,7 +358,7 @@ discussion), the `read` and `read_discard` modes would likely specialize
 of the `span` or `mdspan`, but there is no equivalent specialization for the
 `write` mode.  Thus, to enforce the mutual exclusivity that is obvious from the
 property's definition, one would need to define a special case that specifies
-incompatibilty *in spite of* trait-wise compatibility.
+incompatibility *in spite of* trait-wise compatibility.
 
 
 Data Access Hooks
