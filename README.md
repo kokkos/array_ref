@@ -10,4 +10,5 @@ Proposals
 - [P0332: Relaxed Incomplete Multidimensional Array Type Declaration](https://kokkos.github.io/array_ref/proposals/P0332.html)
 - [P0546: Span - foundation for the future](https://github.com/kokkos/array_ref/blob/master/proposals/P0546.rst)
 - [P0856: Restrict Access Property for span and mdspan](https://kokkos.github.io/array_ref/proposals/P0856.html)
-- [P0860: Atomic Access Property for span and mdspan](https://github.com/kokkos/array_ref/blob/master/proposals/P0860.rst)
+- [P0860: Atomic Access Property for span and mdspan](https://kokkos.github.io/array_ref/proposals/P0860.html)
+- [P0900: An Ontology for Properties of mdspan](https://kokkos.github.io/array_ref/proposals/P0900.html)

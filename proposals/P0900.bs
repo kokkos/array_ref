@@ -511,4 +511,6 @@ entirely and instead treat it as part of the base `mdspan` class template.  This
 third approach seems sensible in light of the fact that layout properties don't
 really apply to `span`, so its inclusion in the wider ontology may be
 unnecessary.  This third strategy almost certainly makes the most sense for the
-`extents` property proposed in [[P009r4]]
+`extents` property proposed in [[P009r4]], since it is mandatory for `mdspan`,
+affects most of the `mdspan` implementation, and does not apply to `span`.  More
+discussion of this point is given below.
