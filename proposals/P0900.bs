@@ -1,5 +1,5 @@
 <pre class='metadata'>
-Title: An Ontology for Properties of `mdspan`
+Title: An Ontology for Properties of <code>mdspan</code>
 Abstract:  TODO Write abstract
 Shortname: D0900
 Revision: 0
@@ -92,6 +92,21 @@ mechanism for implementing and enforcing this constraint is also proposed
 herein. Some potential for nuance within this restriction is also discussed
 below.
 
+A corrollary to this principle is that the behavior and attributes of an
+`mdspan` under a set of access properties should be expressible as a
+well-defined combination of the behaviors or attributes of the `mdspan` under
+each of those properties individually.  For instance, the `noexcept` specifier
+for `mdspan<T, Properties...>::operator[](index_type)` should be expressible as:
+
+```c++
+noexcept(conjunction_v<
+  boolean_constant<noexcept(declval<mdspan<T, Properties>>()[std::declval<index_type>()])>...
+>)
+```
+
+Similar combination should be possible for behaviors via the specification of
+hooks in a traits-like interface, as explored below.
+
 Property Modes
 --------------
 
@@ -182,3 +197,318 @@ use of vendor-specific or user-specific properties), it is not easy to write
 code that is generic with respect to some properties but not others.  A
 potential solution for this is explored below.
 
+
+Proposed Solution: Access Property Traits
+=========================================
+
+One way to implement many of the design constraints expressed above is to
+specify a mechanism for the application of properties to a `span` or `mdspan`
+that maintains adherence to these design principles through its action.  As
+such, we propose a set of access property traits via which most of the aspects
+of most of the properties proposed thus far can be expressed.  (Those that
+express contracts or hints to compilers and optimizers obviously cannot be fully
+specified in this way, but even in those cases some of these traits may be
+relevant.)  The traits in this section are expressed at namespace scope, in
+keeping with newer interface proposals such as the one in [[P0443R3]], rather than
+at class scope (as is the case with `allocator_traits`), but they could easily
+be refactored to a different form based on feedback.  The set of traits proposed
+here is not intended to be exhaustive; rather it is intended to be sufficient to
+implement the properties previously proposed or suggested and most properties
+foreseeable based on that experience.
+
+
+Traits for Member Types
+-----------------------
+
+There are two possible approaches to resolving conflicts between access
+properties attempting to modify the same member type. The first approach is to
+apply the type trait to each property in a nested manner, using the order the
+properties are given in the `Properties...` list (though the best practice
+should be that the result of this operation should be invariant with respect to
+order).  For example, `mdspan<T, Properties...>::element_type` would be defined
+in terms of a recursive application of the following customization point:
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class SpanLike, class Property>
+struct element_type;
+template <class SpanLike, class Property>
+using element_type_t = typename element_type<SpanLike, Property>::type;
+
+}}}
+```
+
+where `SpanLike` is a `span` or `mdspan` with all properties preceding
+`Property` in the `Properties...` list.  For clarity, here is a possible
+implementation of the `element_type` member type of `mdspan`:
+
+```c++
+namespace std {
+namespace experimental {
+
+template <class DataType, class... Properties>
+class mdspan;
+
+template <class DataType, class Property, class... Properties>
+class mdspan {
+public:
+  using element_type = 
+    access_properties::element_type_t<mdspan<DataType, Properties...>, Property>>;
+};
+
+// Base case is the mdspan without any properties:
+template <class DataType>
+class mdspan {
+public:
+  using element_type = remove_all_extents_t<DataType>;  // as in P0009r4
+  /* ... */
+};
+
+}}
+```
+
+and the default, unspecialized implementation of the customization point for
+`element_type` would be:
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class SpanLike, class Property>
+struct element_type { using type = typename SpanLike::element_type; };
+
+}}}
+```
+
+The rest of the element types would have similar customization points:
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class SpanLike, class Property>
+struct value_type;
+template <class SpanLike, class Property>
+using value_type_t = class value_type<SpanLike, Property>::type;
+
+template <class SpanLike, class Property>
+struct index_type;
+template <class SpanLike, class Property>
+using index_type_t = class index_type<SpanLike, Property>::type;
+
+template <class SpanLike, class Property>
+struct difference_type;
+template <class SpanLike, class Property>
+using difference_type_t = class difference_type<SpanLike, Property>::type;
+
+template <class SpanLike, class Property>
+struct pointer;
+template <class SpanLike, class Property>
+using pointer_t = class pointer<SpanLike, Property>::type;
+
+template <class SpanLike, class Property>
+struct reference;
+template <class SpanLike, class Property>
+using reference_t = class reference<SpanLike, Property>::type;
+
+}}}
+```
+
+### On order dependence and order invariance
+
+This approach has the disadvantage of imposing a theoretical order dependence
+on the access properties customization point. Practically speaking, it would be
+considered a best practice of a high-quality implementation to ensure that a
+property's implementation of `access_properties::element_type_t` (and other
+traits) are invariant with respect to ordering with other known properties
+(such as those in the standard library), but with this approach it would be
+impossible to make that guarantee formal, particularly with respect to other
+vendor-defined and user-defined properties unknown to the property implementer.
+This "best practice" enforcement of order invariance is, in some sense, also an
+advantage of this specifying the customization point action in this way, since
+in the event of an unavoidable ordering dependency the behavior is both
+well-defined and easily explained in terms of a relatively simple mechanism.
+This also makes sense in terms of defining an order for invocation of hooks
+(discussed below), which may be needed to implement some access properties.
+
+<h4 id="altconf">Alternative means of resolving conflicts</h4>
+
+A second approach to resolving conflicts between two access properties
+customizing the same member type trait (or most of the other traits) is to
+disallow it and to make this the *definition* of access property
+incompatibility.  Other than eliminating order dependence, this approach has the
+advantage of producing a clean, easy-to-explain definition of property
+incompatibility.  However, there are several key disadvantages to this approach.
+First, the implementations of many access property traits will be
+implementation-defined, which implies that one implementation may specialize a
+trait for a given access property and another may use a different mechanism
+(e.g., specialization of a different trait).  This leads to the uncomfortable
+scenario where either the mechanism for implementation of any standardized
+access properties needs to be specified, or (much worse) the compatibility
+between properties is implementation-defined.  Beyond this, not all mututally
+exclusive modes of a given property may modify the same access property traits.
+For instance, in the example above with `read`/`write`/`read_write`/`read_discard`/etc.
+modes of some property (which we called `access_mode` for the sake of
+discussion), the `read` and `read_discard` modes would likely specialize
+`access_properties::reference_t` to be a `const` reference to the `value_type`
+of the `span` or `mdspan`, but there is no equivalent specialization for the
+`write` mode.  Thus, to enforce the mutual exclusivity that is obvious from the
+property's definition, one would need to define a special case that specifies
+incompatibilty *in spite of* trait-wise compatibility.
+
+
+Data Access Hooks
+-----------------
+
+Similar to the access property member type traits from above, it is desirable to
+define the effects of access properties on `span` and `mdspan` methods in a
+manner that is both orthogonal to that of other properties and separtate from
+the implementation of the property-free implementations for `span` and `mdspan`. 
+Applying the same namespace-scope traits pattern in, e.g., [[P0443R3]], we can
+define ADL-accessible hooks that property implementers would customize to
+implement the property's behavior.
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class SpanLike, class Property>
+typename SpanLike::index_type_t
+pre_subscript_operator_hook(SpanLike s, Property p, class SpanLike::index_type_t i) noexcept;
+template <class SpanLike, class Property>
+void post_subscript_operator_hook(SpanLike s, Property p, class SpanLike::index_type_t i) noexcept;
+
+template <class SpanLike, class Property, class... IndexType>
+std::tuple<IndexType&&...>
+pre_call_operator_hook(SpanLike s, Property p, IndexType&&... idxs) noexcept;
+template <class SpanLike, class Property, class... IndexType>
+void post_call_operator_hook(SpanLike s, Property p, IndexType&&... idxs) noexcept;
+
+template <class SpanLike, class Property, class IndexType, size_t N>
+array<IndexType, N> const&
+pre_call_operator_hook(SpanLike s, Property p, array<IndexType, N> const& idxs) noexcept;
+template <class SpanLike, class Property, class IndexType>
+void post_call_operator_hook(SpanLike s, Property p, array<IndexType, N> const& idxs) noexcept;
+
+}}}
+```
+
+The intent is that the pre-invocation hooks would take the arguments of the
+method invocation and return the (potentially modified) arguments to be used
+with the next property hook or the implementation of the method in the
+property-free `span`/`mdspan` implementation of that method.  For instance, a
+possible implementation of `mdspan<T, Properties...>::operator()` would be
+
+```c++
+template <class DataType, class Property, class... Properties>
+class mdspan {
+public:
+  template <class IndexType, size_t N>
+  reference operator()(array<IndexType,N> const& indices) const noexcept {
+    // remove Property and call the next less-property-qualified implementation
+    // Optimizer should be able to remove spurious copy here (if not, inheritence
+    // could be used internally to achieve the same effect)
+    auto rv = mdspan<DataType, Properties...>(*this).operator()(
+      // intentionally use the unqualified type to trigger ADL
+      pre_call_operator_hook(*this, Property{}, indices)
+    );
+    post_call_operator_hook(*this, Property{}, indices);
+    return rv;
+  }
+  template <class... IndexType>
+  reference operator()(IndexType&&... indices) const noexcept {
+    // similar, but slightly more complicated because of the variadic template
+    auto rv = std::apply(
+      [this](IndexType&&... idxs){ 
+          mdspan<DataType, Properties...>(*this).operator()(std::forward<IndexType>(idxs)...);
+      },
+      pre_call_operator_hook(*this, Property{}, std::forward<IndexType>(indices)...)
+    );
+    post_call_operator_hook(*this, Property{}, std::forward<IndexType>(indices)...);
+    return rv;
+  }
+};
+```
+
+Again, the question of order-invariance arises, though in this case it is much
+harder to detect the presence or absense of a customization for a given
+property (if an order-independent approach is favored in spite of the issues
+raised in [[#altconf]], it may be desirable to use the "monolithic traits class"
+approach instead, similar to the approach of `allocator_traits`).  Though best
+practice should be that the actions taken by these hooks are order independent,
+guaranteeing this for any one property may not be reasonable.  Additionally,
+even if the actions of two hooks are entirely independent and could be reordered
+by the compiler, it may be useful to understand the hook application order for
+performance purposes.
+
+Layout-Related Traits and Hooks for `mdspan` Only
+-------------------------------------------------
+
+```c++
+namespace std {
+namespace experimental {
+namespace access_properties {
+
+template <class MDSpanLike, class Property>
+struct is_always_unique;
+template <class MDSpanLike, class Property>
+inline constexpr bool is_always_unique_v = is_always_unique<MDSpanLike, Property>::value;
+template <class MDSpanLike, class Property>
+constexpr bool is_unique(MDSpanLike s, Property p);
+
+
+template <class MDSpanLike, class Property>
+struct is_always_contiguous;
+template <class MDSpanLike, class Property>
+inline constexpr bool is_always_contiguous_v = is_always_contiguous<MDSpanLike, Property>::value;
+template <class MDSpanLike, class Property>
+constexpr bool is_contiguous(MDSpanLike s, Property p);
+
+template <class MDSpanLike, class Property>
+struct is_always_strided;
+template <class MDSpanLike, class Property>
+inline constexpr bool is_always_strided_v = is_always_strided<MDSpanLike, Property>::value;
+template <class MDSpanLike, class Property>
+constexpr bool is_strided(MDSpanLike s, Property p);
+
+template <typenaem MDSpanLike, class Property>
+constexpr index_type_t<MDSpanLike> stride(MDSpanLike s, Property p);
+
+}}}
+```
+
+The layout-related property traits needed to implement `mdspan` are a bit of a
+special case.  It doesn't really make sense to talk about what happens when
+multiple properties specialize these traits, and trying to formulate these
+traits in a form that can be applied multiple times leads to more confusing and
+less intuitive definitions of the traits (e.g., one could imagine that
+`mdspan<T, Properties...>::stride()` is implemented in terms of the sum of the
+return values from the invocations of the customization points with each of the
+properties separately, and the default implementation of the customization point
+for properties that don't care about stride could return 0).
+
+There are a few approaches to explore for addressing this
+inconsistency.  Taking the approach that no two properties given for the same
+`span`/`mdspan` are allowed to specialize the same customization point makes
+layout-like properties more regular, and perhaps this increase in simplicity is
+enough to outweigh the disadvantages discussed in [[#altconf]].  Another option
+is to provide some sort of trait that says whether or not a property expects to
+be the only one specializing its customization points; something like
+`is_unique_customization_v`.  This is the most complex solution, but provides
+the most flexibility for future property extensions.  It also lends itself to an
+progressive specification strategy by which new properties "lock down" there
+customization point specializations until a compelling use case is presented
+requiring interoperability.  (A more aggressive version of this approach may
+even specify the expected uniqueness of the customization on a per-trait basis.)
+A third option is to just exclude layout-like properties from the ontology
+entirely and instead treat it as part of the base `mdspan` class template.  This
+third approach seems sensible in light of the fact that layout properties don't
+really apply to `span`, so its inclusion in the wider ontology may be
+unnecessary.  This third strategy almost certainly makes the most sense for the
+`extents` property proposed in [[P009r4]]
