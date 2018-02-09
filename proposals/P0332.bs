@@ -80,6 +80,15 @@ the consensus in LEWG has been that the usability of the `mdspan`
 library would be significantly improved with the relaxed array type
 syntax of this proposal.
 
+## Why Not
+
+```
+mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,std::LayoutLeft>
+```
+
+-   Does not allow LayoutLeft or other properties to be types.
+-   Still requires `dynamic_extent` magic number.
+
 
 ## Explicit and Implicit Extents
 
@@ -137,18 +146,9 @@ declarations in this proposal solves the usability problem by providing
 `mdspan` with a concise, intuitive, and highly usable syntax.
 
 
-## Why Not
-
-```
-mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,std::LayoutLeft>
-```
-
--   Does not allow LayoutLeft or other properties to be types.
--   Still requires `dynamic_extent` magic number.
-
-
 ## Clarifying difference between array type and array object declarations
 
+(TODO: Carter add a few sentences about the edge cases and the need to disabiguate).
 The current working draft ([[N4700]]) conflates rules for array type and and
 array object declarations. This proposal also disambiguates the relaxed
 array type declaration rules versus the constrained array object
@@ -433,7 +433,7 @@ length is used by `std::unique_ptr<T[]>` (23.11.1.3),
 `make_shared<T[][N1][N2]>`.
 
 This minor language specification change has been implemented with a
-minor patch to Clang and was permissible in gcc prior to version 5.
+simple patch to Clang.
 
 Holistic View
 =============
@@ -578,21 +578,23 @@ Incomplete array types cannot be used as the return type of a function.
 
 ## Type Deduction Non-Issue
 
+Incomplete array types observe normal type deduction and pointer decay rules.  
+
 ```
 template <typename T>
-void f( span<T[3][5]> ); // A
+void f( mdspan<T[3][5]> ); // A
 
 template <typename T>
-void f( span<T[1][3][5]> ); // B
+void f( mdspan<T[1][3][5]> ); // B
 
 template <typename T>
-void f( span<T[1][][5]> ); // C
+void f( mdspan<T[1][][5]> ); // C
 
 template <typename T, std::size_t M, std::size_t N>
-void f( span<T\[N]\[M][]> ) // D
+void f( mdspan<T\[N]\[M][]> ) // D
 
 template <typename T, std::size_t M, std::size_t N>
-void f( span<T[]\[N]\[M]> ); // E
+void f( mdspan<T[]\[N]\[M]> ); // E
 
 template <typename T>
 void f( T[][3][5] ); // F
@@ -613,7 +615,7 @@ void f( T[]\[N]\[M] ); // I
   // adjusted to pointer T(*)\[M]\[N]
 
 
-int foo( span<int[1][3][5]> x )
+int foo( mdspan<int[1][3][5]> x )
 {
   f(x); // no ambiquity
   // COULD match A with T == int[1]

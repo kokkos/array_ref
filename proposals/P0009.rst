@@ -1,9 +1,9 @@
 ===================================================================
-P0009r4 : Polymorphic Multidimensional Array Reference
+P0009r5 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0009r4
+:Number: D0009r5
 :Date: 2017-10-11
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
@@ -20,6 +20,8 @@ P0009r4 : Polymorphic Multidimensional Array Reference
 :Contact: athanasios.iliopoulos@nrl.navy.mil
 :Author: John Michopoulos
 :Contact: john.michopoulos@nrl.navy.mil
+:Author: Daniel Sunderland
+:Contact: dsunder@sandia.gov
 :Audience: Library Evolution Working Group (LEWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
@@ -122,6 +124,19 @@ Requested full-LEWG straw polls at Albuquerque Nov'2017 meeting:
   - Given authors' update in response to previous two straw polls,
     is this ready to advance to LWG?
   - If not, what specific modifications are required for consensus?
+
+----------------------------------------------------------------------------
+P0009r5 : For 2018-3
+----------------------------------------------------------------------------
+
+Changes from P0009r4
+
+  - Removed nullptr constructor
+  - Added constexpr to indexing operator
+  - Indexing operator requires that rank() == sizeof...(indices)
+  - Fixed typos in examples and moved them to appendix
+  - Converted note on how extentions to access properties may cause reference to
+    be a proxy type to an see_below to make it normative
 
 
 ******************************************************************
@@ -259,8 +274,6 @@ template class ``mdspan``
 
     // Wrapping constructors
 
-    constexpr mdspan(nullptr_t) noexcept;
-
     template< class ... IndexType >
     explicit constexpr mdspan(pointer, IndexType ... DynamicExtents ) noexcept;
 
@@ -275,13 +288,13 @@ template class ``mdspan``
 
     // mapping domain multi-index to access codomain member
   
-    reference operator[]( index_type ) const noexcept; // requires rank() == 1
+    constexpr reference operator[]( index_type ) const noexcept; // requires rank() == 1
 
     template< class ... IndexType >
-    reference operator()( IndexType ... indices ) const noexcept;
+    constexpr reference operator()( IndexType ... indices ) const noexcept;
 
     template< class IndexType , size_t N >
-    reference operator()( std::array<IndexType,N> const & indices ) const noexcept;
+    constexpr reference operator()( std::array<IndexType,N> const & indices ) const noexcept;
 
     // observers of the index space domain
   
@@ -353,10 +366,9 @@ Fundamental Types
 |  ``using reference    = element_type & ;``
 |  ``using pointer      = element_type * ;``
 
-  [Note: If ``std::is_const<element_type>`` then references
-  to codomain members are const.
-  Extensions to access properties may cause ``reference``
-  to become a proxy type. --end note]
+  [If ``std::is_const<element_type>`` then references to codomain members are const.
+  Extensions to access properties may cause ``reference`` to become a proxy type 
+  (see Appendix: Reference is potentially a proxy)]
 
 |  ``using index_type      = ptrdiff_t ;``
 |  ``using difference_type = ptrdiff_t ;``
@@ -403,22 +415,6 @@ specified.
 ``constexpr index_type size() const ;``
 
   Returns: product of ``extent(r)`` where ``0 <= r < rank()``.
-
-
-Given ``mdspan x`` then:
-
-.. code-block:: c++
-
-  int d = 0 ;
-  index_type s = 1 ;
-  for ( int i = 0 ; i < x.rank() ; ++i ) {
-    if ( x.static_extent(i) == std::dynamic_extent ) { ++d ; }
-    s *= x.extent(i);
-  }
-  assert( d == x.rank_dynamic() );
-  assert( s == x.size() );
-
-..
 
 
 Codomain Observers
@@ -576,7 +572,7 @@ Mapping domain multi-index to access elements in the codomain
 
   Requires: ``indices`` is a multi-index in the domain:
 
-  - ``rank() <= sizeof...(IndexType)``
+  - ``rank() == sizeof...(IndexType)``
   - The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
     is in the domain: ``0 <= indices[ith] < extent(ith)``.
   - [Note: Because ``extent(ith) == 1`` for ``rank() <= ith``
@@ -601,7 +597,7 @@ Mapping domain multi-index to access elements in the codomain
 
   Requires: ``indices`` is a multi-index in the domain:
 
-  - ``rank() <= N``
+  - ``rank() == N``
   - ``0 <= indices[ith] < extent(ith)``.
   - [Note: Because ``extent(ith) == 1`` for ``rank() <= ith``
     then extra zero-value indices are valid. --end note]
@@ -769,24 +765,7 @@ the multidimensional index space of an ``mdspan`` is proposed in P0332.
   each integral value in ``slices...`` contracts the corresponding
   extent of ``U``.
 
-  Example:
   
-.. code-block:: c++
-
-  // given U.rank() == 4
-  void foo( mdspan< DataType , Properties ... > const & U )
-  {
-    auto V = subspan( U , make_pair(1,U.extent(0)-1) , 1 , make_pair(2,U.extent(2) , 2 );
-    assert( V.extent(0) == U.extent(0) - 2 );
-    assert( V.extent(1) == U.extent(2) - 2 );
-    assert( & V(0,0) == U(1,1,2,2) );
-    assert( & V(1,0) == U(2,1,2,2) );
-    assert( & V(0,1) == U(1,1,3,2) );
-  }
-
-..
-
-
 Slice Specifier with Static Extent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -898,9 +877,9 @@ codomain member reference generation.
 
       constexpr index_type size() const noexcept;
   
-      // observers of the codomain: [0..span_size())
+      // observers of the codomain: [0..required_span_size())
 
-      constexpr index_type span_size() const noexcept;
+      constexpr index_type required_span_size() const noexcept;
   
       // observers of the mapping from domain to codomain
 
@@ -954,7 +933,7 @@ codomain member reference generation.
 | ``constexpr index_type size() const noexcept;``
 | ``constexpr index_type extent(int) const noexcept;``
 | ``constexpr index_type static_extent(int) noexcept;``
-| ``constexpr index_type span_size() const noexcept;``
+| ``constexpr index_type required_span_size() const noexcept;``
 |
 | ``template < class ... IndexType >``
 | ``static constexpr index_type required_span_size( IndexType ... DynamicExtents ) noexcept;``
@@ -980,6 +959,8 @@ codomain member reference generation.
   ``0 <= indices[ith] < extent(ith)``.
 
   Returns: Layout mapping of ``indices...`` to codomain.
+  (**TODO: Carter**: ABQ notes states that you and Christian gave a more detailed
+  explanation and that it should be specified here) 
 
 
 ***********************************************************************
@@ -1007,7 +988,7 @@ and users have voiced strong expressed preference.
 
 ..
 
-However, this syntax requires the trivial, non-functional language change
+However, this syntax requires the non-functional language change
 proposed in P0332 to relax the definition of an incomplete array type.
 
 **Precedence:**
@@ -1112,6 +1093,42 @@ Appendix: Anticipated mdspan properties
   Verification failure shall be reported.
 
 
+
+***********************************************************************
+Appendix: Examples
+***********************************************************************
+
+Given ``mdspan x`` then:
+
+.. code-block:: c++
+
+  int d = 0 ;
+  index_type s = 1 ;
+  for ( int i = 0 ; i < x.rank() ; ++i ) {
+    if ( x.static_extent(i) == std::dynamic_extent ) { ++d ; }
+    s *= x.extent(i);
+  }
+  assert( d == x.rank_dynamic() );
+  assert( s == x.size() );
+
+..
+
+Subspan behavior:
+  
+.. code-block:: c++
+
+  // given U.rank() == 4
+  void foo( mdspan< DataType , Properties ... > const & U )
+  {
+    auto V = subspan( U , make_pair(1,U.extent(0)-1) , 1 , make_pair(2,U.extent(2)-2 );
+    assert( V.extent(0) == U.extent(0) - 2 );
+    assert( V.extent(1) == U.extent(2) - 2 );
+    assert( & V(0,0) == U(1,1,2,2) );
+    assert( & V(1,0) == U(2,1,2,2) );
+    assert( & V(0,1) == U(1,1,3,2) );
+  }
+
+..
 
 ******************************************************************
 Related papers
