@@ -366,7 +366,7 @@ Data Access Hooks
 
 Similar to the access property member type traits from above, it is desirable to
 define the effects of access properties on `span` and `mdspan` methods in a
-manner that is both orthogonal to that of other properties and separtate from
+manner that is both orthogonal to that of other properties and separate from
 the implementation of the property-free implementations for `span` and `mdspan`. 
 Applying the same namespace-scope traits pattern in, e.g., [[P0443R3]], we can
 define ADL-accessible hooks that property implementers would customize to
