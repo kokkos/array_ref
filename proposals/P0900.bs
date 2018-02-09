@@ -471,7 +471,7 @@ inline constexpr bool is_always_strided_v = is_always_strided<MDSpanLike, Proper
 template <class MDSpanLike, class Property>
 constexpr bool is_strided(MDSpanLike s, Property p);
 
-template <typenaem MDSpanLike, class Property>
+template <typename MDSpanLike, class Property>
 constexpr index_type_t<MDSpanLike> stride(MDSpanLike s, Property p, int i);
 
 }}}
