@@ -1,9 +1,9 @@
 ===================================================================
-P0009r4 : Polymorphic Multidimensional Array Reference
+P0009r5 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: P0009r4
+:Number: D0009r5
 :Date: 2017-10-11
 :Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
 :Author: H\. Carter Edwards
@@ -124,6 +124,19 @@ Requested full-LEWG straw polls at Albuquerque Nov'2017 meeting:
   - Given authors' update in response to previous two straw polls,
     is this ready to advance to LWG?
   - If not, what specific modifications are required for consensus?
+
+----------------------------------------------------------------------------
+P0009r5 : For 2018-3
+----------------------------------------------------------------------------
+
+Changes from P0009r4
+
+  - Removed nullptr constructor
+  - Added constexpr to indexing operator
+  - Indexing operator requires that rank() == sizeof...(indices)
+  - Fixed typos in examples and moved them to appendix
+  - Converted note on how extentions to access properties may cause reference to
+    be a proxy type to an see_below to make it normative
 
 
 ******************************************************************
