@@ -946,6 +946,8 @@ codomain member reference generation.
   ``0 <= indices[ith] < extent(ith)``.
 
   Returns: Layout mapping of ``indices...`` to codomain.
+  (**TODO: Carter**: ABQ notes states that you and Christian gave a more detailed
+  explanation and that it should be specified here) 
 
 
 ***********************************************************************
@@ -1033,42 +1035,6 @@ to a one-dimensional span **Requre** that ``rank() == 1``.
 
 
 ***********************************************************************
-Appendix: mdspan examples
-***********************************************************************
-
-Given ``mdspan x`` then:
-
-.. code-block:: c++
-
-  int d = 0 ;
-  index_type s = 1 ;
-  for ( int i = 0 ; i < x.rank() ; ++i ) {
-    if ( x.static_extent(i) == std::dynamic_extent ) { ++d ; }
-    s *= x.extent(i);
-  }
-  assert( d == x.rank_dynamic() );
-  assert( s == x.size() );
-
-..
-
-subspan:
-  
-.. code-block:: c++
-
-  // given U.rank() == 4
-  void foo( mdspan< DataType , Properties ... > const & U )
-  {
-    auto V = subspan( U , make_pair(1,U.extent(0)-1) , 1 , make_pair(2,U.extent(2)-2 );
-    assert( V.extent(0) == U.extent(0) - 2 );
-    assert( V.extent(1) == U.extent(2) - 2 );
-    assert( & V(0,0) == U(1,1,2,2) );
-    assert( & V(1,0) == U(2,1,2,2) );
-    assert( & V(0,1) == U(1,1,3,2) );
-  }
-
-..
-
-***********************************************************************
 Appendix: Reference is potentially a proxy
 ***********************************************************************
 
@@ -1114,6 +1080,42 @@ Appendix: Anticipated mdspan properties
   Verification failure shall be reported.
 
 
+
+***********************************************************************
+Appendix: Examples
+***********************************************************************
+
+Given ``mdspan x`` then:
+
+.. code-block:: c++
+
+  int d = 0 ;
+  index_type s = 1 ;
+  for ( int i = 0 ; i < x.rank() ; ++i ) {
+    if ( x.static_extent(i) == std::dynamic_extent ) { ++d ; }
+    s *= x.extent(i);
+  }
+  assert( d == x.rank_dynamic() );
+  assert( s == x.size() );
+
+..
+
+Subspan behavior:
+  
+.. code-block:: c++
+
+  // given U.rank() == 4
+  void foo( mdspan< DataType , Properties ... > const & U )
+  {
+    auto V = subspan( U , make_pair(1,U.extent(0)-1) , 1 , make_pair(2,U.extent(2)-2 );
+    assert( V.extent(0) == U.extent(0) - 2 );
+    assert( V.extent(1) == U.extent(2) - 2 );
+    assert( & V(0,0) == U(1,1,2,2) );
+    assert( & V(1,0) == U(2,1,2,2) );
+    assert( & V(0,1) == U(1,1,3,2) );
+  }
+
+..
 
 ******************************************************************
 Related papers
