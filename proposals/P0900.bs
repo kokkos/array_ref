@@ -48,14 +48,17 @@ idea of such a property for expressing ISO-C `restrict`-like semantics.
 context, but the content is relevant to `span` and `mdspan` properties as
 proposed here.
 
-And yet, with all of this activity surrounding uses of this access properties
+With all of this activity surrounding uses of this access properties
 customization point, no paper has been written exploring the design of the
-customization point itself. In particular, the sorts of questions that need to
-be addressed in a more general context include:
+customization point itself. In particular, the above proposals make access
+properties an extension point, define several potentially useful access 
+properties, and allow applying multiple access properties to the same type.
+The design thus needs to define how multiple access properties may interact.
+This means anwering questions like the following:
 
 - What sets of properties are allowed to be given together?
      - Does the addition of a property require the developer to define the set
-        of properties it is compatible with? How do we prevent exponential
+        of properties with which it is compatible? How do we prevent exponential
         explosion of work from this requirement?
 - What does it *mean* when multiple properties are given together?
      - Again, does the addition of a property require the developer to define
