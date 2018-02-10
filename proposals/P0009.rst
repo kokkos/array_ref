@@ -3,13 +3,15 @@ P0009r5 : Polymorphic Multidimensional Array Reference
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0009r5
-:Date: 2017-10-11
-:Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
+:Number: P0009r5
+:Date: 2018-02-10
+:Reply-to: hcedwar@sandia.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
-:Author: Bryce Lelbach 
-:Contact: balelbach@lbl.gov
+:Author: Daniel Sunderland
+:Contact: dsunder@sandia.gov
+:Author: David Hollman
+:Contact: dshollm@sandia.gov
 :Author: Christian Trott
 :Contact: crtrott@sandia.gov
 :Author: Mauro Bianco
@@ -22,7 +24,7 @@ P0009r5 : Polymorphic Multidimensional Array Reference
 :Contact: john.michopoulos@nrl.navy.mil
 :Author: Daniel Sunderland
 :Contact: dsunder@sandia.gov
-:Audience: Library Evolution Working Group (LEWG)
+:Audience: Library Working Group (LWG)
 :URL: https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst
 
 
@@ -126,8 +128,15 @@ Requested full-LEWG straw polls at Albuquerque Nov'2017 meeting:
   - If not, what specific modifications are required for consensus?
 
 ----------------------------------------------------------------------------
-P0009r5 : For 2018-3
+P0009r5 : For 2018-03-Jacksonville Meeting
 ----------------------------------------------------------------------------
+
+`LEWG review at 2017-11-Albuquerque meeting
+<http://wiki.edg.com/bin/view/Wg21albuquerque/P0009>`_
+Unanimous to forward to LWG with editorial and straw poll changes.
+All changes have been applied except allowing ``span<int-type[N]>``
+indexing value for which there was weak support and no proven need.
+This could be added in a subsequent paper.
 
 Changes from P0009r4
 
@@ -281,10 +290,10 @@ template class ``mdspan``
     explicit constexpr mdspan(std::span<element_type>, IndexType ... DynamicExtents ) noexcept;
 
     template< class IndexType , size_t N >
-    explicit constexpr msspan(pointer, std::array<IndexType,N> const & DynamicExtents ) noexcept ;
+    explicit constexpr mdspan(pointer, std::array<IndexType,N> const & DynamicExtents ) noexcept ;
 
     template< class IndexType , size_t N >
-    explicit constexpr msspan(std::span<element_type>, std::array<IndexType,N> const & DynamicExtents ) noexcept ;
+    explicit constexpr mdspan(std::span<element_type>, std::array<IndexType,N> const & DynamicExtents ) noexcept ;
 
     // mapping domain multi-index to access codomain member
   
@@ -354,8 +363,10 @@ Template arguments
 ``Properties...``
 
   Effects:  The domain index space rank, static extents, and identification of
-  dynamic extents is determined from the ``extents`` member of the property pack.
-  The domain to codomain mapping is determined by the remaining members of the property pack
+  dynamic extents is determined from the ``extents``
+  member of the property pack.
+  The domain to codomain layout mapping is
+  determined from the layout member of the property pack.
 
 
 Fundamental Types
@@ -434,12 +445,11 @@ be equal to the codomain.
 
   Requires: 
 
-  - ``rank_dynamic() <= sizeof...(DynamicExtents)``
+  - ``rank_dynamic() == sizeof...(DynamicExtents)``
   - ``is_integral_type_v<IndexType>...``
   - Denote the ith coordinate of ``DynamicExtents...`` as
     denoted as ``DynamicExtents[ith]`` then:
   - ``0 <= DynamicExtents[ith]`` for ``0 <= ith < rank_dynanic()``
-  - ``1 == DynamicExtents[ith]`` for ``rank_dynamic() < ith``
 
   Returns: The minimum size of the codomain to support the multi-index domain
   defined by the merging of ``DynamicExents`` with ``StaticExtents``.
@@ -450,10 +460,9 @@ be equal to the codomain.
 
   Requires: 
 
-  - ``rank_dynamic() <= N``
+  - ``rank_dynamic() == N``
   - ``is_integral_type_v<IndexType>...``
   - ``0 <= DynamicExtents[ith]`` for ``0 <= ith < rank_dynanic()``
-  - ``1 == DynamicExtents[ith]`` for ``rank_dynamic() < ith``
 
   Returns: The minimum size of the codomain to support the multi-index domain
   defined by the merging of ``DynamicExents`` with ``StaticExtents``.
@@ -575,8 +584,6 @@ Mapping domain multi-index to access elements in the codomain
   - ``rank() == sizeof...(IndexType)``
   - The ith coordinate of ``indices...``, denoted as ``indices[ith]``,
     is in the domain: ``0 <= indices[ith] < extent(ith)``.
-  - [Note: Because ``extent(ith) == 1`` for ``rank() <= ith``
-    then extra zero-value indices are valid. --end note]
 
   Returns: A ``reference`` to the element mapped to by ``indices...``.
 
@@ -599,8 +606,6 @@ Mapping domain multi-index to access elements in the codomain
 
   - ``rank() == N``
   - ``0 <= indices[ith] < extent(ith)``.
-  - [Note: Because ``extent(ith) == 1`` for ``rank() <= ith``
-    then extra zero-value indices are valid. --end note]
 
   Returns: A ``reference`` to the element mapped to by ``indices...``.
 
@@ -619,7 +624,7 @@ Mapping domain multi-index to access elements in the codomain
 Mapping Observers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``using layout = /* implmentation deduces from Properties... */ ;``
+``using layout = /* implementation deduces from Properties... */ ;``
 
   Identification of the layout mapping.
   If ``Properties...`` does not include a layout property then
@@ -848,7 +853,7 @@ codomain member reference generation.
 
 .. code-block:: c++
 
-  class layout_concept /* exposition only */ {
+  class layout_property /* exposition only */ {
   public:
  
     template< ptrdiff_t ... StaticExtents >
@@ -923,7 +928,7 @@ codomain member reference generation.
   otherwise ``extent(i) == 0``.
   
 | ``explicit constexpr mapping( index_type... ) noexcept;``
-| ``explicit constexpr mapping(`` *layout_concept* ``const&) noexcept;``
+| ``explicit constexpr mapping(`` *layout_property* ``const&) noexcept;``
 
   Constructors, assignment operators, and destructor requires and effects
   correspond to the corresponding members of ``mdspan`` .
@@ -933,11 +938,10 @@ codomain member reference generation.
 | ``constexpr index_type size() const noexcept;``
 | ``constexpr index_type extent(int) const noexcept;``
 | ``constexpr index_type static_extent(int) noexcept;``
-| ``constexpr index_type required_span_size() const noexcept;``
 |
 | ``template < class ... IndexType >``
 | ``static constexpr index_type required_span_size( IndexType ... DynamicExtents ) noexcept;``
-| ``static constexpr index_type required_span_size( layout_concept const & ) noexcept;``
+| ``static constexpr index_type required_span_size( *layout_property* const & ) noexcept;``
 |
 | ``static constexpr bool is_always_unique     = /* deduced */ ;``
 | ``static constexpr bool is_always_contiguous = /* deduced */ ;``
@@ -952,20 +956,25 @@ codomain member reference generation.
   Domain, codomain, and mapping observers requires and effects
   correspond to the corresponding members of ``mdspan`` .
 
+| ``constexpr index_type required_span_size() const noexcept;``
+
+  Returns: The upper bound of the codomain one dimensional index space
+  ``[0..required_span_size())``.
+
 | ``template< class ... IndexType >``
 | ``constexpr index_type operator()(IndexType ... indices) const noexcept;``
   
   Requires: ``rank() == sizeof...(indices)`` and
   ``0 <= indices[ith] < extent(ith)``.
 
-  Returns: Layout mapping of ``indices...`` to codomain.
-  (**TODO: Carter**: ABQ notes states that you and Christian gave a more detailed
-  explanation and that it should be specified here) 
+  Returns: Result of mapping ``indices...`` from the domain
+  multidimensional index space to the codomain one dimensional index space
+  ``[0..required_span_size())``.
 
 
-***********************************************************************
-Appendix: Preferred declaration syntax for multi-index space domain
-***********************************************************************
+****************************************************************************
+Appendix: Preferred declaration syntax for multi-index space domain (P0332)
+****************************************************************************
 
 .. _`preferred, concise, and intuitive syntax` :
 
@@ -1022,7 +1031,7 @@ Impact on this proposal
 
 
 ***********************************************************************
-Appendix: Alignment or Merging with P0122 ``span`` (see P0456)
+Appendix: Alignment or Merging with P0122 ``span`` (P0456)
 ***********************************************************************
 
 A minor revision of P0122 ``span`` is proposed in P0456 that
@@ -1048,7 +1057,7 @@ to a one-dimensional span **Requre** that ``rank() == 1``.
 
 
 ***********************************************************************
-Appendix: Reference is potentially a proxy
+Appendix: Reference is potentially a proxy (P0860)
 ***********************************************************************
 
 The ``reference`` type may be a proxy for accessing an ``element_type`` object.
