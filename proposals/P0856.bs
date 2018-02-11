@@ -1,7 +1,7 @@
 <pre class='metadata'>
-Title: Restrict Access Property for <code>span</code> and <code>mdspan</code>
-Abstract: This paper proposes a semantic for the use of the access property customization point on <code>span</code> and <code>mdspan</code> to express non-aliasing semantics analogous to those of the ISO-C keyword <code>restrict</code>.  Reconceptualizing non-aliasing semantics as a customization point on a library feature addresses many of the previous ambiguities in non-aliasing semantics for C++, and the implications of this new approach are discussed.
-Shortname: D0856
+Title: Restrict Access Property for <code>mdspan</code> and <code>span</code>
+Abstract: This paper proposes a semantic for the use of the property customization point on <code>span</code> and <code>mdspan</code> to express non-aliasing semantics analogous to those of the ISO-C keyword <code>restrict</code>.  Reconceptualizing non-aliasing semantics as a customization point on a library feature addresses many of the previous ambiguities in non-aliasing semantics for C++, and the implications of this new approach are discussed.
+Shortname: P0856
 Revision: 0
 Date:   2018-02-12
 Editor: David S. Hollman, dshollm@sandia.gov
@@ -9,7 +9,7 @@ Editor: H. Carter Edwards, hcedwar@sandia.gov
 Editor: Christian Trott, crtrott@sandia.gov
 Audience: LEWG
 Group: WG21
-Status: D
+Status: P
 Repository: https://github.com/kokkos/array_ref.git
 URL: https://kokkos.github.io/array_ref/proposals/P0856.html
 Markup Shorthands: markdown yes
@@ -21,9 +21,7 @@ Revision History
 
 ## D0856r0
 
-2017-11-08 Albuquerque LEWG feedback for [[P0009r3]]:
-
--   Generate paper for *restrict* access property for `span` and `mdspan`
+Address [2017-11-Albuquerque LEWG feedback](http://wiki.edg.com/bin/view/Wg21albuquerque/P00546) to generate paper for *restrict_access* property for `mdspan` and `span`.
 
 Motivation
 ==========
@@ -79,8 +77,8 @@ to most people in this example that the user should have made this
 transformation to begin with, but with intervening work in between the two
 assignments, or other increased complexity, this may not be as clear).
 
-We propose to add the `restrict_access` property to the set of admissible access
-properties of `span` and `mdspan`.
+We propose to add the `restrict_access` property to the set of admissible 
+properties of `mdspan` and `span`.
 
 This paper does not propose a strategy for subsequent extensibility. We identify
 open questions that must be addressed in the design of such a strategy.  P0900
@@ -278,29 +276,29 @@ inline namespace fundamentals_v3 {
 
   // Trait common to all span and mdspan property proposals, as given in e.g., P0009r4
   template< class T, class P >
-  struct has_access_property;
+  struct has_property;
 
-  // Variable template for has_access_property
+  // Variable template for has_property
   template< class T, class P >
-  inline constexpr bool has_access_property_v = has_access_property<T, P>::value ;
+  inline constexpr bool has_property_v = has_property<T, P>::value ;
 
   // Tag class for indicating restrict access
   struct restrict_access ;
 
-  // Specialization of has_access_property for restrict_access
+  // Specialization of has_property for restrict_access
   template< class T >
-  struct has_access_property<T, restrict_access> {
+  struct has_property<T, restrict_access> {
     inline constexpr bool value = /* see below */;
   };
 
 }}}
 ```
 
-`has_access_property<T, restrict_access>::value`
+`has_property<T, restrict_access>::value`
 ------------------------------------------------
 
 Evaluates to true if `T` is instantiation of `span` or `mdspan` and the
-`AccessProperties...` parameter pack of `T` contains `restrict_access`.
+`Properties...` parameter pack of `T` contains `restrict_access`.
 
 Application of the Restriction to `span`
 ----------------------------------------
@@ -314,7 +312,7 @@ restriction proposed herein is as follows (in addition to the changes proposed b
 **23.7.2.7 [span.restrict]**
 
 Let `S` be an instantiation of `span` such that
-`has_access_property<S,restrict_access>::value` is `true`, and let `s` be an
+`has_property<S,restrict_access>::value` is `true`, and let `s` be an
 instance of `S`.  Let `p` be an object of type `S::pointer` and `sz` be an
 object of type `S::index_type`.  The *restricted lifetime of* `s`
 *with respect to {* `p, sz` *}* is defined such that it either:
@@ -334,7 +332,7 @@ object of type `S::index_type`.  The *restricted lifetime of* `s`
 the "*restricted lifetime of* `s` *with respect to {* `p, sz` *}* with the
 notation `L{s, p, sz}`.  The lifetime of `s` thus consists of a disjoint set of
 *restricted lifetimes* `L_1{s, p_1, sz_1}`, ..., `L_n{s, p_n, sz_n}`.  The truth of 
-`has_access_property<S,restrict_access>::value` implies that during any given
+`has_property<S,restrict_access>::value` implies that during any given
 restricted lifetime `L_i{s, p_i, sz_i}` of an instance `s` of `S`, no value of a
 pointer or address of a reference may be used to form a glvalue expression that
 modifies an object with an address in the range `[p_i, p_i + sz_i)` except for
@@ -386,7 +384,7 @@ restrict-like semantics in C++:
         parameter, for instance using SFINAE.
 - `restrict`, as given in ISO C, has insufficient expressiveness (you cannot
     precisely enough describe what is restricted)
-    - The extensibility of `AccessProperties...` for `span` and `mdspan` as a
+    - The extensibility of `Properties...` for `span` and `mdspan` as a
         library feature provides a clear path forward towards addressing this.
 - In C, the lifetime of the `restrict` contract is awkward to express and
     therefore is restricted to initialization.
