@@ -1,18 +1,18 @@
 <pre class='metadata'>
 Title: An Ontology for Properties of <code>mdspan</code>
-Abstract:  This paper explores the pros and cons of several different approaches
-           to general specification of the access properties customization point
-           for `mdspan` and `span`, as proposed by [[P0009r4]] and [[P0546r1]] 
-           and already utilized by several other proposals.  Various aspects of
-           and constraints on the interaction between disperate property
-           customizations are examined.
-Shortname: D0900
+Abstract:  This paper is an initial exploration of approaches for the
+           general specification of a properties customization point;
+           such as proposed for mdspan [[P0009r4]], span [[P0546r1]],
+           and other proposals.
+           Considerations and constraints on the interaction
+           between disparate property customizations are examined.
+Shortname: P0900
 Revision: 0
 Date:   2018-02-12
 Editor: David S. Hollman, dshollm@sandia.gov
 Audience: LEWG
 Group: WG21
-Status: D
+Status: P
 Repository: https://github.com/kokkos/array_ref.git
 URL: https://kokkos.github.io/array_ref/proposals/P0900.html
 Markup Shorthands: markdown yes
@@ -40,21 +40,21 @@ namespace experimental {
 [[P0546r1]] proposes that `span` should also accept a similar set of
 properties. For brevity, we will herein refer to the customization point
 expressed via the `Properties...` template parameter(s) of `mdspan` (and,
-pending [[P0546r1]], `span`) as *access properties*. LEWG recommended that
-[[P0019r5]] should be redone as an access property (on `span`, though it would
+pending [[P0546r1]], `span`) as *properties*. LEWG recommended that
+[[P0019r5]] should be redone as a property (on `span`, though it would
 probably also apply to `mdspan`), and P0860 does this. P0856 also explores the
 idea of such a property for expressing ISO-C `restrict`-like semantics.
-[[P0367r0]] also proposed a number of access properties in a more general
+[[P0367r0]] also proposed a number of properties in a more general
 context, but the content is relevant to `span` and `mdspan` properties as
 proposed here.
 
-With all of this activity surrounding uses of this access properties
-customization point, no paper has been written exploring the design of the
-customization point itself. In particular, the above proposals make access
-properties an extension point, define several potentially useful access 
-properties, and allow applying multiple access properties to the same type.
-The design thus needs to define how multiple access properties may interact.
-This means anwering questions like the following:
+We now formally explore the design of the proposed *properties*
+customization point.
+In particular, the referenced papers propose a properties extension point,
+define several need useful properties, and allow the application of
+multiple properties to the same type.
+Thus the design for how multiple properties may interact must be defined;
+for example, 
 
 - What sets of properties are allowed to be given together?
      - Does the addition of a property require the developer to define the set
@@ -68,16 +68,16 @@ This means anwering questions like the following:
     properties given? If so, what is the meaning of the order?
 
 We try to address these questions and other related issues by sketching an
-ontology for `mdspan` and `span` properties herein.
+ontology for `mdspan` (and `span`) properties herein.
 
 Design Principles and Decisions
 ===============================
 
-What follows is a set of overarching principles for the design of the access
+What follows is a set of overarching principles for the design of the
 property customization points. These principles suggest a set of restrictions
 to the set of features implementable via the customization point, and an
 exploration of the viability of these restrictions follows, particularly in the
-context of the access properties proposed (or suggested) thus far in other
+context of the properties proposed (or suggested) thus far in other
 papers.
 
 
@@ -87,8 +87,8 @@ Orthogonality
 The issue of exponential explosion for property compatibility specification
 work is so dire (particularly with respect to vendor-supplied or user-supplied
 extensions) that we suggest taking extreme measures. Thus, we propose that
-**all** access properties should be allowed with all other access properties,
-and that any access property that cannot tolerate this level of compatibility
+**all** properties should be allowed with all other properties,
+and that any property that cannot tolerate this level of compatibility
 should *not* use this customization point but should be implemented via some
 other mechanism. The implications of this constraint are explored below, and a
 mechanism for implementing and enforcing this constraint is also proposed
@@ -96,7 +96,7 @@ herein. Some potential for nuance within this restriction is also discussed
 below.
 
 A corrollary to this principle is that the behavior and attributes of an
-`mdspan` under a set of access properties should be expressible as a
+`mdspan` under a set of properties should be expressible as a
 well-defined combination of the behaviors or attributes of the `mdspan` under
 each of those properties individually.  For instance, the `noexcept` specifier
 for `mdspan<T, Properties...>::operator[](index_type)` should be expressible as:
@@ -113,13 +113,13 @@ hooks in a traits-like interface, as explored below.
 Property Modes
 --------------
 
-It is important to distinguish between access property "types" and their
+It is important to distinguish between property "types" and their
 "values". For instance, [[P0367r0]] proposes a rich set of read/write access
 qualifiers, including the expected `read`, `write`, and `read_write`, but also
 including more specialized "values" like `discard_read` and `discard_write`. It
 is clear that these "values" are meant to be mutually exclusive; that is, it
 would be nonsensical to have an `mdspan` with both `write` and `read_write`. If
-a flat model were used for the access property customization point, this
+a flat model were used for the property customization point, this
 nonsensical mutual exclusivity would violate the orthogonality design principle
 above. However, if we instead view these as different "modes" (or "values") of
 a single "property", orthogonality can be preserved while still providing the
@@ -140,8 +140,8 @@ Convertibility
 A follow-on to the orthogonality design decision is that of convertibility (via
 construction or assignment).  In similar interest of avoiding exponential
 explosion of pairwise convertibility specification and implementation, it makes
-sense to impose the constraint that an `mdspan` with *any* set of access
-properties is always convertible to an `mdspan` with any other set of access
+sense to impose the constraint that an `mdspan` with *any* set of 
+properties is always convertible to an `mdspan` with any other set of
 properties (and likewise for `span`).  A slight nuance that could be added to
 this constraint is to allow properties to forbid interconversion between
 different *modes* within the same property.  For instance, with the access mode
@@ -158,7 +158,7 @@ extensibility constraints as properties themselves.
 On the Importance of API Invariance
 -----------------------------------
 
-In the design of many customization points analogous to the access properties
+In the design of many customization points analogous to the properties
 proposed herein, invariance of the API for members of the resulting class
 template instantiation is critical to its usefulness in a generic context. For
 example, the invariance of the `vector` API with respect to the `Allocator`
@@ -174,17 +174,17 @@ auto copy_odd_values(const vector<T, Allocator>& v) {
 }
 ```
 
-In the context of access properties for `span` and `mdspan`, this invariance is
+In the context of properties for `span` and `mdspan`, this invariance is
 actually not quite as critical for several important reasons. Most importantly,
 both `span` and `mdspan` are intended to be passed by value. Thus, there is less
 need to template on the `Properties...` template parameters, for example in order
-to avoid spurious copies to `const` reference parameters. In fact, some access
+to avoid spurious copies to `const` reference parameters. In fact, some
 properties represent a contract that would be dangerous to transmit into a
 generic context, as is the case with `restrict_access` (proposed in P0856).
 In such cases, it actually makes more sense to eschew support for a generic
 properties variadic template parameter in favor of specific enumeration of the
 properties known to be supported by the generic function.  Many
-compiler-specific access properties are likely to also represent similar sorts
+compiler-specific properties are likely to also represent similar sorts
 of contracts.
 
 On Transmission into Generic Contexts {#gencon}
@@ -200,13 +200,13 @@ code that is generic with respect to some properties but not others.  A
 potential solution for this is explored below.
 
 
-Proposed Solution: Access Property Traits
+Proposed Solution: Property Traits
 =========================================
 
 One way to implement many of the design constraints expressed above is to
 specify a mechanism for the application of properties to a `span` or `mdspan`
 that maintains adherence to these design principles through its action.  As
-such, we propose a set of access property traits via which most of the aspects
+such, we propose a set of property traits via which most of the aspects
 of most of the properties proposed thus far can be expressed.  (Those that
 express contracts or hints to compilers and optimizers obviously cannot be fully
 specified in this way, but even in those cases some of these traits may be
@@ -222,7 +222,7 @@ foreseeable based on that experience.
 Traits for Member Types
 -----------------------
 
-There are two possible approaches to resolving conflicts between access
+There are two possible approaches to resolving conflicts between
 properties attempting to modify the same member type. The first approach is to
 apply the type trait to each property in a nested manner, using the order the
 properties are given in the `Properties...` list (though the best practice
@@ -233,7 +233,7 @@ in terms of a recursive application of the following customization point:
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class SpanLike, class Property>
 struct element_type;
@@ -258,7 +258,7 @@ template <class DataType, class Property, class... Properties>
 class mdspan {
 public:
   using element_type = 
-    access_properties::element_type_t<mdspan<DataType, Properties...>, Property>>;
+    properties::element_type_t<mdspan<DataType, Properties...>, Property>>;
 };
 
 // Base case is the mdspan without any properties:
@@ -278,7 +278,7 @@ and the default, unspecialized implementation of the customization point for
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class SpanLike, class Property>
 struct element_type { using type = typename SpanLike::element_type; };
@@ -291,7 +291,7 @@ The rest of the element types would have similar customization points:
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class SpanLike, class Property>
 struct value_type;
@@ -324,9 +324,9 @@ using reference_t = class reference<SpanLike, Property>::type;
 ### On order dependence and order invariance
 
 This approach has the disadvantage of imposing a theoretical order dependence
-on the access properties customization point. Practically speaking, it would be
+on the properties customization point. Practically speaking, it would be
 considered a best practice of a high-quality implementation to ensure that a
-property's implementation of `access_properties::element_type_t` (and other
+property's implementation of `properties::element_type_t` (and other
 traits) are invariant with respect to ordering with other known properties
 (such as those in the standard library), but with this approach it would be
 impossible to make that guarantee formal, particularly with respect to other
@@ -336,28 +336,28 @@ advantage of this specifying the customization point action in this way, since
 in the event of an unavoidable ordering dependency the behavior is both
 well-defined and easily explained in terms of a relatively simple mechanism.
 This also makes sense in terms of defining an order for invocation of hooks
-(discussed below), which may be needed to implement some access properties.
+(discussed below), which may be needed to implement some properties.
 
 <h4 id="altconf">Alternative means of resolving conflicts</h4>
 
-A second approach to resolving conflicts between two access properties
+A second approach to resolving conflicts between two properties
 customizing the same member type trait (or most of the other traits) is to
-disallow it and to make this the *definition* of access property
+disallow it and to make this the *definition* of property
 incompatibility.  Other than eliminating order dependence, this approach has the
 advantage of producing a clean, easy-to-explain definition of property
 incompatibility.  However, there are several key disadvantages to this approach.
-First, the implementations of many access property traits will be
+First, the implementations of many property traits will be
 implementation-defined, which implies that one implementation may specialize a
-trait for a given access property and another may use a different mechanism
+trait for a given property and another may use a different mechanism
 (e.g., specialization of a different trait).  This leads to the uncomfortable
 scenario where either the mechanism for implementation of any standardized
-access properties needs to be specified, or (much worse) the compatibility
+properties needs to be specified, or (much worse) the compatibility
 between properties is implementation-defined.  Beyond this, not all mututally
-exclusive modes of a given property may modify the same access property traits.
+exclusive modes of a given property may modify the same property traits.
 For instance, in the example above with `read`/`write`/`read_write`/`read_discard`/etc.
 modes of some property (which we called `access_mode` for the sake of
 discussion), the `read` and `read_discard` modes would likely specialize
-`access_properties::reference_t` to be a `const` reference to the `value_type`
+`properties::reference_t` to be a `const` reference to the `value_type`
 of the `span` or `mdspan`, but there is no equivalent specialization for the
 `write` mode.  Thus, to enforce the mutual exclusivity that is obvious from the
 property's definition, one would need to define a special case that specifies
@@ -367,8 +367,8 @@ incompatibility *in spite of* trait-wise compatibility.
 Data Access Hooks
 -----------------
 
-Similar to the access property member type traits from above, it is desirable to
-define the effects of access properties on `span` and `mdspan` methods in a
+Similar to the property member type traits from above, it is desirable to
+define the effects of properties on `span` and `mdspan` methods in a
 manner that is both orthogonal to that of other properties and separate from
 the implementation of the property-free implementations for `span` and `mdspan`. 
 Applying the same namespace-scope traits pattern in, e.g., [[P0443R3]], we can
@@ -378,7 +378,7 @@ implement the property's behavior.
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class SpanLike, class Property>
 typename SpanLike::index_type_t
@@ -455,7 +455,7 @@ Layout-Related Traits and Hooks for `mdspan` Only
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class MDSpanLike, class Property>
 struct is_always_unique;
@@ -557,7 +557,7 @@ trait would look something like:
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class Property>
 using generic_context_propagation_mode_t = /* implementation defined */;
@@ -570,8 +570,8 @@ Implementers could then rewrite `my_generic_function` as:
 ```c++
 template <class T1, class... Properties1, class T2, class... Properties2>
 auto my_generic_function(mdspan<T1, Properties1...> s1, mdspan<T2, Properties2...> s2) {
-    auto s1g = mdspan<T1, access_properties::generic_context_propagation_mode_t<Properties1>...>(s1);
-    auto s2g = mdspan<T2, access_properties::generic_context_propagation_mode_t<Properties2>...>(s2);
+    auto s1g = mdspan<T1, properties::generic_context_propagation_mode_t<Properties1>...>(s1);
+    auto s2g = mdspan<T2, properties::generic_context_propagation_mode_t<Properties2>...>(s2);
     return generic_dot(s1g, s1g) + generic_dot(s2g, s2g);
 }
 ```
@@ -607,7 +607,7 @@ between any pair of modes of the same property.
 ```c++
 namespace std {
 namespace experimental {
-namespace access_properties {
+namespace properties {
 
 template <class PropertyInMode1, class PropertyInMode2>
 inline constexpr bool modes_of_same_property_v = /* implementation defined */
@@ -658,5 +658,5 @@ Open Questions and Straw Polls
     implemented at namespace scope or as part of a monolithic traits class?
 - Straw poll: Should the guidance be to propagate properties via the
     instructions of a trait like `generic_context_propagation_mode_t`, or should
-    the guidance be to not propagate access properties via template argument
+    the guidance be to not propagate properties via template argument
     deduction?

@@ -3,13 +3,11 @@ P0546r2 : Span - foundation for the future
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0546r2
-:Date: 2017-10-11
-:Reply-to: hcedwar@sandia.gov, balelbach@lbl.gov
+:Number: P0546r2
+:Date: 2018-02-11
+:Reply-to: hcedwar@sandia.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
-:Author: Bryce Lelbach
-:Contact: balelbach@lbl.gov
 :Author: Daniel Sunderland
 :Contact: dsunder@sandia.gov
 :Audience: Library Evolution Working Group (LEWG)
@@ -24,6 +22,7 @@ P0546r2 : Span - foundation for the future
 +------------+-------------------------------------------------------------+
 + P0546r2    + Update AccessProperties to Properties.                      +
 +            + Reference P0900 on properties ontology.                     +
++            + Request LEWG straw polls at 2018-03-Jacksonville.           +
 +------------+-------------------------------------------------------------+
 
 +------------+-------------------------------------------------------------+
@@ -42,6 +41,40 @@ P0546r2 : Span - foundation for the future
 | P0900      | Property Ontology                                           |
 +------------+-------------------------------------------------------------+
 
+******************************************************************
+Requested Action by LEWG at 2018-03-Jacksonville
+******************************************************************
+
+- Recall `LEWG 2017-11-Albuquerque
+  <http://wiki.edg.com/bin/view/Wg21albuquerque/P0546>`_
+  straw polls
+
+    *We should specify the dynamic extent as the
+    element type of the first template parameter
+    rather than the (current) second template parameter*
+
+      **SF 5 , F 3 , N 2 , A 2 , SA 0**
+
+    *We support the addition of access properties variadic template parameters*
+
+      **SF 0 , F 10 , N 1 , A 5 , SA 0**
+
+
+- LEWG 2018-03-Jacksonville requested straw polls:
+
+  1. Revise P0122 ``span`` to declare extent as part of the element type of
+     the first template parameter; before progressing ``span`` through LWG?
+
+     * This modifies ``span`` to have a single template argument.
+
+
+  2. For the single template argument ``span`` add the properties parameter pack
+     to enable properties such as ``atomic_access`` (P0860) and
+     ``restrict_access`` (P0856); before progressing ``span`` through LWG?
+
+  3. Introduce into wording the vocabulary of *domain index space*
+     for the set of admissible indices and
+     *codomain element space* for the set of referenced objects.
 
 ******************************************************************
 Motivation
@@ -62,11 +95,8 @@ to incorporate additional high performance access needs such
 as those identified in **P0009** and **P0367**.
 
 
-Summary of Proposed Change
+Summary of Proposed Changes
 ----------------------------------------------------------------------------
-
-Instead of ``ElementType`` provide an ``ArrayType`` and
-delete the *magic value* ``dynamic_extent`` .
 
 .. code-block:: c++
 
@@ -74,6 +104,9 @@ delete the *magic value* ``dynamic_extent`` .
   class span ;
 
 ..
+
+1. Instead of ``ElementType`` provide an ``ArrayType`` and
+   delete the *magic value* ``dynamic_extent`` .
 
   - ``ArrayType`` is either
 
@@ -87,6 +120,9 @@ delete the *magic value* ``dynamic_extent`` .
 
   - The need for a ``dynamic_extent`` *magic value* is entirely eliminated.
 
+
+2. Add properties parameter pack.
+
   - ``Properties...`` is a well-defined extension point **P0900**.
     This extension point, while not exercised in this proposal, enables
     code which is templated on ``span`` to be *future proofed* with
@@ -97,7 +133,7 @@ delete the *magic value* ``dynamic_extent`` .
     future proof.
 
 
-Introduce vocabulary of *domain index space* and *codomain element space* .
+3. Introduce vocabulary of *domain index space* and *codomain element space* .
 
 
 Precedence 
@@ -271,7 +307,6 @@ Changes to span constructors, copy, assignment, and destructor [span.cons]
 .. code-block:: c++
 
   constexpr span() noexcept ;
-  constexpr span( nullptr_t ) nodexcept ;
 
 ..
 
