@@ -1,25 +1,24 @@
 <pre class='metadata'>
 Title:  Relaxed Incomplete Multidimensional Array Type Declaration
-Abstract: TODO Write abstract
+Abstract: Significantly improve usability of
+  the mdspan multidimensional array library
+  by providing users with a concise and intuitive syntax
+  for specifying static and dynamic dimensions.
 Editor: H. Carter Edwards, hcedwar@sandia.gov
+Editor: Daniel Sunderland, dsunder@sandia.gov
 Editor: Christian Trott, crtrott@sandia.gov
 Editor: David Hollman, dshollm@sandia.gov
 Editor: Mauro Bianco, mbianco@cscs.ch
 Editor: Athanasios Iliopoulos, athanasios.iliopoulos@nrl.navy.mil
 Editor: John Michopoulos, john.michopoulos@nrl.navy.mil
-Shortname: D0332
+Shortname: P0332
 Revision: 2
 Audience: EWG
-Status: D
+Status: P
 Group: WG21
-Date: 2017-10-09
+Date: 2018-02-10
 Repository: https://github.com/kokkos/array_ref.git
 URL: https://kokkos.github.io/array_ref/proposals/P0332.html
-Warning: Custom
-Custom Warning Title: Work in Progress
-Custom Warning Text: This document is a work in progress that has not yet been
-                     submitted to the committee for discussion in its current
-                     form. 
 Markup Shorthands: markdown yes
 </pre>
 
@@ -53,7 +52,7 @@ Motivation
 
 The dimensions of multidimensional array reference `mdspan`
 ([[P0331r0]] and [[P0009r3]]) are declared with a syntactically verbose
-property argument.
+extents property argument.
 We propose a minor, non-breaking relaxation of the array type declaration
 in [decl.array] to allow a concise and intuitive syntax for
 multidimensional declarations.
@@ -86,7 +85,7 @@ syntax of this proposal.
 mdspan<double,std::dynamic_extent,std::dynamic_extent,std::dynamic_extent,std::LayoutLeft>
 ```
 
--   Does not allow LayoutLeft or other properties to be types.
+-   Does not allow `layout_left` or other properties to be types.
 -   Still requires `dynamic_extent` magic number.
 
 
@@ -148,19 +147,31 @@ declarations in this proposal solves the usability problem by providing
 
 ## Clarifying difference between array type and array object declarations
 
-(TODO: Carter add a few sentences about the edge cases and the need to disabiguate).
-The current working draft ([[N4700]]) conflates rules for array type and and
-array object declarations. This proposal also disambiguates the relaxed
-array type declaration rules versus the constrained array object
-declaration rules.
+An array object has the unusual ability to change array type,
+as illustrated in the following example.
+
+```
+  extern int x[];
+  using T_incomplete = decltype(x);
+  int x[42];
+  using T_complete = decltype(x)
+  static_assert( ! is_same_v<T_incomplete,T_complete> );
+```
+
+Specifications ([[N4700]]) to support this unusual ability 
+conflate the rules for array type and array object declarations.
+In this proposal we systematically reviewed complete array type,
+incomplete array type, and array object declaration rules in ([[N4700]])
+and propose revisions to disambiguate these rules.
+
 
 Proposal
 ========
 
 This proposal has two themes: (1) clarification of incomplete types,
 array type declarations, and array object declarations and (2)
-relaxation of extent expressions for incomplete array types, but not
-array declarations.
+relaxation of extent expressions for incomplete array types
+but not array object declarations.
 
 ## Clarification of incomplete types
 
@@ -424,6 +435,8 @@ decay_t<S> // is an incomplete type
 is_same_v< decay_t<S> , double(*)[20][] >
 ```
 
+
+
 Precedence and Feasibility
 ==========================
 
@@ -633,13 +646,24 @@ int foo( int y[][3][5] )
 }
 ```
 
-TODOs/To Address/To Think About
-===============================
+## Array Types of Zero Length
 
-- TODO: Remove this section
-- TODO: address conveying other information via other constants in, e.g.,
-    `std::extents` template (here or elsewhere)
-- TODO: address `std::array` sizes
-- TODO: function types returning function types
-- TODO: address what needs this other than `mdspan`?
-- TODO: note that array to pointer decay is unchanged
+An array type of zero length `int[M][N]` where `N==0` is invalid.
+This can lead to challenges in meta-programming where `N` is computed.
+A potential work-around enabled by this proposal is to map such a type
+to an incomplete type.
+
+```
+  template< size_t M , size_t N >
+  using T = conditional_t< N != 0 , int[M][N] , int[M][] > ;
+```
+
+
+## Other Potential Applications
+
+There may be other potential applications for the proposed
+relaxed incomplete array syntax; for example deduction of
+multiple dimensions.
+
+
+
