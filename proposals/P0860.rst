@@ -1,10 +1,10 @@
 ===================================================================
-D0860r0 : Atomic Access Property for span and mdspan
+P0860r0 : Atomic Access Property for span and mdspan
 ===================================================================
 
 :Project: ISO JTC1/SC22/WG21: Programming Language C++
-:Number: D0860r0
-:Date: 2017-11-09
+:Number: P0860r0
+:Date: 2018-02-10
 :Reply-to: hcedwar@sandia.gov
 :Author: H\. Carter Edwards
 :Contact: hcedwar@sandia.gov
@@ -28,7 +28,7 @@ Revision History
 P0856r0
 ----------------------------------------------------------------------------
 
-2017-11-08 Albuquerque LEWG feedback for P0009, P0019, and P0546
+2017-11-Albuquerque LEWG feedback for P0009, P0019, and P0546
 
   - Extract atomic array reference from P0019 to a separate paper
 
@@ -36,15 +36,6 @@ P0856r0
 ******************************************************************
 Description / Motivation
 ******************************************************************
-
-Both ``span`` and ``mdspan`` allow for additional property parameters 
-to be specified. 
-The collections of all possible property parameters form an ontology 
-**P0900** where the properties are grouped into orthogonal *property-types*.
-Properties with the property-type *access* allows ``span`` and ``mdspan``
-to tailor how referenced members are accessed.
-A ``span`` or ``mdspan`` can have at most one parameter with the
-*access* property-type.
 
 High performance computing (HPC) applications use very large arrays.
 Computations with these arrays typically have distinct phases that
@@ -68,32 +59,31 @@ in order to perform atomic operations on that object.
 Construction of ``atomic_ref`` has potentially large overhead
 which could be performed once for an entire span.
 
-We propose the property ``atomic_access`` with property-type *access* for
-``span`` and ``mdspan`` such that
+The proposed ``mdspan`` (**P0009**) allows for additional
+property parameters to be specified. 
+Collections of property parameters form an ontology,
+described in **P0900**, where the *property-values* are organized
+into orthogonal *property-types*.
 
-  - all references to elements are ``atomic_ref``
+We propose the ``atomic_access`` property-value
+for ``span`` and ``mdspan`` such that
+
+  - all references to ``mdspan`` elements are ``atomic_ref``
   - potential overhead associated with constructing ``atomic_ref``
-    occurs only once when the ``span`` or ``mdspan``
+    occurs only once when an ``mdspan`` object
     is constructed.
 
 ******************************************************************
 Proposal
 ******************************************************************
 
-Modify ``span`` and ``mdspan`` specification:
+Modify ``mdspan`` specification:
 
 .. code-block:: c++
 
   namespace std {
   namespace experimental {
   inline namespace fundamentals_v3 {
-
-    template< class ArrayType , typename ... Properties >
-    struct span {
-      // revision
-      // using reference = element_type & ; // remove
-      using reference = /* implementation defined */ ;
-    };
 
     template< class ArrayType , typename ... Properties >
     struct mdspan {
@@ -113,19 +103,15 @@ Add to **[views]** a new **[views.atomics]** section.
   namespace std {
   namespace experimental {
   inline namespace fundamentals_v3 {
-  
-    struct atomic_access {
-      using property_type  = access_property;
-      //...
-    };
-       
+
+    struct atomic_access ;
+
   }}}
 
 ..
 
-The ``atomic_access`` property may appear at most once
-in the ``Properties...`` parameter pack of ``span`` or ``mdpsan``
-and no other property with the *access* property-type can be given.
+The ``atomic_access`` property-value may appear at most once
+in the ``Properties...`` parameter pack of ``span`` or ``mdpsan``.
 Let *S* be an instantiation of ``span`` or ``mdspan`` with
 ``Properties...`` parameter pack containing ``atomic_access``.
 Let *R* be ``atomic_ref<`` *S* ``::element_type>`` .
@@ -142,4 +128,29 @@ Let *R* be ``atomic_ref<`` *S* ``::element_type>`` .
     - *S* ``::reference`` is ``atomic_ref<`` *S* ``::element_type>``,
     - *S* iterator types dereference to ``atomic_ref<`` *S* ``::element_type>``
 
+
+******************************************************************
+Application to ``span``
+******************************************************************
+
+When the ``span`` library is updated to accept properties (**P0546**)
+the same revision should be applied to accept the ``atomic_access``
+property-value.
+
+.. code-block:: c++
+
+  namespace std {
+  namespace experimental {
+  inline namespace fundamentals_v3 {
+
+    template< class ArrayType , typename ... Properties >
+    struct span {
+      // revision
+      // using reference = element_type & ; // remove
+      using reference = /* implementation defined */ ;
+    };
+
+  }}}
+
+..
 
