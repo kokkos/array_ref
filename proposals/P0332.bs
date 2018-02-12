@@ -655,7 +655,7 @@ to an incomplete type.
 
 ```
   template< size_t M , size_t N >
-  using T = conditional_t< N != 0 , int\[M]\[N?N:1] , int\[M][] > ;
+  using T = conditional_t< N != 0 , int\[M][N?N:1] , int\[M][] > ;
 ```
 
 
