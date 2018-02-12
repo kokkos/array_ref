@@ -1,0 +1,877 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.14: http://docutils.sourceforge.net/" />
+<title>P0546r2 : Span - foundation for the future</title>
+<meta name="date" content="2018-02-11" />
+<meta name="author" content="H. Carter Edwards" />
+<meta name="author" content="Daniel Sunderland" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7952 2016-07-26 18:15:59Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+.subscript {
+  vertical-align: sub;
+  font-size: smaller }
+
+.superscript {
+  vertical-align: super;
+  font-size: smaller }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left, table.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right, table.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+.align-top    {
+  vertical-align: top }
+
+.align-middle {
+  vertical-align: middle }
+
+.align-bottom {
+  vertical-align: bottom }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="p0546r2-span-foundation-for-the-future">
+<h1 class="title">P0546r2 : Span - foundation for the future</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr class="project field"><th class="docinfo-name">Project:</th><td class="field-body">ISO JTC1/SC22/WG21: Programming Language C++</td>
+</tr>
+<tr class="number field"><th class="docinfo-name">Number:</th><td class="field-body">P0546r2</td>
+</tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2018-02-11</td></tr>
+<tr class="reply-to field"><th class="docinfo-name">Reply-to:</th><td class="field-body"><a class="reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td>
+</tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>H. Carter Edwards</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Daniel Sunderland</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:dsunder&#64;sandia.gov">dsunder&#64;sandia.gov</a></td></tr>
+<tr class="audience field"><th class="docinfo-name">Audience:</th><td class="field-body">Library Evolution Working Group (LEWG)</td>
+</tr>
+<tr class="url field"><th class="docinfo-name">URL:</th><td class="field-body"><a class="reference external" href="https://github.com/kokkos/array_ref/blob/master/proposals/P0546.rst">https://github.com/kokkos/array_ref/blob/master/proposals/P0546.rst</a></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="84%" />
+</colgroup>
+<tbody valign="top">
+<tr><td colspan="2"><strong>Revision History</strong></td>
+</tr>
+<tr><td rowspan="3">P0546r1</td>
+<td rowspan="3">Update subspan bounds requires clause.
+Add precedence background information.</td>
+</tr>
+<tr></tr>
+<tr></tr>
+<tr><td rowspan="4">P0546r2</td>
+<td rowspan="4">Update AccessProperties to Properties.
+Reference P0900 on properties ontology.
+Request LEWG straw polls at 2018-03-Jacksonville.</td>
+</tr>
+<tr></tr>
+<tr></tr>
+<tr></tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="84%" />
+</colgroup>
+<tbody valign="top">
+<tr><td colspan="2"><strong>References</strong></td>
+</tr>
+<tr><td>P0009</td>
+<td>Multidimensional array reference specification</td>
+</tr>
+<tr><td>P0122</td>
+<td>span: bounds-safe views for sequences of objects</td>
+</tr>
+<tr><td>P0454</td>
+<td>Wording for a Minimal <tt class="docutils literal">mdspan</tt></td>
+</tr>
+<tr><td>P0332</td>
+<td>Relaxed array declaration</td>
+</tr>
+<tr><td>P0367</td>
+<td>Accessors</td>
+</tr>
+<tr><td>P0900</td>
+<td>Property Ontology</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="requested-action-by-lewg-at-2018-03-jacksonville">
+<h1>Requested Action by LEWG at 2018-03-Jacksonville</h1>
+<ul>
+<li><p class="first">Recall <a class="reference external" href="http://wiki.edg.com/bin/view/Wg21albuquerque/P0546">LEWG 2017-11-Albuquerque</a>
+straw polls</p>
+<blockquote>
+<p><em>We should specify the dynamic extent as the
+element type of the first template parameter
+rather than the (current) second template parameter</em></p>
+<blockquote>
+<p><strong>SF 5 , F 3 , N 2 , A 2 , SA 0</strong></p>
+</blockquote>
+<p><em>We support the addition of access properties variadic template parameters</em></p>
+<blockquote>
+<p><strong>SF 0 , F 10 , N 1 , A 5 , SA 0</strong></p>
+</blockquote>
+</blockquote>
+</li>
+<li><p class="first">LEWG 2018-03-Jacksonville requested straw polls:</p>
+<ol class="arabic simple">
+<li>Revise P0122 <tt class="docutils literal">span</tt> to declare extent as part of the element type of
+the first template parameter; before progressing <tt class="docutils literal">span</tt> through LWG?<ul>
+<li>This modifies <tt class="docutils literal">span</tt> to have a single template argument.</li>
+</ul>
+</li>
+<li>For the single template argument <tt class="docutils literal">span</tt> add the properties parameter pack
+to enable properties such as <tt class="docutils literal">atomic_access</tt> (P0860) and
+<tt class="docutils literal">restrict_access</tt> (P0856); before progressing <tt class="docutils literal">span</tt> through LWG?</li>
+<li>Introduce into wording the vocabulary of <em>domain index space</em>
+for the set of admissible indices and
+<em>codomain element space</em> for the set of referenced objects.</li>
+</ol>
+</li>
+</ul>
+</div>
+<div class="section" id="motivation">
+<h1>Motivation</h1>
+<p>The <tt class="docutils literal">span</tt> capability proposed in
+<strong>P0122, span: bounds-safe views for sequences of objects</strong>
+is intended to provide high performance access to a sequence of elements.
+The current <strong>P0122</strong> proposal defines two access mechanisms:
+mapping an integral offset to an element and
+an iterator over the sequence of elements.
+The proposed <tt class="docutils literal">span</tt> abstraction is the foundation for an extensible
+set of high performance computing access abstractions, with the
+proper preparation.
+This paper proposes improvements to the <strong>P0122</strong> proposed <tt class="docutils literal">span</tt>
+that will establish a solid, future-proof, and extensible foundation
+to incorporate additional high performance access needs such
+as those identified in <strong>P0009</strong> and <strong>P0367</strong>.</p>
+<div class="section" id="summary-of-proposed-changes">
+<h2>Summary of Proposed Changes</h2>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span> <span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">ArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+<span class="keyword">class</span> <span class="name class">span</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<ol class="arabic simple">
+<li>Instead of <tt class="docutils literal">ElementType</tt> provide an <tt class="docutils literal">ArrayType</tt> and
+delete the <em>magic value</em> <tt class="docutils literal">dynamic_extent</tt> .</li>
+</ol>
+<blockquote>
+<ul>
+<li><p class="first"><tt class="docutils literal">ArrayType</tt> is either</p>
+<ul class="simple">
+<li><tt class="docutils literal">ElementType[N]</tt> for a span with explicit static length,</li>
+<li><tt class="docutils literal">ElementType[]</tt> for a span with an explicit dynamic length, or</li>
+<li><tt class="docutils literal">ElementType</tt> for a span with an implied dynamic length.</li>
+</ul>
+<p>Thus the <em>current</em> proposal requires <tt class="docutils literal">rank_v&lt;ArrayType&gt; &lt;= 1</tt>.</p>
+</li>
+<li><p class="first">The need for a <tt class="docutils literal">dynamic_extent</tt> <em>magic value</em> is entirely eliminated.</p>
+</li>
+</ul>
+</blockquote>
+<ol class="arabic simple" start="2">
+<li>Add properties parameter pack.</li>
+</ol>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">Properties...</span></tt> is a well-defined extension point <strong>P0900</strong>.
+This extension point, while not exercised in this proposal, enables
+code which is templated on <tt class="docutils literal">span</tt> to be <em>future proofed</em> with
+respect to extensions by including the <tt class="docutils literal">Properties</tt> parameter pack.
+For example this proposal requires <tt class="docutils literal"><span class="pre">sizeof...(Properties)</span> == 0</tt>;
+however, the proposed <tt class="docutils literal">span</tt> comparison operator overloads
+retain the <tt class="docutils literal">Properties</tt> parameter pack so that they are
+future proof.</li>
+</ul>
+</blockquote>
+<ol class="arabic simple" start="3">
+<li>Introduce vocabulary of <em>domain index space</em> and <em>codomain element space</em> .</li>
+</ol>
+</div>
+<div class="section" id="precedence">
+<h2>Precedence</h2>
+<p>There is solid precedence for declaring static and dynamic array
+template arguments as <tt class="docutils literal">ElementType[N]</tt> and <tt class="docutils literal">ElementType[]</tt></p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;T[]&gt;</span></tt> and <tt class="docutils literal"><span class="pre">std::unique_ptr&lt;T[]&gt;</span></tt>
+denote a dynamic extent array through the incomplete type <tt class="docutils literal">T[]</tt></li>
+<li>P0674 denotes <tt class="docutils literal"><span class="pre">make_shared&lt;T[][N1][N2]&gt;</span></tt> to allocate
+a <tt class="docutils literal">shared_ptr</tt> to a C style multidimensional array.</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="foundation-for-the-future">
+<h2>Foundation for the Future</h2>
+<p>The proposed changes prepare <tt class="docutils literal">span</tt> to be an extensible
+foundation for future higher performance intentions.
+Examples of possible extensions are as follows.</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal">ArrayType</tt> could allow <tt class="docutils literal">( rank_v&lt;ArrayType&gt; &gt; 1 )</tt></li>
+<li><tt class="docutils literal"><span class="pre">Properties...</span></tt> could include a layout mapping specification
+when <tt class="docutils literal">( rank_v&lt;ArrayType&gt; &gt; 1 )</tt> .</li>
+<li><tt class="docutils literal"><span class="pre">Properties...</span></tt> could include a contract specification
+for <em>restrict</em>  that guarantees that a <tt class="docutils literal">span</tt> type is free from
+certain forms of aliasing.</li>
+<li><tt class="docutils literal"><span class="pre">Properties...</span></tt> could include memory performance requests
+such as non-caching loads/stores, streaming access, write only, or random access.
+<strong>P0367 Accessors</strong> includes numerous potential memory access properties
+of interest to high performance / low latency computing and
+heterogeneous architectures.</li>
+</ul>
+</blockquote>
+</div>
+</div>
+<div class="section" id="proposed-wording-change">
+<h1>Proposed Wording Change</h1>
+<div class="section" id="changes-to-header-span-synopsis">
+<h2>Changes to Header &lt;span&gt; synopsis</h2>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+
+<span class="comment single">// eliminate:  constexpr ptrdiff_t dynamic_extent = -1;
+</span>
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">ArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+<span class="keyword">class</span> <span class="name class">span</span><span class="punctuation">;</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span><span class="operator">==</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                         <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span><span class="operator">!=</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                         <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span><span class="operator">&lt;</span> <span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                         <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span><span class="operator">&lt;=</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                         <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span><span class="operator">&gt;</span> <span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                         <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span><span class="operator">&gt;=</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                         <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+<span class="comment single">// Note: Prefer output element type of std::byte versus char.
+// Note: Static length specification may change for ( rank_v&lt;ArrayType&gt; &gt; 1 )
+</span><span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">ArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+  <span class="name">conditional_t</span><span class="operator">&lt;</span> <span class="punctuation">(</span> <span class="name">rank_v</span><span class="operator">&lt;</span><span class="name">ArrayType</span><span class="operator">&gt;</span> <span class="operator">&lt;=</span> <span class="literal number integer">1</span> <span class="punctuation">)</span> <span class="operator">&amp;&amp;</span> <span class="punctuation">(</span> <span class="name">extent_v</span><span class="operator">&lt;</span><span class="name">ArrayType</span><span class="operator">&gt;</span> <span class="operator">&gt;</span> <span class="literal number integer">0</span> <span class="punctuation">)</span>
+               <span class="punctuation">,</span> <span class="name">span</span><span class="operator">&lt;</span><span class="keyword type">char</span><span class="punctuation">[</span><span class="keyword">sizeof</span><span class="punctuation">(</span><span class="name">remove_all_extents_t</span><span class="operator">&lt;</span><span class="name">ArrayType</span><span class="operator">&gt;</span><span class="punctuation">)</span><span class="operator">*</span><span class="name">extent_v</span><span class="operator">&lt;</span><span class="name">ArrayType</span><span class="operator">&gt;</span><span class="punctuation">]</span><span class="operator">&gt;</span>
+               <span class="punctuation">,</span> <span class="name">span</span><span class="operator">&lt;</span><span class="keyword type">char</span><span class="punctuation">[]</span><span class="operator">&gt;</span>
+               <span class="operator">&gt;</span>
+<span class="name">as_writeable_bytes</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">ArrayType</span><span class="punctuation">,</span><span class="name">Properties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="changes-to-class-template-span-views-span">
+<h2>Changes to Class template span [views.span]</h2>
+<blockquote>
+<p><strong>1</strong> <tt class="docutils literal">span</tt> provides mechanisms to access members within a
+contiguous sequence (array) of objects.  Note that a <tt class="docutils literal">span</tt>
+does not own the storage of that sequence.</p>
+<div class="line-block">
+<div class="line"><strong>2</strong> Requires: <tt class="docutils literal">remove_all_extents_t&lt;ArrayType&gt;</tt> is a complete
+object type that is not an abstract class type.</div>
+<div class="line"><tt class="docutils literal">rank_v&lt;ArrayType&gt; &lt;= 1</tt>, which may be relaxed in a future
+extension of <tt class="docutils literal">span</tt>.</div>
+<div class="line"><tt class="docutils literal"><span class="pre">sizeof...(Properties)</span> == 0</tt>, which may be relaxed in a future
+extension of <tt class="docutils literal">span</tt>.</div>
+</div>
+<p><strong>3</strong> <tt class="docutils literal">span</tt> has a <em>domain index space</em> and a <em>codomain element space</em>.
+The domain index space is the integral values <em>[ 0 .. extent() )</em>.
+The codomain element space is the contiguous sequence of objects.
+When <tt class="docutils literal">rank_v&lt;ArrayType&gt; &gt; 1</tt> is permitted in a future extension
+of <tt class="docutils literal">span</tt> the domain index space will be the Cartesian product
+of integral extents.</p>
+<p><strong>4</strong> The <tt class="docutils literal">iterator</tt> type for <tt class="docutils literal">span</tt> is a random access iterator
+and a contiguous iterator.  The <tt class="docutils literal">reverse_iterator</tt> type is a
+random access iterator. Iteration is over the codomain.</p>
+</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+
+<span class="comment single">// Unless noted here, previously proposed span members remain unchanged
+</span>
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">ArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+<span class="keyword">class</span> <span class="name class">span</span> <span class="punctuation">{</span>
+<span class="keyword">public</span><span class="operator">:</span>
+  <span class="keyword">using</span> <span class="name">element_type</span> <span class="operator">=</span> <span class="name">remove_all_extents_t</span><span class="operator">&lt;</span><span class="name">ArrayType</span><span class="operator">&gt;</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// replace: extent
+</span>
+  <span class="keyword">constexpr</span> <span class="keyword">static</span> <span class="name">index_type</span> <span class="name function">rank</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="keyword">static</span> <span class="name">index_type</span> <span class="name function">static_extent</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">extent</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// replace: type-morphing constructors
+</span>
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">OtherArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">OtherProperties</span> <span class="operator">&gt;</span>
+    <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">OtherArrayType</span><span class="punctuation">,</span><span class="name">OtherProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">OtherArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">OtherProperties</span> <span class="operator">&gt;</span>
+    <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">OtherArrayType</span><span class="punctuation">,</span><span class="name">OtherProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;&amp;</span> <span class="punctuation">);</span>
+
+  <span class="comment single">// replace: subspan functions
+</span>
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="name">Count</span> <span class="operator">&gt;</span>
+    <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[</span> <span class="name">Count</span> <span class="punctuation">],</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">first</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="name">Count</span> <span class="operator">&gt;</span>
+    <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[</span> <span class="name">Count</span> <span class="punctuation">],</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">last</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[],</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">first</span><span class="punctuation">(</span> <span class="name">index_type</span> <span class="name">count</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[],</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">last</span><span class="punctuation">(</span> <span class="name">index_type</span> <span class="name">count</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[],</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">subspan</span><span class="punctuation">(</span> <span class="name">index_type</span> <span class="name">offset</span> <span class="punctuation">,</span> <span class="name">index_type</span> <span class="name">count</span> <span class="operator">=</span> <span class="operator">-</span><span class="literal number integer">1</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+<span class="punctuation">};</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="changes-to-span-constructors-copy-assignment-and-destructor-span-cons">
+<h2>Changes to span constructors, copy, assignment, and destructor [span.cons]</h2>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name function">span</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Requires: <tt class="docutils literal">static_extent() == 0</tt></blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name function">span</span><span class="punctuation">(</span> <span class="name">pointer</span> <span class="name">ptr</span> <span class="punctuation">,</span> <span class="name">index_type</span> <span class="name">count</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+<div class="line-block">
+<div class="line">Requires: <tt class="docutils literal">static_extent() == 0</tt> or <tt class="docutils literal">static_extent() == count</tt>.</div>
+<div class="line">If <tt class="docutils literal">ptr</tt> is null then <tt class="docutils literal">count == 0</tt>.</div>
+<div class="line">If <tt class="docutils literal">ptr</tt> is not null then it shall point to the beginning of a
+valid sequence of objects of at least <tt class="docutils literal">count</tt> length.</div>
+</div>
+</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name function">span</span><span class="punctuation">(</span> <span class="name">pointer</span> <span class="name">firstElem</span> <span class="punctuation">,</span> <span class="name">pointer</span> <span class="name">lastElem</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+<div class="line-block">
+<div class="line">Requires: <tt class="docutils literal">distance(firstElem,lastElem) &gt;= 0</tt>.</div>
+<div class="line"><tt class="docutils literal">static_extent() == 0</tt> or
+<tt class="docutils literal">static_extent() == distance(firstElem,lastElem)</tt>.</div>
+</div>
+</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="name">element_type</span> <span class="punctuation">(</span><span class="operator">&amp;</span><span class="name">arr</span><span class="punctuation">)[</span><span class="name">N</span><span class="punctuation">]</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="name">array</span><span class="operator">&lt;</span><span class="name">element_type</span><span class="punctuation">,</span><span class="name">N</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="name">arr</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="name">array</span><span class="operator">&lt;</span><span class="name">remove_const_t</span><span class="operator">&lt;</span><span class="name">element_type</span><span class="operator">&gt;</span><span class="punctuation">,</span><span class="name">N</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="name">arr</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Requires: <tt class="docutils literal">static_extent() == 0</tt> or <tt class="docutils literal">static_extent() == N</tt>.</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">OtherArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">OtherProperties</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">OtherArrayType</span><span class="punctuation">,</span><span class="name">OtherProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="name">other</span> <span class="punctuation">);</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">OtherArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">OtherProperties</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="punctuation">(</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">OtherArrayType</span><span class="punctuation">,</span><span class="name">OtherProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;&amp;</span> <span class="name">other</span> <span class="punctuation">);</span>
+</pre>
+<!--  -->
+<blockquote>
+<div class="line-block">
+<div class="line">Requires: <tt class="docutils literal">static_extent() == 0</tt> or <tt class="docutils literal">static_extent() == other.size()</tt>.</div>
+<div class="line"><tt class="docutils literal">is_same_v&lt; element_type , remove_extent_t&lt; OtherArrayType &gt; &gt;</tt></div>
+</div>
+<p>Effects: Constructs <tt class="docutils literal">span</tt> on the same
+sequence of objects referenced by <tt class="docutils literal">other</tt>.</p>
+</blockquote>
+</div>
+<div class="section" id="changes-to-span-subviews-span-sub">
+<h2>Changes to span subviews [span.sub]</h2>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">Count</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[</span><span class="name">Count</span><span class="punctuation">]</span> <span class="punctuation">,</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">first</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">Count</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[</span><span class="name">Count</span><span class="punctuation">]</span> <span class="punctuation">,</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">last</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+<div class="line-block">
+<div class="line">Requires: <tt class="docutils literal">0 &lt; Count &amp;&amp; Count &lt;= size()</tt>.</div>
+<div class="line"><tt class="docutils literal">rank() == 1</tt>.</div>
+</div>
+</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[]</span> <span class="punctuation">,</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">first</span><span class="punctuation">(</span> <span class="name">index_type</span> <span class="name">count</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+<span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[]</span> <span class="punctuation">,</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">last</span><span class="punctuation">(</span> <span class="name">index_type</span> <span class="name">count</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Requires: <tt class="docutils literal">Count &lt;= size()</tt>.  <tt class="docutils literal">rank() == 1</tt>.</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name">span</span><span class="operator">&lt;</span> <span class="name">element_type</span><span class="punctuation">[]</span> <span class="punctuation">,</span> <span class="name">Properties</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">subspan</span><span class="punctuation">(</span> <span class="name">index_type</span> <span class="name">offset</span> <span class="punctuation">,</span> <span class="name">index_type</span> <span class="name">count</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+<div class="line-block">
+<div class="line">Requires: <tt class="docutils literal">0 &lt;= offset &amp;&amp; offset &lt;= size()</tt>.</div>
+<div class="line"><tt class="docutils literal">count == <span class="pre">-1</span> || offset + count &lt;= size()</tt>.</div>
+<div class="line"><tt class="docutils literal">rank() == 1</tt>.</div>
+</div>
+<p>Returns: <tt class="docutils literal">span( data() + offset , ( count == <span class="pre">-1</span> ? size() - offset : count ))</tt></p>
+</blockquote>
+</div>
+<div class="section" id="changes-to-span-observers-span-obs">
+<h2>Changes to span observers [span.obs]</h2>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="keyword">static</span> <span class="name">index_type</span> <span class="name function">rank</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Returns: Rank of the domain index space; i.e.,
+<tt class="docutils literal">rank_v&lt;ArrayType&gt; ? rank_v&lt;ArrayType&gt; : 1</tt>.</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="keyword">static</span> <span class="name">index_type</span> <span class="name function">static_extent</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+<p>Returns: Static extent of the domain index space; i.e.,
+<tt class="docutils literal">extent_v&lt;ArrayType,0&gt;</tt>.</p>
+<p>Remark: When <tt class="docutils literal">rank_v&lt;ArrayType&gt; &gt; 1</tt> is permitted then
+a new <tt class="docutils literal">static_extent( index_type r )</tt> observer will be required.</p>
+</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">extent</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+<p>Returns:  Runtime extent of the rank-one domain index space; i.e.,
+<tt class="docutils literal">extent_v&lt;ArrayType,0&gt; ? extent_v&lt;ArrayType,0&gt; : size()</tt>.</p>
+<p>Remark: When <tt class="docutils literal">rank_v&lt;ArrayType&gt; &gt; 1</tt> is permitted then
+a new <tt class="docutils literal">extent( index_type r )</tt> observer will be required.</p>
+</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">size</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Returns:  Number of elements in the codomain.</blockquote>
+<pre class="code c++ literal-block">
+<span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">size_bytes</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Returns:  Number of bytes used for the object representation of all
+elements in the codomain.</blockquote>
+</div>
+<div class="section" id="changes-to-span-iterator-support-span-iterators">
+<h2>Changes to span iterator support [span.iterators]</h2>
+<pre class="code c++ literal-block">
+<span class="name">iterator</span> <span class="name function">begin</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Returns:
+When <tt class="docutils literal">data() != nullptr</tt> an iterator referring to the element
+in the codomain with the smallest address.
+When <tt class="docutils literal">data() == nullptr</tt> then <tt class="docutils literal">begin() == end()</tt>.</blockquote>
+<pre class="code c++ literal-block">
+<span class="name">iterator</span> <span class="name function">end</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<blockquote>
+Returns:
+When <tt class="docutils literal">data() != nullptr</tt> an iterator such that
+<tt class="docutils literal"><span class="pre">--end()</span></tt> refers to the element in the codomain
+with the largest address.
+When <tt class="docutils literal">data() == nullptr</tt> then <tt class="docutils literal">begin() == end()</tt>.</blockquote>
+</div>
+<div class="section" id="changes-to-span-comparison-operators-span-comparison">
+<h2>Changes to span comparison operators [span.comparison]</h2>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">lhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">lhsProperties</span>
+        <span class="punctuation">,</span> <span class="keyword">class</span> <span class="name class">rhsArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">rhsProperties</span> <span class="operator">&gt;</span>
+<span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span> <span class="name">OP</span> <span class="punctuation">(</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">lhsArrayType</span><span class="punctuation">,</span><span class="name">lhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span>
+                           <span class="punctuation">,</span> <span class="keyword">const</span> <span class="name">span</span><span class="operator">&lt;</span><span class="name">rhsArrayType</span><span class="punctuation">,</span><span class="name">rhsProperties</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="operator">&amp;</span> <span class="punctuation">);</span>
+</pre>
+<!--  -->
+<blockquote>
+Remark: The spans <em>may</em> be comparable even when
+<tt class="docutils literal">remove_all_extents_t&lt;lhsArrayType&gt;</tt> and
+<tt class="docutils literal">remove_all_extents_t&lt;rhsArrayType&gt;</tt> are different types
+(e.g., have different <em>cv</em> qualification) or
+<tt class="docutils literal"><span class="pre">lhsProperties...</span></tt> and
+<tt class="docutils literal"><span class="pre">rhsProperties...</span></tt> are different.</blockquote>
+</div>
+</div>
+</div>
+</body>
+</html>

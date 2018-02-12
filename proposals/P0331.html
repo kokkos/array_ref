@@ -1,0 +1,963 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.14: http://docutils.sourceforge.net/" />
+<title>P0331r1 : Motivation and Examples for Multidimensional Array</title>
+<meta name="date" content="2017-XX-XX" />
+<meta name="author" content="H. Carter Edwards" />
+<meta name="author" content="Bryce Lelbach" />
+<meta name="author" content="Christian Trott" />
+<meta name="author" content="Mauro Bianco" />
+<meta name="author" content="Robin Maffeo" />
+<meta name="author" content="Ben Sander" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7952 2016-07-26 18:15:59Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+.subscript {
+  vertical-align: sub;
+  font-size: smaller }
+
+.superscript {
+  vertical-align: super;
+  font-size: smaller }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left, table.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right, table.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+.align-top    {
+  vertical-align: top }
+
+.align-middle {
+  vertical-align: middle }
+
+.align-bottom {
+  vertical-align: bottom }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="p0331r1-motivation-and-examples-for-multidimensional-array">
+<h1 class="title">P0331r1 : Motivation and Examples for Multidimensional Array</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr class="project field"><th class="docinfo-name">Project:</th><td class="field-body">ISO JTC1/SC22/WG21: Programming Language C++</td>
+</tr>
+<tr class="number field"><th class="docinfo-name">Number:</th><td class="field-body">P0331r0</td>
+</tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2017-XX-XX</td></tr>
+<tr class="reply-to field"><th class="docinfo-name">Reply-to:</th><td class="field-body"><a class="reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a>, <a class="reference external" href="mailto:balelbach&#64;lbl.gov">balelbach&#64;lbl.gov</a></td>
+</tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>H. Carter Edwards</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Bryce Lelbach</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:balelbach&#64;lbl.gov">balelbach&#64;lbl.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Christian Trott</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:crtrott&#64;sandia.gov">crtrott&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Mauro Bianco</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:mbianco&#64;cscs.ch">mbianco&#64;cscs.ch</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Robin Maffeo</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:Robin.Maffeo&#64;amd.com">Robin.Maffeo&#64;amd.com</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Ben Sander</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:ben.sander&#64;amd.com">ben.sander&#64;amd.com</a></td></tr>
+<tr class="audience field"><th class="docinfo-name">Audience:</th><td class="field-body">Library Evolution Working Group (LEWG)</td>
+</tr>
+<tr class="url field"><th class="docinfo-name">URL:</th><td class="field-body"><a class="reference external" href="https://github.com/kokkos/array_ref/blob/master/proposals/P0331.rst">https://github.com/kokkos/array_ref/blob/master/proposals/P0331.rst</a></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="84%" />
+</colgroup>
+<tbody valign="top">
+<tr><td colspan="2"><strong>Revision History</strong></td>
+</tr>
+<tr><td>P0009r0</td>
+<td>Original multidimensional array reference paper with
+motivation, specification, and examples.</td>
+</tr>
+<tr><td>P0009r1</td>
+<td>Revised with renaming from <tt class="docutils literal">view</tt> to <tt class="docutils literal">array_ref</tt>
+and allow unbounded rank through variadic arguments.</td>
+</tr>
+<tr><td>P03310
+<em>(current</em>)</td>
+<td>Multidimensional array reference motivation and examples
+moved from P0009.</td>
+</tr>
+<tr><td colspan="2"><strong>References</strong></td>
+</tr>
+<tr><td>P0454r0</td>
+<td>Wording for a Minimal <tt class="docutils literal">mdspan</tt></td>
+</tr>
+<tr><td>P0009r2</td>
+<td>Multidimensional array reference specification</td>
+</tr>
+<tr><td>P0332</td>
+<td>Relaxed array declaration</td>
+</tr>
+<tr><td>P0122</td>
+<td>span: bounds-safe views for sequences of objects</td>
+</tr>
+<tr><td colspan="2">earlier related papers: N4512, N4355, N4300, N4222</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="motivation-for-polymorphic-multidimensional-array-reference">
+<h1>1&nbsp;&nbsp;&nbsp;Motivation for polymorphic multidimensional array reference</h1>
+<p>Multidimensional arrays are a foundational data structure
+for science and engineering codes, as demonstrated by their
+extensive use in FORTRAN for five decades.
+A <em>multidimensional array reference</em> is a reference to a memory extent
+through a <strong>layout</strong> mapping from a multi-index space (domain) to
+that extent (range).
+A array layout mapping may be bijective as in the case of a traditional
+multidimensional array, injective as in the case of a subarray, or
+surjective to express symmetry.</p>
+<p>Traditional layout mappings have been specfied as part of the language.
+For example, FORTRAN specifies <em>column major</em> layout and
+C specifies <em>row major</em> layout.
+Such a language-imposed specification requires signficant code refactoring
+to change an array's layout, and requires significant code complexity to
+implement non-traditional layouts such as tiling in modern linear algebra
+or structured grid application domains.  Such layout changes are required
+to adapt and optimize code for varying computer architectures; for example,
+to change a code from <em>array of structures</em> or <em>row major</em> storage
+to <em>structure of arrays</em> or <em>column major</em> storage.
+Furthermore, multiple versions of code must be maintained for
+each required layout.</p>
+<p>A multidimensional array reference abstraction
+with a polymorphic layout is required
+to enable changing array layouts without extensive code refactoring and
+maintenance of functionally redundant code.
+Layout polymorphism is a critical capability; however, it is not the only
+beneficial form of polymorphism.</p>
+<p>The Kokkos library (github.com/kokkos/kokkos) implements
+multidimensional array references with polymorphic layout,
+and other access properties as well.
+Until recently the Kokkos implementation was limited
+to C++1998 standard and is incrementally being refactored
+to C++2011 standard.
+Additionally, there is a standalone reference implementation of this proposal
+which is publicly available on github (github.com/kokkos/array_ref).</p>
+</div>
+<div class="section" id="motivation-for-syntax">
+<h1>2&nbsp;&nbsp;&nbsp;Motivation for Syntax</h1>
+<p>The full <tt class="docutils literal">array_ref</tt> library specification is given in P0009r2.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">typename</span> <span class="name">DataType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+  <span class="name">stuct</span> <span class="name">array_ref</span> <span class="punctuation">;</span>
+<span class="punctuation">}}</span>
+</pre>
+<!--  -->
+<div class="section" id="one-dimensional-array">
+<h2>2.1&nbsp;&nbsp;&nbsp;One-Dimensional Array</h2>
+<p>A reference to a one-dimension array is anticipated to subsume the functionality
+of a pointer to a memory extent combined with an array length.
+For example, a one-dimensional array is passed to a function as follows.</p>
+<pre class="code c++ literal-block">
+<span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="keyword type">int</span> <span class="name">A</span><span class="punctuation">[]</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="punctuation">);</span> <span class="comment single">// Traditional API
+</span><span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="keyword">const</span> <span class="keyword type">int</span> <span class="name">A</span><span class="punctuation">[]</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="punctuation">);</span> <span class="comment single">// Traditional API
+</span>
+<span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span><span class="punctuation">[]</span> <span class="operator">&gt;</span> <span class="name">A</span> <span class="punctuation">);</span> <span class="comment single">// Reference API
+</span><span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword">const</span> <span class="keyword type">int</span><span class="punctuation">[]</span> <span class="operator">&gt;</span> <span class="name">A</span> <span class="punctuation">);</span> <span class="comment single">// Reference API
+</span>
+<span class="keyword type">void</span> <span class="name function">bar</span><span class="punctuation">()</span>
+<span class="punctuation">{</span>
+  <span class="keyword">enum</span> <span class="punctuation">{</span> <span class="name">L</span> <span class="operator">=</span> <span class="punctuation">...</span> <span class="punctuation">};</span>
+  <span class="keyword type">int</span> <span class="name">buffer</span><span class="punctuation">[</span> <span class="name">L</span> <span class="punctuation">];</span>
+  <span class="name">array_ref</span><span class="operator">&lt;</span><span class="keyword type">int</span><span class="punctuation">[]</span><span class="operator">&gt;</span> <span class="name">A</span><span class="punctuation">(</span> <span class="name">buffer</span> <span class="punctuation">,</span> <span class="name">L</span> <span class="punctuation">);</span>
+
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="name">L</span> <span class="operator">==</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">size</span><span class="punctuation">()</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">A</span><span class="punctuation">[</span><span class="literal number integer">0</span><span class="punctuation">]</span> <span class="operator">==</span> <span class="name">buffer</span> <span class="punctuation">);</span>
+
+  <span class="name">foo</span><span class="punctuation">(</span> <span class="name">array</span> <span class="punctuation">);</span>
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+<p>The <em>const-ness</em> of an <tt class="docutils literal">array_ref</tt> is analogous to the <em>const-ness</em>
+of a pointer.
+A <tt class="docutils literal">const array_ref&lt;D&gt;</tt> is similar to a const-pointer in that the <tt class="docutils literal">array_ref</tt>
+may not be modifid but the referenced extent of memory may be modified.
+A <tt class="docutils literal">array_ref&lt;const D&gt;</tt> is similar to a pointer-to-const in that the
+referenced extent of memory may not be modified. These are the same <em>const-ness</em>
+semantics of <tt class="docutils literal">unique_ptr</tt> and <tt class="docutils literal">shared_ptr</tt>.</p>
+<p>The <tt class="docutils literal">T[]</tt> syntax has precedence in the standard; <tt class="docutils literal">unique_ptr</tt> supports this
+syntax to denote a <tt class="docutils literal">unique_ptr</tt> which manages the lifetime of a dynamically
+allocated array of objects.</p>
+</div>
+<div class="section" id="traditional-multidimensional-array-with-static-dimensions">
+<h2>2.2&nbsp;&nbsp;&nbsp;Traditional Multidimensional Array with Static Dimensions</h2>
+<p>A traditional multidimensional array with static dimensions
+(for example, an array of 3x3 tensors) is passed to a function as follows.</p>
+<pre class="code c++ literal-block">
+<span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="keyword type">double</span> <span class="name">A</span><span class="punctuation">[][</span><span class="literal number integer">3</span><span class="punctuation">][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N0</span> <span class="punctuation">);</span> <span class="comment single">// Traditional API
+</span><span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">double</span><span class="punctuation">[][</span><span class="literal number integer">3</span><span class="punctuation">][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">&gt;</span> <span class="name">A</span> <span class="punctuation">);</span> <span class="comment single">// Reference API
+</span>
+<span class="keyword type">void</span> <span class="name function">bar</span><span class="punctuation">()</span>
+<span class="punctuation">{</span>
+  <span class="keyword">enum</span> <span class="punctuation">{</span> <span class="name">L</span> <span class="operator">=</span> <span class="punctuation">...</span> <span class="punctuation">};</span>
+  <span class="keyword type">int</span> <span class="name">buffer</span><span class="punctuation">[</span> <span class="name">L</span> <span class="operator">*</span> <span class="literal number integer">3</span> <span class="operator">*</span> <span class="literal number integer">3</span> <span class="punctuation">];</span>
+  <span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">double</span><span class="punctuation">[][</span><span class="literal number integer">3</span><span class="punctuation">][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">&gt;</span> <span class="name">A</span><span class="punctuation">(</span> <span class="name">buffer</span> <span class="punctuation">,</span> <span class="name">L</span> <span class="punctuation">);</span>
+
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="literal number integer">3</span> <span class="operator">==</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">rank</span><span class="punctuation">()</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="name">L</span> <span class="operator">==</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="literal number integer">3</span> <span class="operator">==</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="literal number integer">3</span> <span class="operator">==</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">size</span><span class="punctuation">()</span> <span class="operator">==</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">*</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">*</span> <span class="name">A</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">A</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">buffer</span> <span class="punctuation">);</span>
+
+  <span class="name">foo</span><span class="punctuation">(</span> <span class="name">A</span> <span class="punctuation">);</span>
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+<p>Support for static extents is an essential performance feature
+of the proprosed <tt class="docutils literal">array_ref</tt>.
+First a compiler can optimize the index-to-object mapping computation
+and second the <tt class="docutils literal">array_ref</tt> implementation can eliminate storage for
+static extents.
+Consider the following example where <tt class="docutils literal">L</tt> is only known at runtime.</p>
+<!-- code-block: c++
+
+array_ref< double[][3][3] > A( buffer , L );
+
+A(i,2,1) = 42 ; -->
+<!--  -->
+<p>The member access mapping can be optimized to a single integer
+multiply-add <tt class="docutils literal">A.ptr[i*9+7]</tt>
+because the implementation of <tt class="docutils literal">A(i,2,1)</tt> is <tt class="docutils literal"><span class="pre">A.ptr[((i)*3+j)*3+k]</span></tt>
+and <tt class="docutils literal">j=2</tt> and <tt class="docutils literal"><span class="pre">k==1</span></tt> are statically determined.
+The <tt class="docutils literal">sizeof(A)</tt> can be <tt class="docutils literal"><span class="pre">sizeof(double*)+sizeof(size_t)</span></tt>
+because storage is required for only the pointer and dynamic extent.</p>
+</div>
+<div class="section" id="multidimensional-array-with-multiple-dynamic-dimensions">
+<h2>2.3&nbsp;&nbsp;&nbsp;Multidimensional Array with Multiple Dynamic Dimensions</h2>
+<p>The current multidimensional array type declaration in <strong>n4567 8.3.4.p3</strong>
+restricts array declarations such that only the leading dimension
+may be implicit.
+Multidimensional arrays with multiple implicit (dynamic) dimensions as well as
+static dimensions are supported with the <strong>dimension</strong> property.
+The dimension property uses the &quot;magic value&quot; zero to denote an
+implicit dimension.
+The &quot;magic value&quot; of zero is chosen for consistency with <strong>std::extent</strong>.</p>
+<pre class="code c++ literal-block">
+<span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span><span class="punctuation">[][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">&gt;</span> <span class="name">x</span> <span class="punctuation">;</span>
+
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="literal number integer">0</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="literal number integer">3</span> <span class="punctuation">);</span>
+
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">extent</span><span class="operator">&lt;</span> <span class="keyword type">int</span><span class="punctuation">[][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="punctuation">,</span> <span class="literal number integer">0</span> <span class="operator">&gt;::</span><span class="name">value</span> <span class="operator">==</span> <span class="literal number integer">0</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">extent</span><span class="operator">&lt;</span> <span class="keyword type">int</span><span class="punctuation">[][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="operator">&gt;::</span><span class="name">value</span> <span class="operator">==</span> <span class="literal number integer">0</span> <span class="punctuation">);</span>
+
+<span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span> <span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">dimension</span><span class="operator">&lt;</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">3</span><span class="operator">&gt;</span> <span class="operator">&gt;</span> <span class="name">y</span> <span class="punctuation">;</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">y</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="literal number integer">0</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">y</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="literal number integer">0</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">y</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="literal number integer">3</span> <span class="punctuation">);</span>
+
+<span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span> <span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">dimension</span><span class="operator">&lt;</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">3</span><span class="operator">&gt;</span> <span class="operator">&gt;</span> <span class="name">z</span><span class="punctuation">(</span><span class="name">ptr</span><span class="punctuation">,</span><span class="name">N0</span><span class="punctuation">,</span><span class="name">N1</span><span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">z</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">N0</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">z</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">N1</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">z</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="literal number integer">3</span> <span class="punctuation">);</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="preferred-syntax">
+<h2>2.4&nbsp;&nbsp;&nbsp;Preferred Syntax</h2>
+<p>We prefer the following concise and intuitive syntax for arrays
+with multiple implict dimensions.</p>
+<pre class="code c++ literal-block">
+<span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span><span class="punctuation">[][][</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">&gt;</span> <span class="name">y</span> <span class="punctuation">;</span> <span class="comment single">// concise intuitive syntax</span>
+</pre>
+<!--  -->
+<p>However, this syntax requires a
+relaxation of the current multidimensional array type declaration
+in <strong>n4567 8.3.4.p3</strong>, as proposed in P00332.
+Furthermore, this concise and intuitive syntax eliminates the need
+for <tt class="docutils literal"><span class="pre">array_property::dimension&lt;...&gt;</span></tt> and the associated &quot;magic value&quot;
+of zero to denote an implicit dimension.</p>
+</div>
+</div>
+<div class="section" id="array-properties">
+<h1>3&nbsp;&nbsp;&nbsp;Array Properties</h1>
+<div class="section" id="layout-polymorphism">
+<h2>3.1&nbsp;&nbsp;&nbsp;Layout Polymorphism</h2>
+<p>The <tt class="docutils literal"><span class="pre">array_ref::operator()</span></tt> maps the input multi-index from the array's
+cartesian product multi-index <em>domain</em> space to a member in the array's <em>range</em> space.
+This is the <strong>layout</strong> mapping for the referenced array.
+For natively declared multidimensional arrays the layout mapping
+is defined to conform to treating the multidimensional array as
+an <em>array of arrays of arrays ...</em>; i.e., the size and span are
+equal and the strides increase from right-to-left
+(the layout specified in the C language).
+In the FORTRAN language defines layout mapping with strides
+increasing from left-to-right.
+These <em>native</em> layout mappings are only two of many possible layouts.
+For example, the <em>basic linear algebra subprograms (BLAS)</em> standard
+defines dense matrix layout mapping with padding of the leading dimension,
+requiring both dimensions and <strong>LDA</strong> parameters to fully declare a matrix layout.</p>
+<p>A property template parameter specifies a layout mapping.
+If this property is omitted the layout mapping of the array reference
+conforms to a corresponding natively declared multidimensional array
+as if implicit dimensions were declared explicitly.
+The default layout is <em>regular</em> - the distance is constant between
+entries when a single index of the multi-index is incremented.
+This distance is the <em>stride</em> of the corresponding dimension.
+The default layout mapping is bijective and the stride increases
+monotonically from the right most to the left most dimension.</p>
+<pre class="code c++ literal-block">
+<span class="comment single">// The default layout mapping of a rank-four multidimensional
+// array is as if implemented as follows.
+</span>
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N2</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N3</span> <span class="operator">&gt;</span>
+<span class="keyword type">size_t</span> <span class="name">native_mapping</span><span class="punctuation">(</span> <span class="keyword type">size_t</span> <span class="name">i0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i2</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i3</span> <span class="punctuation">)</span>
+  <span class="punctuation">{</span>
+    <span class="keyword">return</span> <span class="name">i0</span> <span class="operator">*</span> <span class="name">N3</span> <span class="operator">*</span> <span class="name">N2</span> <span class="operator">*</span> <span class="name">N1</span> <span class="comment single">// stride == N3 * N2 * N1
+</span>         <span class="operator">+</span> <span class="name">i1</span> <span class="operator">*</span> <span class="name">N3</span> <span class="operator">*</span> <span class="name">N2</span>      <span class="comment single">// stride == N3 * N2
+</span>         <span class="operator">+</span> <span class="name">i2</span> <span class="operator">*</span> <span class="name">N3</span>           <span class="comment single">// stride == N3
+</span>         <span class="operator">+</span> <span class="name">i3</span> <span class="punctuation">;</span>              <span class="comment single">// stride == 1
+</span>  <span class="punctuation">}</span>
+</pre>
+<!--  -->
+<p>An initial set of layout properties are
+<strong>layout_right</strong>, <strong>layout_left</strong>, and <strong>layout_stride</strong>,</p>
+<blockquote>
+<div class="line-block">
+<div class="line">namespace std {</div>
+<div class="line">namespace experimental {</div>
+<div class="line">namespace array_property {</div>
+<div class="line-block">
+<div class="line">struct layout_right ;</div>
+<div class="line">struct layout_left ;</div>
+<div class="line">struct layout_stride ;</div>
+</div>
+<div class="line">}}}</div>
+</div>
+</blockquote>
+<p>A <strong>void</strong> (<em>a.k.a.</em>, default or native) mapping is regular and bijective with
+strides increasing from increasing from right most to left most dimension.
+A <strong>layout_right</strong> mapping is regular and injective (may have padding) with
+strides increasing from right most to left most dimension.
+A <strong>layout_left</strong> mapping is regular and injective (may have padding) with
+strides increasing from left most to right most dimension.
+A <strong>layout_stride</strong> mapping is regular; however, it might
+not be injective or surjective.</p>
+<pre class="code c++ literal-block">
+<span class="comment single">// The right and left layout mapping of a rank-four
+// multidimensional array could be is as if implemented
+// as follows.  Note that padding is allowed but not required.
+</span>
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N2</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N4</span> <span class="operator">&gt;</span>
+<span class="keyword type">size_t</span> <span class="name">right_padded_mapping</span><span class="punctuation">(</span> <span class="keyword type">size_t</span> <span class="name">i0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i2</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i3</span> <span class="punctuation">)</span>
+  <span class="punctuation">{</span>
+    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">S3</span> <span class="operator">=</span> <span class="comment single">// stride of dimension 3
+</span>    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">P3</span> <span class="operator">=</span> <span class="comment single">// padding of dimension 3
+</span>    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">P2</span> <span class="operator">=</span> <span class="comment single">// padding of dimension 2
+</span>    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">P1</span> <span class="operator">=</span> <span class="comment single">// padding of dimension 1
+</span>    <span class="keyword">return</span> <span class="name">i0</span> <span class="operator">*</span> <span class="name">S3</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P3</span> <span class="operator">+</span> <span class="name">N3</span> <span class="punctuation">)</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P2</span> <span class="operator">+</span> <span class="name">N2</span> <span class="punctuation">)</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P1</span> <span class="operator">+</span> <span class="name">N1</span> <span class="punctuation">)</span>
+         <span class="operator">+</span> <span class="name">i1</span> <span class="operator">*</span> <span class="name">S3</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P3</span> <span class="operator">+</span> <span class="name">N3</span> <span class="punctuation">)</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P2</span> <span class="operator">+</span> <span class="name">N2</span> <span class="punctuation">)</span>
+         <span class="operator">+</span> <span class="name">i2</span> <span class="operator">*</span> <span class="name">S3</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P3</span> <span class="operator">+</span> <span class="name">N3</span> <span class="punctuation">)</span>
+         <span class="operator">+</span> <span class="name">i3</span> <span class="operator">*</span> <span class="name">S3</span> <span class="punctuation">;</span>
+  <span class="punctuation">}</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N2</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N4</span> <span class="operator">&gt;</span>
+<span class="keyword type">size_t</span> <span class="name">left_padded_mapping</span><span class="punctuation">(</span> <span class="keyword type">size_t</span> <span class="name">i0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i2</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i3</span> <span class="punctuation">)</span>
+  <span class="punctuation">{</span>
+    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">S0</span> <span class="operator">=</span> <span class="comment single">// stride of dimension 0
+</span>    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">P0</span> <span class="operator">=</span> <span class="comment single">// padding of dimension 0
+</span>    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">P1</span> <span class="operator">=</span> <span class="comment single">// padding of dimension 1
+</span>    <span class="keyword">const</span> <span class="keyword type">size_t</span> <span class="name">P2</span> <span class="operator">=</span> <span class="comment single">// padding of dimension 2
+</span>    <span class="keyword">return</span> <span class="name">i0</span> <span class="operator">*</span> <span class="name">S0</span>
+         <span class="operator">+</span> <span class="name">i1</span> <span class="operator">*</span> <span class="name">S0</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P0</span> <span class="operator">+</span> <span class="name">N0</span> <span class="punctuation">)</span>
+         <span class="operator">+</span> <span class="name">i2</span> <span class="operator">*</span> <span class="name">S0</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P0</span> <span class="operator">+</span> <span class="name">N0</span> <span class="punctuation">)</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P1</span> <span class="operator">+</span> <span class="name">N1</span> <span class="punctuation">)</span>
+         <span class="operator">+</span> <span class="name">i3</span> <span class="operator">*</span> <span class="name">S0</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P0</span> <span class="operator">+</span> <span class="name">N0</span> <span class="punctuation">)</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P1</span> <span class="operator">+</span> <span class="name">N1</span> <span class="punctuation">)</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">P2</span> <span class="operator">+</span> <span class="name">N2</span> <span class="punctuation">);</span>
+  <span class="punctuation">}</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="extensible-layout-polymorphism">
+<h2>3.2&nbsp;&nbsp;&nbsp;Extensible Layout Polymorphism</h2>
+<p>The <tt class="docutils literal">array_ref</tt> is intended to be extensible such that a user may supply
+a customized layout mapping.
+A user supplied customized layout mapping will be required to conform
+to a specified interface; <em>a.k.a.</em>, a C++ Concept.
+Details of this extension point will be included in a subsequent
+proposal.
+Our current extensibility strategy is for
+a user supplied layout property to implement an offset mapping.</p>
+<p><em>Motivation:</em> An important customized layout mapping is hierarchical tiling.
+This kind of layout mapping is used in dense linear algebra matrices and
+computations on Cartesian grids to improve the spatial locality
+of array entries.
+These mappings are bijective but are not regular.
+Computations on such multidimensional arrays typically iterate
+through tiles as <em>subarray</em> of the array.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">size_t</span> <span class="name">N0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N2</span> <span class="operator">&gt;</span>
+<span class="keyword type">size_t</span> <span class="name">tiling_left_mapping</span><span class="punctuation">(</span> <span class="keyword type">size_t</span> <span class="name">i0</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i1</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">i2</span> <span class="punctuation">)</span>
+<span class="punctuation">{</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">size_t</span> <span class="name">T</span> <span class="operator">=</span> <span class="comment single">// cube tile size
+</span>  <span class="keyword">constexpr</span> <span class="keyword type">size_t</span> <span class="name">T0</span> <span class="operator">=</span> <span class="punctuation">(</span> <span class="name">N0</span> <span class="operator">+</span> <span class="name">T</span> <span class="operator">-</span> <span class="literal number integer">1</span> <span class="punctuation">)</span> <span class="operator">/</span> <span class="name">T</span> <span class="punctuation">;</span> <span class="comment single">// tiles in dimension 0
+</span>  <span class="keyword">constexpr</span> <span class="keyword type">size_t</span> <span class="name">T1</span> <span class="operator">=</span> <span class="punctuation">(</span> <span class="name">N1</span> <span class="operator">+</span> <span class="name">T</span> <span class="operator">-</span> <span class="literal number integer">1</span> <span class="punctuation">)</span> <span class="operator">/</span> <span class="name">T</span> <span class="punctuation">;</span> <span class="comment single">// tiles in dimension 1
+</span>  <span class="keyword">constexpr</span> <span class="keyword type">size_t</span> <span class="name">T2</span> <span class="operator">=</span> <span class="punctuation">(</span> <span class="name">N2</span> <span class="operator">+</span> <span class="name">T</span> <span class="operator">-</span> <span class="literal number integer">1</span> <span class="punctuation">)</span> <span class="operator">/</span> <span class="name">T</span> <span class="punctuation">;</span> <span class="comment single">// tiles in dimension 2
+</span>
+  <span class="comment single">// offset within tile + offset to tile
+</span>  <span class="keyword">return</span> <span class="punctuation">(</span> <span class="name">i0</span> <span class="operator">%</span> <span class="name">T</span> <span class="punctuation">)</span> <span class="operator">+</span> <span class="name">T</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">i1</span> <span class="operator">%</span> <span class="name">T</span> <span class="punctuation">)</span> <span class="operator">+</span> <span class="name">T</span> <span class="operator">*</span> <span class="name">T</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">i2</span> <span class="operator">%</span> <span class="name">T</span> <span class="punctuation">)</span>
+       <span class="operator">+</span> <span class="name">T</span> <span class="operator">*</span> <span class="name">T</span> <span class="operator">*</span> <span class="name">T</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="punctuation">(</span> <span class="name">i0</span> <span class="operator">/</span> <span class="name">T</span> <span class="punctuation">)</span> <span class="operator">+</span> <span class="name">T0</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="punctuation">(</span> <span class="name">i1</span> <span class="operator">/</span> <span class="name">T</span> <span class="punctuation">)</span> <span class="operator">+</span> <span class="name">T1</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">i2</span> <span class="operator">/</span> <span class="name">T</span> <span class="punctuation">)</span> <span class="punctuation">)</span> <span class="punctuation">);</span>
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+<p>Note that a tiled layout mapping is irregular and if padding is
+required to align with tile boundarries then the span will exceed the size.
+A customized layout mapping will have slightly different requirements
+depending on whether the layout is regular or irregular.</p>
+</div>
+<div class="section" id="bounds-checking">
+<h2>3.3&nbsp;&nbsp;&nbsp;Bounds Checking</h2>
+<p>Array bounds checking is an invaluable tool for debugging user code.
+This functionality traditionally requires global injection through
+special compiler support.
+In large, long running code global array bounds checking introduces
+a significant overhead that impedes the debugging process.
+A member access array bounds checking array property allows
+the selective injection of array bounds checking and removes
+the need for special compiler support.
+A high quality implementation of bounds checking would output the
+array bounds, multi-index, and traceback of where the array bounds violation occured.</p>
+<pre class="code c++ literal-block">
+<span class="comment single">// User enables array bounds checking for selected array_ref.
+</span>
+<span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span> <span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">dimension</span><span class="operator">&lt;</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">3</span><span class="operator">&gt;</span>
+         <span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">check_bounds_if</span><span class="operator">&lt;</span> <span class="name">ENABLE_ARRAY_BOUNDS_CHECKING</span> <span class="operator">&gt;</span> <span class="operator">&gt;</span>
+    <span class="name">x</span><span class="punctuation">(</span><span class="name">ptr</span><span class="punctuation">,</span><span class="name">N0</span><span class="punctuation">,</span><span class="name">N1</span><span class="punctuation">);</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="future-possible-extensions">
+<h2>3.4&nbsp;&nbsp;&nbsp;Future Possible Extensions</h2>
+<p>The <tt class="docutils literal">array_ref</tt> abstraction and interface has utility
+well beyond the multidimensional array layout property.
+Other planned and prototyped properties include specification
+of which <em>memory space</em> within a heterogeneous memory system
+the referenced data resides on and algorithmic access intent properties.
+Examples of access intent properties include</p>
+<blockquote>
+<ol class="arabic simple">
+<li><em>read-only random with locality</em> such that member queries are
+performed through GPU texture cache hardware for GPU memory spaces,</li>
+<li><em>atomic</em> such that member access operations are overloaded
+via proxy objects to atomic operations (see P0019, Atomic View),</li>
+<li><em>non-temporal</em> such that member access operations can be overloaded
+with non-caching reads and writes, and</li>
+<li><em>restrict</em> to guarantee non-aliasing of referenced data within the
+current context.</li>
+</ol>
+</blockquote>
+</div>
+</div>
+<div class="section" id="subarrays">
+<h1>4&nbsp;&nbsp;&nbsp;Subarrays</h1>
+<p>The capability to <strong>easily</strong> extract subarrays of an array,
+or subarrays of subarrays, is essential to many array-based
+algorithms.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">using</span> <span class="name">U</span> <span class="operator">=</span> <span class="name">array_ref</span><span class="operator">&lt;</span> <span class="keyword type">int</span> <span class="punctuation">,</span> <span class="name">array_properties</span><span class="operator">::</span><span class="name">dimension</span><span class="operator">&lt;</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="operator">&gt;</span> <span class="operator">&gt;</span> <span class="punctuation">;</span>
+
+<span class="name">U</span> <span class="name function">x</span><span class="punctuation">(</span><span class="name">buffer</span><span class="punctuation">,</span><span class="name">N0</span><span class="punctuation">,</span><span class="name">N1</span><span class="punctuation">,</span><span class="name">N2</span><span class="punctuation">);</span>
+
+<span class="comment single">// Using std::pair&lt;int,int&gt; for an integral range
+</span><span class="keyword">auto</span> <span class="name">y</span> <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">x</span> <span class="punctuation">,</span> <span class="name">std</span><span class="operator">::</span><span class="name">pair</span><span class="operator">&lt;</span><span class="keyword type">int</span><span class="punctuation">,</span><span class="keyword type">int</span><span class="operator">&gt;</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="name">N0</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">,</span>
+                       <span class="name">std</span><span class="operator">::</span><span class="name">pair</span><span class="operator">&lt;</span><span class="keyword type">int</span><span class="punctuation">,</span><span class="keyword type">int</span><span class="operator">&gt;</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="name">N1</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="punctuation">);</span>
+
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">y</span><span class="punctuation">.</span><span class="name">rank</span><span class="punctuation">()</span> <span class="operator">==</span> <span class="literal number integer">2</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">y</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">N0</span> <span class="operator">-</span> <span class="literal number integer">2</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">y</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">N1</span> <span class="operator">-</span> <span class="literal number integer">2</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">y</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="operator">&amp;</span> <span class="name">x</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+
+<span class="comment single">// Using initializer_list of size 2 as an integral range
+</span><span class="keyword">auto</span> <span class="name">z</span> <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">x</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="punctuation">,</span> <span class="punctuation">{</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="name">N1</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">}</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="punctuation">);</span>
+
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">z</span><span class="punctuation">.</span><span class="name">rank</span><span class="punctuation">()</span> <span class="operator">==</span> <span class="literal number integer">1</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">z</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="operator">&amp;</span> <span class="name">x</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+
+<span class="comment single">// Conveniently extracting subarray for all of a extent
+// without having to explicitly extract the dimensions.
+</span><span class="keyword">auto</span> <span class="name">x</span> <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">x</span> <span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">all</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="punctuation">);</span>
+</pre>
+<!--  -->
+<p>The <tt class="docutils literal">subarray()</tt> function returns an unspecified instantiation
+of <tt class="docutils literal">array_ref&lt;&gt;</tt>.
+Note that there is precedence in the standard for library functions with
+unspecified return types
+(e.g. <tt class="docutils literal">bind()</tt>).</p>
+<div class="section" id="subarray-type-deduction">
+<h2>4.1&nbsp;&nbsp;&nbsp;Subarray Type Deduction</h2>
+<p>The <tt class="docutils literal">subarray</tt> function returns <tt class="docutils literal">array_ref&lt;</tt> <em>deduced...</em> <tt class="docutils literal">&gt;</tt>.
+The return type is deduced from the input <tt class="docutils literal">array_ref</tt> and the slicing argument pack.
+The deduction rules must be defined to insure correctness and
+should be defined for performance.
+For example, a simple rule wuld define the returned type to always
+have a strided layout.  While correct there are many use cases
+where a better performing layout can be deduced.</p>
+<p>Subarray type deduction is necessarily dependent upon the layout.</p>
+</div>
+<div class="section" id="example-usage-in-an-8th-order-finite-difference-stencil">
+<h2>4.2&nbsp;&nbsp;&nbsp;Example Usage in an 8th Order Finite Difference Stencil</h2>
+<p>The subarray interface provides a powerful mechanism for accessing
+3-dimensional data in numerical kernels in a fashion which utilizes performant
+memory access patterns and is amenable to compiler-assisted vectorization.</p>
+<p>The following code is an example of a typical finite difference stencil which
+might be used in a computational fluid dynamics application. This code utilizes
+operator splitting to avoid vector register pressure and moves through memory
+in unit stride to facilitate optimal memory access patterns. With the addition
+of compiler alignment hints (as well as padding and aligned allocations to make
+those assumptions true) and compiler directives or attributes to indicate that
+the input pointers do not alias each other, this code would vectorize well on a
+traditional x86 platform.</p>
+<pre class="code c++ literal-block">
+<span class="keyword type">void</span> <span class="name function">eighth_order_stencil</span><span class="punctuation">(</span>
+  <span class="keyword">const</span> <span class="keyword type">double</span><span class="operator">*</span> <span class="name">V</span><span class="punctuation">,</span> <span class="keyword type">double</span><span class="operator">*</span> <span class="name">U</span><span class="punctuation">,</span>
+  <span class="keyword type">ptrdiff_t</span> <span class="name">dx</span><span class="punctuation">,</span> <span class="keyword type">ptrdiff_t</span> <span class="name">dy</span><span class="punctuation">,</span> <span class="keyword type">ptrdiff_t</span> <span class="name">dz</span><span class="punctuation">,</span>
+  <span class="name">array</span><span class="operator">&lt;</span><span class="keyword type">double</span><span class="punctuation">,</span> <span class="literal number integer">5</span><span class="operator">&gt;</span> <span class="name">c</span><span class="punctuation">)</span>
+<span class="punctuation">{</span>
+  <span class="comment single">// Iterate over interior points, skipping the 4 cell wide ghost
+</span>  <span class="comment single">// zone region.
+</span>  <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">iz</span> <span class="operator">=</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="name">iz</span> <span class="operator">&lt;</span> <span class="name">dz</span> <span class="operator">-</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="operator">++</span><span class="name">iz</span><span class="punctuation">)</span>
+    <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">iy</span> <span class="operator">=</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="name">iy</span> <span class="operator">&lt;</span> <span class="name">dy</span> <span class="operator">-</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="operator">++</span><span class="name">iy</span><span class="punctuation">)</span> <span class="punctuation">{</span>
+      <span class="comment single">// Pre-compute shared iy and iz indexing to ensure redundant
+</span>      <span class="comment single">// calculations are avoided.
+</span>      <span class="keyword type">double</span> <span class="keyword">const</span><span class="operator">*</span> <span class="name">v</span> <span class="operator">=</span> <span class="operator">&amp;</span><span class="name">V</span><span class="punctuation">[</span><span class="name">iy</span><span class="operator">*</span><span class="name">dx</span> <span class="operator">+</span> <span class="name">iz</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">];</span>
+      <span class="keyword type">double</span><span class="operator">*</span>       <span class="name">u</span> <span class="operator">=</span> <span class="operator">&amp;</span><span class="name">U</span><span class="punctuation">[</span><span class="name">iy</span><span class="operator">*</span><span class="name">dx</span> <span class="operator">+</span> <span class="name">iz</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">];</span>
+
+      <span class="comment single">// X-direction (unit stride) split.
+</span>      <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">ix</span> <span class="operator">=</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="name">ix</span> <span class="operator">&lt;</span> <span class="name">dx</span> <span class="operator">-</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="operator">++</span><span class="name">ix</span><span class="punctuation">)</span>
+        <span class="name">u</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span> <span class="operator">=</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">0</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">2</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">3</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">4</span><span class="punctuation">]);</span>
+
+      <span class="comment single">// Y-direction (dx stride) split.
+</span>      <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">ix</span> <span class="operator">=</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="name">ix</span> <span class="operator">&lt;</span> <span class="name">dx</span> <span class="operator">-</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="operator">++</span><span class="name">ix</span><span class="punctuation">)</span>
+        <span class="name">u</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span> <span class="operator">+=</span> <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="name">dx</span><span class="punctuation">]</span>   <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="name">dx</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">2</span><span class="operator">*</span><span class="name">dx</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">2</span><span class="operator">*</span><span class="name">dx</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">3</span><span class="operator">*</span><span class="name">dx</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">3</span><span class="operator">*</span><span class="name">dx</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">4</span><span class="operator">*</span><span class="name">dx</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">4</span><span class="operator">*</span><span class="name">dx</span><span class="punctuation">]);</span>
+
+      <span class="comment single">// Z-direction (dx*dy stride) split.
+</span>      <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">ix</span> <span class="operator">=</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="name">ix</span> <span class="operator">&lt;</span> <span class="name">dx</span> <span class="operator">-</span> <span class="literal number integer">4</span><span class="punctuation">;</span> <span class="operator">++</span><span class="name">ix</span><span class="punctuation">)</span>
+        <span class="name">u</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span> <span class="operator">+=</span> <span class="name">c1</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">]</span>   <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c2</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">2</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">2</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c3</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">3</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">3</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">])</span>
+              <span class="operator">+</span>  <span class="name">c4</span> <span class="operator">*</span> <span class="punctuation">(</span><span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">4</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">v</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">4</span><span class="operator">*</span><span class="name">dx</span><span class="operator">*</span><span class="name">dy</span><span class="punctuation">]);</span>
+    <span class="punctuation">}</span>
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+<p>The corresponding code can be rewritten using array_ref&lt;&gt; and the associated
+subarray() interfaces.
+Note that all the code is now decoupled from the arrays' layout.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">VP</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">UP</span> <span class="operator">&gt;</span>
+<span class="keyword type">void</span> <span class="name">eighth_order_stencil</span><span class="punctuation">(</span>
+  <span class="name">array_ref</span><span class="operator">&lt;</span><span class="keyword">const</span> <span class="keyword type">double</span><span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">dimension</span><span class="operator">&lt;</span><span class="literal number integer">0</span><span class="punctuation">,</span> <span class="literal number integer">0</span><span class="punctuation">,</span> <span class="literal number integer">0</span><span class="operator">&gt;</span><span class="punctuation">,</span> <span class="name">VP</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="keyword">const</span> <span class="name">V</span><span class="punctuation">,</span>
+  <span class="name">array_ref</span><span class="operator">&lt;</span><span class="keyword type">double</span><span class="punctuation">,</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">dimension</span><span class="operator">&lt;</span><span class="literal number integer">0</span><span class="punctuation">,</span> <span class="literal number integer">0</span><span class="punctuation">,</span> <span class="literal number integer">0</span><span class="operator">&gt;</span><span class="punctuation">,</span> <span class="name">UP</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="keyword">const</span> <span class="name">U</span><span class="punctuation">,</span>
+  <span class="name">array</span><span class="operator">&lt;</span><span class="keyword type">double</span><span class="punctuation">,</span> <span class="literal number integer">5</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="name">c</span><span class="punctuation">)</span>
+<span class="punctuation">{</span>
+  <span class="keyword">auto</span> <span class="name">all</span> <span class="operator">=</span> <span class="name">array_property</span><span class="operator">::</span><span class="name">all</span> <span class="punctuation">;</span>
+
+  <span class="keyword">const</span> <span class="keyword type">int</span> <span class="name">base</span> <span class="operator">=</span> <span class="literal number integer">4</span> <span class="punctuation">;</span>
+  <span class="keyword">const</span> <span class="keyword type">int</span> <span class="name">endx</span> <span class="operator">=</span> <span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">-</span> <span class="name">base</span> <span class="punctuation">;</span>
+  <span class="keyword">const</span> <span class="keyword type">int</span> <span class="name">endy</span> <span class="operator">=</span> <span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">-</span> <span class="name">base</span> <span class="punctuation">;</span>
+  <span class="keyword">const</span> <span class="keyword type">int</span> <span class="name">endz</span> <span class="operator">=</span> <span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="operator">-</span> <span class="name">base</span> <span class="punctuation">;</span>
+
+  <span class="keyword">for</span> <span class="punctuation">(</span> <span class="keyword type">int</span> <span class="name">iz</span> <span class="operator">=</span> <span class="name">base</span> <span class="punctuation">;</span> <span class="name">iz</span> <span class="operator">&lt;</span> <span class="name">endz</span> <span class="punctuation">;</span> <span class="operator">++</span><span class="name">iz</span> <span class="punctuation">)</span>
+    <span class="keyword">for</span> <span class="punctuation">(</span> <span class="keyword type">int</span> <span class="name">iy</span> <span class="operator">=</span> <span class="name">base</span> <span class="punctuation">;</span> <span class="name">iy</span> <span class="operator">&lt;</span> <span class="name">endy</span> <span class="punctuation">;</span> <span class="operator">++</span><span class="name">iy</span> <span class="punctuation">)</span> <span class="punctuation">{</span>
+
+      <span class="comment single">// Use subarrays to avoid redundant indexing calculations
+</span>      <span class="comment single">// within the inner loop.
+</span>
+      <span class="keyword">auto</span> <span class="name">u</span>  <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">U</span><span class="punctuation">,</span> <span class="name">all</span><span class="punctuation">,</span>  <span class="name">iy</span><span class="punctuation">,</span>  <span class="name">iz</span><span class="punctuation">);</span>
+      <span class="keyword">auto</span> <span class="name">vx</span> <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">V</span><span class="punctuation">,</span> <span class="name">all</span><span class="punctuation">,</span>  <span class="name">iy</span><span class="punctuation">,</span>  <span class="name">iz</span><span class="punctuation">);</span>
+      <span class="keyword">auto</span> <span class="name">vy</span> <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">V</span><span class="punctuation">,</span> <span class="name">all</span> <span class="punctuation">,</span> <span class="punctuation">{</span><span class="name">iy</span><span class="operator">-</span><span class="name">base</span><span class="punctuation">,</span><span class="name">iy</span><span class="operator">+</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">1</span><span class="punctuation">},</span> <span class="name">iz</span> <span class="punctuation">);</span>
+      <span class="keyword">auto</span> <span class="name">vz</span> <span class="operator">=</span> <span class="name">subarray</span><span class="punctuation">(</span> <span class="name">V</span><span class="punctuation">,</span> <span class="name">all</span> <span class="punctuation">,</span> <span class="name">iy</span><span class="punctuation">,</span> <span class="punctuation">{</span><span class="name">iz</span><span class="operator">-</span><span class="name">base</span><span class="punctuation">,</span><span class="name">iz</span><span class="operator">+</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">1</span><span class="punctuation">}</span> <span class="punctuation">);</span>
+
+      <span class="comment single">// X-direction split.
+</span>      <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">ix</span> <span class="operator">=</span> <span class="name">base</span> <span class="punctuation">;</span> <span class="name">ix</span> <span class="operator">&lt;</span> <span class="name">endx</span> <span class="punctuation">;</span> <span class="operator">++</span><span class="name">ix</span><span class="punctuation">)</span>
+        <span class="name">u</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span> <span class="operator">=</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">0</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">+</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">+</span> <span class="name">vx</span><span class="punctuation">[</span><span class="name">ix</span><span class="operator">-</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="punctuation">);</span>
+
+      <span class="comment single">// Y-direction split.
+</span>      <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">ix</span> <span class="operator">=</span> <span class="name">base</span> <span class="punctuation">;</span> <span class="name">ix</span> <span class="operator">&lt;</span> <span class="name">endx</span> <span class="punctuation">;</span> <span class="operator">++</span><span class="name">ix</span><span class="punctuation">)</span>
+        <span class="name">u</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span> <span class="operator">+=</span> <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">3</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">3</span><span class="punctuation">)</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">4</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vy</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">4</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+
+      <span class="comment single">// Z-direction split.
+</span>      <span class="keyword">for</span> <span class="punctuation">(</span><span class="keyword type">int</span> <span class="name">ix</span> <span class="operator">=</span> <span class="name">base</span> <span class="punctuation">;</span> <span class="name">ix</span> <span class="operator">&lt;</span> <span class="name">endx</span> <span class="punctuation">;</span> <span class="operator">++</span><span class="name">ix</span><span class="punctuation">)</span>
+        <span class="name">u</span><span class="punctuation">[</span><span class="name">ix</span><span class="punctuation">]</span> <span class="operator">+=</span> <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">1</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">2</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">3</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">3</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">3</span><span class="punctuation">)</span> <span class="punctuation">)</span>
+              <span class="operator">+</span>  <span class="name">c</span><span class="punctuation">[</span><span class="literal number integer">4</span><span class="punctuation">]</span> <span class="operator">*</span> <span class="punctuation">(</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">+</span><span class="literal number integer">4</span><span class="punctuation">)</span> <span class="operator">+</span> <span class="name">vz</span><span class="punctuation">(</span><span class="name">ix</span><span class="punctuation">,</span><span class="name">base</span><span class="operator">-</span><span class="literal number integer">4</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+
+    <span class="punctuation">}</span>
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+</div>
+</div>
+</div>
+</body>
+</html>

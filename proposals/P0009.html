@@ -1,0 +1,1467 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.14: http://docutils.sourceforge.net/" />
+<title>P0009r5 : Polymorphic Multidimensional Array Reference</title>
+<meta name="date" content="2018-02-10" />
+<meta name="author" content="H. Carter Edwards" />
+<meta name="author" content="Daniel Sunderland" />
+<meta name="author" content="David Hollman" />
+<meta name="author" content="Christian Trott" />
+<meta name="author" content="Mauro Bianco" />
+<meta name="author" content="Ben Sander" />
+<meta name="author" content="Athanasios Iliopoulos" />
+<meta name="author" content="John Michopoulos" />
+<meta name="author" content="Daniel Sunderland" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7952 2016-07-26 18:15:59Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+.subscript {
+  vertical-align: sub;
+  font-size: smaller }
+
+.superscript {
+  vertical-align: super;
+  font-size: smaller }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left, table.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right, table.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+.align-top    {
+  vertical-align: top }
+
+.align-middle {
+  vertical-align: middle }
+
+.align-bottom {
+  vertical-align: bottom }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="p0009r5-polymorphic-multidimensional-array-reference">
+<h1 class="title">P0009r5 : Polymorphic Multidimensional Array Reference</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr class="project field"><th class="docinfo-name">Project:</th><td class="field-body">ISO JTC1/SC22/WG21: Programming Language C++</td>
+</tr>
+<tr class="number field"><th class="docinfo-name">Number:</th><td class="field-body">P0009r5</td>
+</tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2018-02-10</td></tr>
+<tr class="reply-to field"><th class="docinfo-name">Reply-to:</th><td class="field-body"><a class="reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td>
+</tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>H. Carter Edwards</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Daniel Sunderland</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:dsunder&#64;sandia.gov">dsunder&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>David Hollman</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:dshollm&#64;sandia.gov">dshollm&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Christian Trott</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:crtrott&#64;sandia.gov">crtrott&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Mauro Bianco</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:mbianco&#64;cscs.ch">mbianco&#64;cscs.ch</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Ben Sander</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:ben.sander&#64;amd.com">ben.sander&#64;amd.com</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Athanasios Iliopoulos</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:athanasios.iliopoulos&#64;nrl.navy.mil">athanasios.iliopoulos&#64;nrl.navy.mil</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>John Michopoulos</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:john.michopoulos&#64;nrl.navy.mil">john.michopoulos&#64;nrl.navy.mil</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Daniel Sunderland</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:dsunder&#64;sandia.gov">dsunder&#64;sandia.gov</a></td></tr>
+<tr class="audience field"><th class="docinfo-name">Audience:</th><td class="field-body">Library Working Group (LWG)</td>
+</tr>
+<tr class="url field"><th class="docinfo-name">URL:</th><td class="field-body"><a class="reference external" href="https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst">https://github.com/kokkos/array_ref/blob/master/proposals/P0009.rst</a></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="revision-history">
+<h1>1&nbsp;&nbsp;&nbsp;Revision History</h1>
+<div class="section" id="p0009r0">
+<h2>1.1&nbsp;&nbsp;&nbsp;P0009r0</h2>
+<p>Original multidimensional array reference paper with
+motivation, specification, and examples.</p>
+<p>LEWG feedback <tt class="docutils literal">view</tt> is not an acceptable name, bikeshed names:
+view ,
+span ,
+array_ref ,
+slice ,
+array_view ,
+ref ,
+array_span ,
+basic_span ,
+object_span ,
+field</p>
+</div>
+<div class="section" id="p0009r1">
+<h2>1.2&nbsp;&nbsp;&nbsp;P0009r1</h2>
+<p>Revised with renaming from <tt class="docutils literal">view</tt> to <tt class="docutils literal">array_ref</tt>
+and allow unbounded rank through variadic arguments.</p>
+</div>
+<div class="section" id="p0009r2">
+<h2>1.3&nbsp;&nbsp;&nbsp;P0009r2</h2>
+<p>Adding details for extensibility of layout mapping.</p>
+<p>Move motivation, examples, and relaxed incomplete array type proposal to separate papers.</p>
+<blockquote>
+<ul class="simple">
+<li>P0331 : Motivation and Examples for Polymorphic Multidimensional Array</li>
+<li>P0332 : Relaxed Incomplete Multidimensional Array Type Declaration</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="p0009r3">
+<h2>1.4&nbsp;&nbsp;&nbsp;P0009r3</h2>
+<p>Oulu-2016 LEWG strawpoll: Move iterator from this paper to a subsequent paper.</p>
+<p>Oulu-2016 LEWG feedback: <a class="reference external" href="http://wiki.edg.com/bin/view/Wg21oulu/P0009">http://wiki.edg.com/bin/view/Wg21oulu/P0009</a></p>
+<blockquote>
+<ul class="simple">
+<li>Array extents specification mechanism options are either-or, not both.</li>
+<li>List potential names for LEWG and/or LWG todo bikeshedding.</li>
+<li>Clearly &amp; concisely note difference between multidimensional array versus language's array-of-array-of-array...</li>
+<li>Actual specification of reference type (and others), not &quot;typically is&quot; vagueness.</li>
+<li>Future directions / extensibility section regarding <tt class="docutils literal"><span class="pre">Properties...</span></tt></li>
+</ul>
+</blockquote>
+<p>The domain space specification <em>preferred</em> and <em>undesirable</em> mechanisms
+changed from accepting both to accepting only one.</p>
+<p>Tighten up domain, codomain, and domain -&gt; codomain mapping specifications.</p>
+<p>Consistently use <em>extent</em> and <em>extents</em> for the multidimensional index space.</p>
+<p>More LEWG name bikeshedding:
+sci_span ,
+numeric_span ,
+multidimensional_span ,
+multidim_span ,
+md_span ,
+vla_span ,
+multispan ,
+multi_span</p>
+</div>
+<div class="section" id="p0009r4-for-2017-11-albuquerque-meeting">
+<h2>1.5&nbsp;&nbsp;&nbsp;P0009r4 : For 2017-11-Albuquerque Meeting</h2>
+<p>Changes from P0009r3:</p>
+<blockquote>
+<ul class="simple">
+<li>Rename to <tt class="docutils literal">mdspan</tt>, multidimensional span,
+to align with P0122r5 <tt class="docutils literal">span</tt>.</li>
+<li>Move preferred array extents mechanism to appendix</li>
+<li>Align with P0122r5 span</li>
+<li>Expose codomain as a std::span</li>
+<li>Elaborate layout mapping</li>
+</ul>
+</blockquote>
+<p>Requested full-LEWG straw polls at Albuquerque Nov'2017 meeting:</p>
+<blockquote>
+<ul class="simple">
+<li>Acceptability of exclusively using signed integer <tt class="docutils literal">index_type</tt>
+and omitting the traditional container unsigned integer <tt class="docutils literal">size_type</tt>.</li>
+<li>Embedding the domain-to-codomain mapping observers within
+the <tt class="docutils literal">mdspan</tt> class or moving these into a
+<tt class="docutils literal"><span class="pre">mdspan::mapping</span></tt> class.</li>
+<li>Given authors' update in response to previous two straw polls,
+is this ready to advance to LWG?</li>
+<li>If not, what specific modifications are required for consensus?</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="p0009r5-for-2018-03-jacksonville-meeting">
+<h2>1.6&nbsp;&nbsp;&nbsp;P0009r5 : For 2018-03-Jacksonville Meeting</h2>
+<p><a class="reference external" href="http://wiki.edg.com/bin/view/Wg21albuquerque/P0009">LEWG review at 2017-11-Albuquerque meeting</a>
+Unanimous to forward to LWG with editorial and straw poll changes.
+All changes have been applied except allowing <tt class="docutils literal"><span class="pre">span&lt;int-type[N]&gt;</span></tt>
+indexing value for which there was weak support and no proven need.
+This could be added in a subsequent paper.</p>
+<p>Changes from P0009r4</p>
+<blockquote>
+<ul class="simple">
+<li>Removed nullptr constructor</li>
+<li>Added constexpr to indexing operator</li>
+<li>Indexing operator requires that rank() == sizeof...(indices)</li>
+<li>Fixed typos in examples and moved them to appendix</li>
+<li>Converted note on how extentions to access properties may cause reference to
+be a proxy type to an see_below to make it normative</li>
+</ul>
+</blockquote>
+</div>
+</div>
+<div class="section" id="description">
+<h1>2&nbsp;&nbsp;&nbsp;Description</h1>
+<p>The proposed polymorphic multidimensional array reference (<tt class="docutils literal">mdspan</tt>)
+defines types and functions for mapping indices from a
+<strong>multidimensional index space</strong> (the domain)
+to members of a contiguous span of objects (the codomain).
+A multidimensional index space is defined as the
+Cartesian product of integer extents,
+<strong>[0..N0) X [0..N1) X [0..N2) ...</strong></p>
+<p>This <strong>layout mapping</strong> is one <em>property</em> of the
+<tt class="docutils literal">mdspan</tt> that may be specified through a template parameter.
+The intent is that <em>properties*</em> are an extensible set of options
+for multi-index mapping and member access.
+For example,
+bounds checking the input multi-index versus the multdimensional extents or
+accessing members through an atomic interface.
+The recent Accessors paper (P0367) introduces a rich set of potential access properties.</p>
+<p><strong>A multidimensional array is not an array-of-array-of-array-of-array...</strong></p>
+<p>The multidimensional array abstraction has been fundamental
+to numerical computations for over five decades.
+However, the C/C++ language provides only a one dimensional array
+abstraction which can be composed into array-of-array-of-array... types.
+While such types have some similarity to multidimensional arrays they
+do not provide adequate multidimensional array functionality
+of this proposal.
+Two critical functionality differences are
+(1) multiple dynamic extents and
+(2) polymorphic mapping of multi-indices to member objects.</p>
+</div>
+<div class="section" id="multidimensional-array-and-subarray-proposal">
+<h1>3&nbsp;&nbsp;&nbsp;Multidimensional Array and Subarray Proposal</h1>
+<div class="section" id="add-to-same-section-and-header-as-span">
+<h2>3.1&nbsp;&nbsp;&nbsp;Add to same section and header as <strong>span</strong></h2>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+<span class="keyword reserved">inline</span> <span class="keyword">namespace</span> <span class="name">fundamentals_v3</span> <span class="punctuation">{</span>
+
+  <span class="keyword reserved">inline</span> <span class="keyword">constexpr</span> <span class="keyword type">ptrdiff_t</span> <span class="name">dynamic_extent</span> <span class="operator">=</span> <span class="operator">-</span><span class="literal number integer">1</span> <span class="punctuation">;</span> <span class="comment single">// Revise to add inline
+</span>
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">typename</span> <span class="name">DataType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+  <span class="keyword">class</span> <span class="name class">mdspan</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">StaticExtents</span> <span class="operator">&gt;</span>
+  <span class="keyword">class</span> <span class="name class">extents</span> <span class="punctuation">;</span>
+
+  <span class="keyword">class</span> <span class="name class">layout_right</span> <span class="punctuation">;</span>
+  <span class="keyword">class</span> <span class="name class">layout_left</span> <span class="punctuation">;</span>
+  <span class="keyword">class</span> <span class="name class">layout_stride</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">LHS</span> <span class="punctuation">,</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">RHS</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span> <span class="operator">==</span> <span class="punctuation">(</span> <span class="name">extents</span><span class="operator">&lt;</span><span class="name">LHS</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">lhs</span> <span class="punctuation">,</span> <span class="name">extents</span><span class="operator">&lt;</span><span class="name">RHS</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">rhs</span> <span class="punctuation">)</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">LHS</span> <span class="punctuation">,</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">RHS</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="keyword">operator</span> <span class="operator">!=</span> <span class="punctuation">(</span> <span class="name">extents</span><span class="operator">&lt;</span><span class="name">LHS</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">lhs</span> <span class="punctuation">,</span> <span class="name">extents</span><span class="operator">&lt;</span><span class="name">RHS</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">rhs</span> <span class="punctuation">)</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// return type of subspan free function is an mdspan
+</span>  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">typename</span> <span class="name">DataType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">SliceSpecifiers</span> <span class="operator">&gt;</span>
+    <span class="comment single">// for exposition only:
+</span>    <span class="name">detail</span><span class="operator">::</span><span class="name">subspan_deduction_t</span><span class="operator">&lt;</span> <span class="name">mdspan</span><span class="operator">&lt;</span><span class="name">DataType</span><span class="punctuation">,</span><span class="name">Properties</span><span class="punctuation">...</span><span class="operator">&gt;</span><span class="punctuation">,</span><span class="name">SliceSpecifiers</span><span class="punctuation">...</span><span class="operator">&gt;</span>
+  <span class="name">subspan</span><span class="punctuation">(</span> <span class="name">mdspan</span><span class="operator">&lt;</span> <span class="name">DataType</span><span class="punctuation">,</span> <span class="name">Properties</span> <span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="punctuation">,</span> <span class="name">SliceSpecifiers</span> <span class="punctuation">...</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="comment single">// tag supporting subspan
+</span>  <span class="keyword">struct</span> <span class="name">all_type</span> <span class="punctuation">{};</span>
+  <span class="keyword reserved">inline</span> <span class="keyword">constexpr</span> <span class="name">all_type</span> <span class="name">all</span> <span class="operator">=</span> <span class="name">all_type</span><span class="punctuation">{};</span>
+<span class="punctuation">}}}</span>
+</pre>
+<!--  -->
+<p>The <tt class="docutils literal">mdspan</tt> class maps a multi-index within a multi-index <strong>domain</strong>
+to a reference to the <strong>codomain</strong>, defined by a span of objects.</p>
+<p>The <tt class="docutils literal">subspan</tt> free function generates an <tt class="docutils literal">mdspan</tt> with a domain contained
+within the input <tt class="docutils literal">mdspan</tt> domain and codomain contained within the input
+<tt class="docutils literal">mdspan</tt> codomain.</p>
+<p>The <em>detail::subspan_deduction_t</em> template class is not proposed and
+appears for exposition only.
+An implementation metafunction of this form is necessary
+to deduce the specific <tt class="docutils literal">mdspan</tt> return type of the <tt class="docutils literal">subspan</tt> function.</p>
+</div>
+<div class="section" id="template-class-mdspan">
+<h2>3.2&nbsp;&nbsp;&nbsp;template class <tt class="docutils literal">mdspan</tt></h2>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+<span class="keyword reserved">inline</span> <span class="keyword">namespace</span> <span class="name">fundamentals_v3</span> <span class="punctuation">{</span>
+
+<span class="keyword">template</span> <span class="operator">&lt;</span><span class="keyword">typename</span> <span class="name">DataType</span><span class="punctuation">,</span> <span class="keyword">typename</span><span class="punctuation">...</span> <span class="name">Properties</span><span class="operator">&gt;</span>
+<span class="keyword">class</span> <span class="name class">mdspan</span> <span class="punctuation">{</span>
+<span class="keyword">public</span><span class="operator">:</span>
+  <span class="comment single">// domain and codomain types
+</span>
+  <span class="keyword">using</span> <span class="name">element_type</span>    <span class="operator">=</span> <span class="keyword">typename</span> <span class="name">remove_all_extents_t</span><span class="operator">&lt;</span><span class="name">DataType</span><span class="operator">&gt;</span> <span class="punctuation">;</span>
+  <span class="keyword">using</span> <span class="name">value_type</span>      <span class="operator">=</span> <span class="keyword">typename</span> <span class="name">remove_cv_t</span><span class="operator">&lt;</span> <span class="name">element_type</span> <span class="operator">&gt;</span> <span class="punctuation">;</span>
+  <span class="keyword">using</span> <span class="name">index_type</span>      <span class="operator">=</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">;</span>
+  <span class="keyword">using</span> <span class="name">difference_type</span> <span class="operator">=</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">;</span>
+  <span class="keyword">using</span> <span class="name">pointer</span>         <span class="operator">=</span> <span class="name">element_type</span> <span class="operator">*</span> <span class="punctuation">;</span>
+  <span class="keyword">using</span> <span class="name">reference</span>       <span class="operator">=</span> <span class="name">element_type</span> <span class="operator">&amp;</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// Standard constructors, assignments, and destructor
+</span>
+  <span class="operator">~</span><span class="name">mdspan</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name function">mdspan</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="name function">mdspan</span><span class="punctuation">(</span><span class="name">mdspan</span><span class="operator">&amp;&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="name function">mdspan</span><span class="punctuation">(</span><span class="name">mdspan</span> <span class="keyword">const</span><span class="operator">&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="name">mdspan</span><span class="operator">&amp;</span> <span class="keyword">operator</span><span class="operator">=</span><span class="punctuation">(</span><span class="name">mdspan</span><span class="operator">&amp;&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="name">mdspan</span><span class="operator">&amp;</span> <span class="keyword">operator</span><span class="operator">=</span><span class="punctuation">(</span><span class="name">mdspan</span> <span class="keyword">const</span><span class="operator">&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// Constructor and assignment for assignable mdspan
+</span>
+  <span class="keyword">template</span> <span class="operator">&lt;</span><span class="keyword">typename</span> <span class="name">UType</span><span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">UProp</span><span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">mdspan</span><span class="punctuation">(</span> <span class="name">mdspan</span><span class="operator">&lt;</span><span class="name">UType</span><span class="punctuation">,</span> <span class="name">UProp</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="keyword">const</span><span class="operator">&amp;</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="keyword">template</span> <span class="operator">&lt;</span><span class="keyword">typename</span> <span class="name">UType</span><span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">UProp</span><span class="operator">&gt;</span>
+  <span class="name">mdspan</span><span class="operator">&amp;</span> <span class="keyword">operator</span><span class="operator">=</span><span class="punctuation">(</span> <span class="name">mdspan</span><span class="operator">&lt;</span><span class="name">UType</span><span class="punctuation">,</span> <span class="name">UProp</span><span class="punctuation">...</span><span class="operator">&gt;</span> <span class="keyword">const</span><span class="operator">&amp;</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="comment single">// Wrapping constructors
+</span>
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="operator">&gt;</span>
+  <span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="name">mdspan</span><span class="punctuation">(</span><span class="name">pointer</span><span class="punctuation">,</span> <span class="name">IndexType</span> <span class="punctuation">...</span> <span class="name">DynamicExtents</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="operator">&gt;</span>
+  <span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="name">mdspan</span><span class="punctuation">(</span><span class="name">std</span><span class="operator">::</span><span class="name">span</span><span class="operator">&lt;</span><span class="name">element_type</span><span class="operator">&gt;</span><span class="punctuation">,</span> <span class="name">IndexType</span> <span class="punctuation">...</span> <span class="name">DynamicExtents</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">IndexType</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="name">mdspan</span><span class="punctuation">(</span><span class="name">pointer</span><span class="punctuation">,</span> <span class="name">std</span><span class="operator">::</span><span class="name">array</span><span class="operator">&lt;</span><span class="name">IndexType</span><span class="punctuation">,</span><span class="name">N</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">DynamicExtents</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">IndexType</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="name">mdspan</span><span class="punctuation">(</span><span class="name">std</span><span class="operator">::</span><span class="name">span</span><span class="operator">&lt;</span><span class="name">element_type</span><span class="operator">&gt;</span><span class="punctuation">,</span> <span class="name">std</span><span class="operator">::</span><span class="name">array</span><span class="operator">&lt;</span><span class="name">IndexType</span><span class="punctuation">,</span><span class="name">N</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">DynamicExtents</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// mapping domain multi-index to access codomain member
+</span>
+  <span class="keyword">constexpr</span> <span class="name">reference</span> <span class="keyword">operator</span><span class="punctuation">[](</span> <span class="name">index_type</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span> <span class="comment single">// requires rank() == 1
+</span>
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">reference</span> <span class="keyword">operator</span><span class="punctuation">()(</span> <span class="name">IndexType</span> <span class="punctuation">...</span> <span class="name">indices</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">IndexType</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">reference</span> <span class="keyword">operator</span><span class="punctuation">()(</span> <span class="name">std</span><span class="operator">::</span><span class="name">array</span><span class="operator">&lt;</span><span class="name">IndexType</span><span class="punctuation">,</span><span class="name">N</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">indices</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+  <span class="comment single">// observers of the index space domain
+</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">int</span> <span class="name function">rank</span><span class="punctuation">()</span> <span class="name">noexecept</span> <span class="punctuation">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">int</span> <span class="name function">rank_dynamic</span><span class="punctuation">()</span> <span class="name">noexecept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">static_extent</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="name">noexecept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">extent</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">const</span>  <span class="name">noexecept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">size</span><span class="punctuation">()</span> <span class="keyword">const</span>  <span class="name">noexecept</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// observers of the codomain:
+</span>
+  <span class="keyword">constexpr</span> <span class="name">std</span><span class="operator">::</span><span class="name">span</span><span class="operator">&lt;</span><span class="name">element_type</span><span class="operator">&gt;</span> <span class="name">span</span><span class="punctuation">()</span> <span class="keyword">const</span>  <span class="name">noexecept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="operator">&gt;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name">required_span_size</span><span class="punctuation">(</span> <span class="name">IndexType</span> <span class="punctuation">...</span> <span class="name">DynamicExtents</span> <span class="punctuation">);</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="punctuation">,</span> <span class="keyword type">size_t</span> <span class="name">N</span> <span class="operator">&gt;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name">required_span_size</span><span class="punctuation">(</span> <span class="name">std</span><span class="operator">::</span><span class="name">array</span><span class="operator">&lt;</span><span class="name">IndexType</span><span class="punctuation">,</span><span class="name">N</span><span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">DynamicExtents</span> <span class="punctuation">);</span>
+
+  <span class="comment single">// observers of the mapping : domain -&gt; codomain
+</span>
+  <span class="keyword">using</span> <span class="name">layout</span> <span class="operator">=</span> <span class="comment multiline">/* extracted from Properties... */</span> <span class="punctuation">;</span>
+
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name">is_always_unique</span>     <span class="operator">=</span> <span class="comment multiline">/* layout */</span> <span class="punctuation">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name">is_always_contiguous</span> <span class="operator">=</span> <span class="comment multiline">/* layout */</span> <span class="punctuation">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name">is_always_strided</span>    <span class="operator">=</span> <span class="comment multiline">/* layout */</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name function">is_unique</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name function">is_contiguous</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name function">is_strided</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">stride</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">const</span> <span class="punctuation">;</span>
+
+<span class="keyword">private</span><span class="operator">:</span>
+  <span class="comment single">// exposition only
+</span>  <span class="keyword">typename</span> <span class="name">layout</span><span class="operator">::</span><span class="name">mapping</span><span class="operator">&lt;</span> <span class="name">StaticExtents</span><span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="name">mapping</span> <span class="punctuation">;</span>
+  <span class="name">pointer_type</span>                                 <span class="name">ptr</span> <span class="punctuation">;</span>
+<span class="punctuation">};</span>
+
+<span class="punctuation">}}}</span>
+</pre>
+<!--  -->
+<div class="section" id="template-arguments">
+<h3>3.2.1&nbsp;&nbsp;&nbsp;Template arguments</h3>
+<p><tt class="docutils literal">template &lt;typename DataType, <span class="pre">typename...</span> Properties&gt; class mdspan</tt></p>
+<p><tt class="docutils literal">DataType</tt></p>
+<blockquote>
+Requires: Is a non-array type denoting the element type of the array.</blockquote>
+<p><tt class="docutils literal"><span class="pre">Properties...</span></tt></p>
+<blockquote>
+Effects:  The domain index space rank, static extents, and identification of
+dynamic extents is determined from the <tt class="docutils literal">extents</tt>
+member of the property pack.
+The domain to codomain layout mapping is
+determined from the layout member of the property pack.</blockquote>
+</div>
+<div class="section" id="fundamental-types">
+<h3>3.2.2&nbsp;&nbsp;&nbsp;Fundamental Types</h3>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">using element_type = typename remove_all_extents_t&lt;DataType&gt; ;</tt></div>
+<div class="line"><tt class="docutils literal">using value_type&nbsp;&nbsp; = typename remove_cv_t&lt;element_type&gt; ;</tt></div>
+<div class="line"><tt class="docutils literal">using reference&nbsp;&nbsp;&nbsp; = element_type &amp; ;</tt></div>
+<div class="line"><tt class="docutils literal">using pointer&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = element_type * ;</tt></div>
+</div>
+<blockquote>
+[If <tt class="docutils literal"><span class="pre">std::is_const&lt;element_type&gt;</span></tt> then references to codomain members are const.
+Extensions to access properties may cause <tt class="docutils literal">reference</tt> to become a proxy type
+(see Appendix: Reference is potentially a proxy)]</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">using index_type&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = ptrdiff_t ;</tt></div>
+<div class="line"><tt class="docutils literal">using difference_type = ptrdiff_t ;</tt></div>
+</div>
+<blockquote>
+[Note: Integral types for dimensions and indexing are signed
+integers to avoid casting unsigned-to-signed for loop bounds
+and improve opportunities for optimizing loops. --end note]</blockquote>
+</div>
+<div class="section" id="domain-observers">
+<h3>3.2.3&nbsp;&nbsp;&nbsp;Domain Observers</h3>
+<p>The multi-index domain space is the Cartesian product of the extents:
+<tt class="docutils literal"><span class="pre">[0..extent(0))</span> X <span class="pre">[0..extent(1))</span> X ... X <span class="pre">[0..extent(rank()-1))</span></tt>.
+Each extent may be statically (at compile time) or dynamically (at runtime)
+specified.</p>
+<p><tt class="docutils literal">static constexpr int <span class="pre">rank();</span></tt></p>
+<blockquote>
+Returns: Rank of the multi-index domain.</blockquote>
+<p><tt class="docutils literal">static constexpr int <span class="pre">rank_dynamic();</span></tt></p>
+<blockquote>
+Returns: number of extents that are dynamic.</blockquote>
+<p><tt class="docutils literal">static constexpr index_type static_extent(int r);</tt></p>
+<blockquote>
+<p>Requires: <tt class="docutils literal">0 &lt;= r</tt></p>
+<p>Returns: If <tt class="docutils literal">0 &lt;= r &lt; rank()</tt> the statically specified extent.
+A statically declared extent of <tt class="docutils literal">dynamic_extent</tt>
+denotes that the extent is dynamic.
+If <tt class="docutils literal">rank() &lt;= r</tt> then <tt class="docutils literal">static_extent(r) == 1</tt>.</p>
+</blockquote>
+<p><tt class="docutils literal">constexpr index_type extent(int r) const ;</tt></p>
+<blockquote>
+<p>Requires: <tt class="docutils literal">0 &lt;= r</tt></p>
+<p>Returns: If <tt class="docutils literal">0 &lt;= r &lt; rank()</tt> the extent of coordinate <tt class="docutils literal">r</tt>.
+If <tt class="docutils literal">rank() &lt;= r</tt> then <tt class="docutils literal">extent(r) == 1</tt>.</p>
+</blockquote>
+<p><tt class="docutils literal">constexpr index_type size() const ;</tt></p>
+<blockquote>
+Returns: product of <tt class="docutils literal">extent(r)</tt> where <tt class="docutils literal">0 &lt;= r &lt; rank()</tt>.</blockquote>
+</div>
+<div class="section" id="codomain-observers">
+<h3>3.2.4&nbsp;&nbsp;&nbsp;Codomain Observers</h3>
+<p>Not all members of the codomain may be accessible through the layout mapping;
+i.e., the range of the mapping is contained within the codomain but may not
+be equal to the codomain.</p>
+<p><tt class="docutils literal">constexpr <span class="pre">std::span&lt;element_type&gt;</span> span() const ;</tt></p>
+<blockquote>
+Returns: An <tt class="docutils literal"><span class="pre">std::span</span></tt> for the codomain.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class ... IndexType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr index_type required_span_size( IndexType ... DynamicExtents );</tt></div>
+</div>
+<blockquote>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal">rank_dynamic() == <span class="pre">sizeof...(DynamicExtents)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">is_integral_type_v&lt;IndexType&gt;...</span></tt></li>
+<li>Denote the ith coordinate of <tt class="docutils literal"><span class="pre">DynamicExtents...</span></tt> as
+denoted as <tt class="docutils literal">DynamicExtents[ith]</tt> then:</li>
+<li><tt class="docutils literal">0 &lt;= DynamicExtents[ith]</tt> for <tt class="docutils literal">0 &lt;= ith &lt; rank_dynanic()</tt></li>
+</ul>
+<p>Returns: The minimum size of the codomain to support the multi-index domain
+defined by the merging of <tt class="docutils literal">DynamicExents</tt> with <tt class="docutils literal">StaticExtents</tt>.</p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class ... IndexType , size_t N &gt;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr index_type required_span_size( <span class="pre">std::array&lt;IndexType,N&gt;</span> const &amp; DynamicExtents );</tt></div>
+</div>
+<blockquote>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal">rank_dynamic() == N</tt></li>
+<li><tt class="docutils literal"><span class="pre">is_integral_type_v&lt;IndexType&gt;...</span></tt></li>
+<li><tt class="docutils literal">0 &lt;= DynamicExtents[ith]</tt> for <tt class="docutils literal">0 &lt;= ith &lt; rank_dynanic()</tt></li>
+</ul>
+<p>Returns: The minimum size of the codomain to support the multi-index domain
+defined by the merging of <tt class="docutils literal">DynamicExents</tt> with <tt class="docutils literal">StaticExtents</tt>.</p>
+</blockquote>
+</div>
+<div class="section" id="constructors-assignments-destructor">
+<h3>3.2.5&nbsp;&nbsp;&nbsp;Constructors, assignments, destructor</h3>
+<p><tt class="docutils literal">constexpr <span class="pre">mdspan();</span></tt></p>
+<blockquote>
+Effect: Construct a <em>null</em> <tt class="docutils literal">mdspan</tt> with codomain
+<tt class="docutils literal">span() == <span class="pre">std::span&lt;element_type&gt;()</span></tt>
+and <tt class="docutils literal">extent(r) == 0</tt> for all dynamic extents.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; typename UType , typename ... UProperties &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr mdspan( mdspan&lt; UType , UProperties ... &gt; const &amp; ) noexcept</tt></div>
+<div class="line"><tt class="docutils literal">template&lt; typename UType , typename ... UProperties &gt;</tt></div>
+<div class="line"><tt class="docutils literal">mdspan &amp; operator = ( mdspan&lt; UType , UProperties ... &gt; const &amp; ) noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires:
+Given <tt class="docutils literal">using V = <span class="pre">mdspan&lt;DataType,Properties...&gt;</span></tt> and
+<tt class="docutils literal">using U = <span class="pre">mdspan&lt;UType,UProperties...&gt;</span></tt> then</p>
+<div class="line-block">
+<div class="line"><tt class="docutils literal"><span class="pre">is_assignable&lt;V::pointer,U::pointer&gt;</span></tt> ,</div>
+<div class="line"><tt class="docutils literal"><span class="pre">V::rank()</span> == <span class="pre">U::rank()</span></tt> ,</div>
+<div class="line"><tt class="docutils literal"><span class="pre">V::static_extent(r)</span> == <span class="pre">U::static_extent(r)</span></tt> or <tt class="docutils literal"><span class="pre">V::static_extent(r)</span> == <span class="pre">std::dynamic_extent</span></tt> for <tt class="docutils literal">0 &lt;= r &lt; <span class="pre">V::rank()</span></tt> ,</div>
+<div class="line">compatibility of layout mapping</div>
+</div>
+<p>Effect: <tt class="docutils literal">* this</tt> has equal domain, equal codomain, and
+equivalent mapping.</p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class ... IndexType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr mdspan( pointer ptr , IndexType ... DynamicExtents) noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">sizeof...(DynamicExtents)</span> == rank_dynamic()</tt></li>
+<li><tt class="docutils literal"><span class="pre">is_integral_type_v&lt;IndexType&gt;...</span></tt></li>
+<li>The ith coordinate of <tt class="docutils literal"><span class="pre">DynamicExtents...</span></tt>,
+denoted as <tt class="docutils literal">DynamicExtents[ith]</tt>, is <tt class="docutils literal">0 &lt;= DynamicExtents[ith]</tt>.</li>
+<li>The span of elements denoted by <tt class="docutils literal">[ ptr , ptr + <span class="pre">required_span_size(DynamicExtents...)</span> )</tt>,
+shall be a valid contiguous span of elements.</li>
+</ul>
+<p>Effects:
+This <em>wrapping constructor</em> constructs <tt class="docutils literal">* this</tt>
+with domain's dynamic extents equal to <tt class="docutils literal"><span class="pre">DynamicExtents...</span></tt>
+and codomain equal to
+<tt class="docutils literal"><span class="pre">std::span&lt;element_type&gt;(</span> ptr , <span class="pre">required_span_size(DynamicExtents...)</span> )</tt></p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class IndexType , size_t N &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr mdspan( pointer ptr , <span class="pre">std::array&lt;IndexType,N&gt;</span> const &amp; DynamicExtents) noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal">N == rank_dynamic()</tt></li>
+<li><tt class="docutils literal"><span class="pre">is_integral_type_v&lt;IndexType&gt;...</span></tt></li>
+<li><tt class="docutils literal">0 &lt;= DynamicExtents[ith]</tt></li>
+<li>The span of elements denoted by <tt class="docutils literal">[ ptr , ptr + required_span_size(DynamicExtents) )</tt>,
+shall be a valid contiguous span of elements.</li>
+</ul>
+<p>Effects:
+This <em>wrapping constructor</em> constructs <tt class="docutils literal">* this</tt>
+with domain's dynamic extents equal to <tt class="docutils literal">DynamicExtents[ith].</tt>
+and codomain equal to
+<tt class="docutils literal"><span class="pre">std::span&lt;element_type&gt;(</span> ptr , required_span_size(DynamicExtents) )</tt></p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class ... IndexType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr mdspan( <span class="pre">std::span&lt;element_type&gt;</span> s , IndexType ... DynamicExtents) noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">sizeof...(DynamicExtents)</span> == rank_dynamic()</tt></li>
+<li><tt class="docutils literal"><span class="pre">is_integral_type_v&lt;IndexType&gt;...</span></tt></li>
+<li>The ith coordinate of <tt class="docutils literal"><span class="pre">DynamicExtents...</span></tt>,
+denoted as <tt class="docutils literal">DynamicExtents[ith]</tt>, is <tt class="docutils literal">0 &lt;= DynamicExtents[ith]</tt></li>
+<li><tt class="docutils literal"><span class="pre">required_span_size(DynamicExtents...)</span> &lt;= s.size()</tt></li>
+</ul>
+<p>Effects: This <em>wrapping constructor</em> constructs <tt class="docutils literal">* this</tt>
+with domain's dynamic extents equal to <tt class="docutils literal"><span class="pre">DynamicExtents...</span></tt>
+and codomain equal to
+<tt class="docutils literal"><span class="pre">std::span&lt;element_type&gt;(</span> ptr , <span class="pre">required_span_size(DynamicExtents...)</span> )</tt></p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class IndexType , size_t N &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr mdspan( <span class="pre">std::span&lt;element_type&gt;</span> s , <span class="pre">std::array&lt;IndexType,N&gt;</span> const &amp; DynamicExtents) noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal">N == rank_dynamic()</tt></li>
+<li><tt class="docutils literal"><span class="pre">is_integral_type_v&lt;IndexType&gt;...</span></tt></li>
+<li><tt class="docutils literal">0 &lt;= DynamicExtents[ith]</tt></li>
+<li><tt class="docutils literal">required_span_size(DynamicExtents) &lt;= s.size()</tt></li>
+</ul>
+<p>Effects: This <em>wrapping constructor</em> constructs <tt class="docutils literal">* this</tt>
+with domain's dynamic extents equal to <tt class="docutils literal">DynamicExtents[ith]</tt>
+and codomain equal to
+<tt class="docutils literal"><span class="pre">std::span&lt;element_type&gt;(</span> ptr , required_span_size(DynamicExtents[ith]) )</tt></p>
+</blockquote>
+</div>
+<div class="section" id="mapping-domain-multi-index-to-access-elements-in-the-codomain">
+<h3>3.2.6&nbsp;&nbsp;&nbsp;Mapping domain multi-index to access elements in the codomain</h3>
+<p><tt class="docutils literal">reference <span class="pre">operator[](</span> index_type index ) const noexcept</tt></p>
+<blockquote>
+<p>Requires: <tt class="docutils literal">rank() == 1</tt> and  <tt class="docutils literal">0 &lt;= i &lt; extent(0)</tt></p>
+<p>Returns: A <tt class="docutils literal">reference</tt> to the element mapped to by <tt class="docutils literal">index</tt>.</p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class ... IndexType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">reference <span class="pre">operator()(</span> IndexType ... indices ) const noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires: <tt class="docutils literal">indices</tt> is a multi-index in the domain:</p>
+<ul class="simple">
+<li><tt class="docutils literal">rank() == <span class="pre">sizeof...(IndexType)</span></tt></li>
+<li>The ith coordinate of <tt class="docutils literal"><span class="pre">indices...</span></tt>, denoted as <tt class="docutils literal">indices[ith]</tt>,
+is in the domain: <tt class="docutils literal">0 &lt;= indices[ith] &lt; extent(ith)</tt>.</li>
+</ul>
+<p>Returns: A <tt class="docutils literal">reference</tt> to the element mapped to by <tt class="docutils literal"><span class="pre">indices...</span></tt>.</p>
+<p>Remark: Optimization of the mapping operator is a critical
+feature of the multidimensional array implementation.
+Recommended optimizations include:</p>
+<ul class="simple">
+<li>Rank-specific overloads to better
+enable optimization of the member access operator.</li>
+<li>Inlining of a <tt class="docutils literal">constexpr</tt> multi-index mapping expression
+that is <strong>not</strong> included in an optimizer's inlining budget.</li>
+<li>Compile-time evaluation statically determined portions of
+multi-index mapping expression.</li>
+</ul>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class IndexType , size_t N &gt;</tt></div>
+<div class="line"><tt class="docutils literal">reference <span class="pre">operator()(</span> <span class="pre">std::array&lt;IndexType,N&gt;</span> const &amp; indices ) const noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires: <tt class="docutils literal">indices</tt> is a multi-index in the domain:</p>
+<ul class="simple">
+<li><tt class="docutils literal">rank() == N</tt></li>
+<li><tt class="docutils literal">0 &lt;= indices[ith] &lt; extent(ith)</tt>.</li>
+</ul>
+<p>Returns: A <tt class="docutils literal">reference</tt> to the element mapped to by <tt class="docutils literal"><span class="pre">indices...</span></tt>.</p>
+<p>Remark: Optimization of the mapping operator is a critical
+feature of the multidimensional array implementation.
+Recommended optimizations include:</p>
+<ul class="simple">
+<li>Rank-specific overloads to better
+enable optimization of the member access operator.</li>
+<li>Inlining of a <tt class="docutils literal">constexpr</tt> multi-index mapping expression
+that is <strong>not</strong> included in an optimizer's inlining budget.</li>
+<li>Compile-time evaluation statically determined portions of
+multi-index mapping expression.</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="mapping-observers">
+<h3>3.2.7&nbsp;&nbsp;&nbsp;Mapping Observers</h3>
+<p><tt class="docutils literal">using layout = /* implementation deduces from <span class="pre">Properties...</span> */ ;</tt></p>
+<blockquote>
+Identification of the layout mapping.
+If <tt class="docutils literal"><span class="pre">Properties...</span></tt> does not include a layout property then
+<tt class="docutils literal">layout</tt> is <tt class="docutils literal">layout_right</tt> denoting the traditional C/C++ mapping.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">static constexpr bool is_always_unique =</tt></div>
+<div class="line"><tt class="docutils literal">constexpr bool is_unique() const noexcept ;</tt></div>
+</div>
+<blockquote>
+A layout mapping is <em>unique</em> if each multi-index in the domain
+is mapped to a unique member in the codomain.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">static constexpr bool is_always_contiguous =</tt></div>
+<div class="line"><tt class="docutils literal">constexpr bool is_contiguous() const noexcept ;</tt></div>
+</div>
+<blockquote>
+<p>A layout mapping is <em>contiguous</em> if the codomain elements accessed through
+the layout mapping form a contiguous span.</p>
+<p>A layout mapping that is both unique and contiguous is <em>bijective</em>
+and has <tt class="docutils literal">size() == <span class="pre">span().size()</span></tt>.</p>
+</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">static constexpr bool is_always_strided =</tt></div>
+<div class="line"><tt class="docutils literal">constexpr bool is_strided() const noexcept ;</tt></div>
+</div>
+<blockquote>
+A <em>strided</em> layout has constant striding between multi-index coordinates.
+Let <tt class="docutils literal">A</tt> be an <tt class="docutils literal">mdspan</tt> and <tt class="docutils literal"><span class="pre">indices_V...</span></tt> and <tt class="docutils literal"><span class="pre">indices_U...</span></tt> be multi-indices
+in the domain space such that all coordinates are equal except for
+the <em>ith</em> coordinate where <tt class="docutils literal">indices_V[ith] = indices_U[ith] + 1</tt>.
+Then <tt class="docutils literal">stride(ith) = distance(&amp; <span class="pre">A(indices_V...)</span> - &amp; A( <span class="pre">indices_U...</span> )</tt>
+is constant for all coordinates.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; typename IntegralType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr index_type stride( IntegralType index ) const noexcept</tt></div>
+</div>
+<blockquote>
+<p>Requires: <tt class="docutils literal">is_strided()</tt>.</p>
+<p>Returns: When <tt class="docutils literal">r &lt; rank()</tt> the distance between members
+when the index of coordinate <tt class="docutils literal">r</tt> is incremented by one, otherwise 0.</p>
+</blockquote>
+</div>
+</div>
+<div class="section" id="template-class-extents">
+<h2>3.3&nbsp;&nbsp;&nbsp;template class <tt class="docutils literal">extents</tt></h2>
+<p>One of the valid members of an <tt class="docutils literal">mdspan</tt> <tt class="docutils literal"><span class="pre">Properties...</span></tt> pack
+is an instantiation of template class <tt class="docutils literal">extents</tt>.
+This property declares the rank and static extents of the <tt class="docutils literal">mdspan</tt> type.
+Example:</p>
+<pre class="code c++ literal-block">
+<span class="keyword">using</span> <span class="name">tensor</span> <span class="operator">=</span> <span class="name">std</span><span class="operator">::</span><span class="name">mdspan</span><span class="operator">&lt;</span><span class="keyword type">double</span><span class="punctuation">,</span><span class="name">std</span><span class="operator">::</span><span class="name">extents</span><span class="operator">&lt;</span><span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span><span class="punctuation">,</span><span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span><span class="punctuation">,</span><span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span><span class="operator">&gt;&gt;</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<p>Note: A <a class="reference internal" href="#preferred-concise-and-intuitive-syntax">preferred, concise, and intuitive syntax</a> for declaring
+the multidimensional index space of an <tt class="docutils literal">mdspan</tt> is proposed in P0332.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+<span class="keyword reserved">inline</span> <span class="keyword">namespace</span> <span class="name">fundamentals_v3</span> <span class="punctuation">{</span>
+
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">StaticExtents</span> <span class="operator">&gt;</span>
+<span class="keyword">class</span> <span class="name class">extents</span> <span class="punctuation">{</span>
+<span class="keyword">public</span><span class="operator">:</span>
+
+  <span class="keyword">using</span> <span class="name">index_type</span> <span class="operator">=</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// observers of the index space domain:
+</span>  <span class="comment single">// [0..extent(0))X[0..extent(1))X...X[0..extent(rank()-1))
+</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">int</span> <span class="name function">rank</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">int</span> <span class="name function">rank_dynamic</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">static_extent</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">extent</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">size</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+
+  <span class="comment single">// constructors/assignment/destructor
+</span>
+  <span class="operator">~</span><span class="name">extents</span><span class="punctuation">()</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="name function">extents</span><span class="punctuation">();</span>
+  <span class="keyword">constexpr</span> <span class="name function">extents</span><span class="punctuation">(</span><span class="name">extents</span> <span class="keyword">const</span> <span class="operator">&amp;</span><span class="punctuation">)</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="keyword">constexpr</span> <span class="name function">extents</span><span class="punctuation">(</span><span class="name">extents</span> <span class="operator">&amp;&amp;</span><span class="punctuation">)</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="name">extents</span> <span class="operator">&amp;</span> <span class="keyword">operator</span> <span class="operator">=</span> <span class="punctuation">(</span><span class="name">extents</span> <span class="keyword">const</span> <span class="operator">&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+  <span class="name">extents</span> <span class="operator">&amp;</span> <span class="keyword">operator</span> <span class="operator">=</span> <span class="punctuation">(</span><span class="name">extents</span> <span class="operator">&amp;&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="operator">&gt;</span>
+  <span class="keyword">constexpr</span> <span class="name">extents</span><span class="punctuation">(</span> <span class="name">IndexType</span> <span class="punctuation">...</span> <span class="name">DynamicExtents</span> <span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="punctuation">;</span>
+<span class="punctuation">};</span>
+
+<span class="punctuation">}}}</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="subspan">
+<h2>3.4&nbsp;&nbsp;&nbsp;<tt class="docutils literal">subspan</tt></h2>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; typename DataType , typename ... Properties , typename ... SliceSpecifiers &gt;</tt></div>
+<div class="line-block">
+<div class="line">// for exposition only:</div>
+<div class="line"><em>detail::subspan_deduction_t&lt;mdspan&lt;DataType,Properties...&gt;,SliceSpecifiers...&gt;</em></div>
+</div>
+<div class="line"><tt class="docutils literal">subspan( mdspan&lt; DataType, Properties ... &gt; const &amp; U , SliceSpecifiers ... slices ) noexcept;</tt></div>
+</div>
+<blockquote>
+<p>The <tt class="docutils literal"><span class="pre">detail::subspan_deduction_t</span></tt> is for exposition only to indicate
+that the implementation will require a metafunction to deduce the resulting
+<tt class="docutils literal">mdspan</tt> type from <tt class="docutils literal">U</tt> and <tt class="docutils literal"><span class="pre">slices...</span></tt>.</p>
+<p>Let the <em>ith</em> member of <tt class="docutils literal"><span class="pre">slices...</span></tt> be denoted by <tt class="docutils literal">slices[ith]</tt>.</p>
+<p>Let an <em>integral range</em> be denoted by any of the following.</p>
+<ul class="simple">
+<li>an <tt class="docutils literal">initializer_list&lt;T&gt;</tt> of integral type <tt class="docutils literal">T</tt> and size 2</li>
+<li>a <tt class="docutils literal">pair&lt;T,T&gt;</tt> of integral type <tt class="docutils literal">T</tt></li>
+<li>a <tt class="docutils literal">tuple&lt;T,T&gt;</tt>  of integral type <tt class="docutils literal">T</tt></li>
+<li>an <tt class="docutils literal">array&lt;T,2&gt;</tt> of integral type <tt class="docutils literal">T</tt></li>
+<li><tt class="docutils literal">all</tt> to denote the range <tt class="docutils literal">[0 .. U.extent(ith))</tt></li>
+</ul>
+<p>If <tt class="docutils literal">slices[ith]</tt> is an integral range then let
+<tt class="docutils literal">begin(slices[ith])</tt> be the beginning of the integral range
+<tt class="docutils literal">end(slices[ith])</tt> be the end of the integral range.
+If <tt class="docutils literal">slices[ith]</tt> is an integral value then let
+<tt class="docutils literal">begin(slices[ith]) == slices[ith]</tt> and
+<tt class="docutils literal">end(slices[ith]) == <span class="pre">slices[ith]+1</span></tt>.</p>
+<p>Requires:</p>
+<ul class="simple">
+<li><tt class="docutils literal">U.rank() == <span class="pre">sizeof...(slices)</span></tt>.</li>
+<li>Each member of the <tt class="docutils literal"><span class="pre">slices...</span></tt> pack is either an <em>integral range</em>
+or an <em>integral value</em>.</li>
+<li><tt class="docutils literal">0 &lt;= begin(slices[ith]) &lt;= end(slices[ith]) &lt;= U.extent(ith)</tt>.</li>
+</ul>
+<p>Returns:
+An <tt class="docutils literal">mdspan V</tt> with a domain contained within the domain of <tt class="docutils literal">U</tt> ,
+codomain contained within the codomain of <tt class="docutils literal">U</tt> ,
+<tt class="docutils literal">V.rank()</tt> is the number of integral ranges in <tt class="docutils literal"><span class="pre">slices...</span></tt> ,
+<tt class="docutils literal">U( <span class="pre">begin(slices)...</span> )</tt> refers to the same codomain member
+refered to by the mapping the zero-index of <tt class="docutils literal">V</tt> ,
+each integral value in <tt class="docutils literal"><span class="pre">slices...</span></tt> contracts the corresponding
+extent of <tt class="docutils literal">U</tt>.</p>
+</blockquote>
+<div class="section" id="slice-specifier-with-static-extent">
+<h3>3.4.1&nbsp;&nbsp;&nbsp;Slice Specifier with Static Extent</h3>
+<p>The proposed <tt class="docutils literal">initializer_list</tt>, <tt class="docutils literal">pair</tt>, <tt class="docutils literal">tuple</tt>, and
+<tt class="docutils literal">array</tt> slice specifier types define dynamic extents.
+When the <tt class="docutils literal">all</tt> slice specifier references a static
+extent then the subspan's corresponding extent should be
+static as well.
+When the extent of a slice specifier is statically known
+there should be a slice specifier type to explicitly
+express this knowledge.
+Such a static extent slice specifier type is to-be-done.</p>
+</div>
+</div>
+<div class="section" id="layout-properties">
+<h2>3.5&nbsp;&nbsp;&nbsp;Layout properties</h2>
+<p>An <tt class="docutils literal">mdspan</tt> maps multi-indices from the domain to
+reference elements in the codomain by composing a <em>layout mapping</em>
+with a span of elements.
+The layout mapping is an extension point such that an <tt class="docutils literal">mdspan</tt> may be
+instantiated with non-standard layout mappings.</p>
+<div class="section" id="predefined-standard-layouts">
+<h3>3.5.1&nbsp;&nbsp;&nbsp;Predefined, Standard Layouts</h3>
+<p>The <tt class="docutils literal">layout_right</tt> property denotes the C/C++ standard
+multidimensional array index mapping
+where the right-most extent is stride one and strides increase right-to-left
+as the product of extents.</p>
+<p>The <tt class="docutils literal">layout_left</tt> property denotes the FORTRAN standard
+multidimensional array index mapping
+where the left-most extent is stride one and strides increase left-to-right
+as the product of extents.</p>
+<p>The <tt class="docutils literal">layout_stride</tt> property denotes a multidimensional array index mapping
+with arbitrary strides for each extent.
+This is the layout for subarrays that are not contiguous.</p>
+<p>The three standard layouts have the following layout mapping traits.</p>
+<p><tt class="docutils literal">layout_right</tt> ; i.e., the C/C++ standard layout</p>
+<blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">is_always_unique == true</tt></div>
+<div class="line"><tt class="docutils literal">is_always_contiguous == true</tt></div>
+<div class="line"><tt class="docutils literal">is_always_strided == true</tt></div>
+<div class="line">When <tt class="docutils literal">0 &lt; rank()</tt> then <tt class="docutils literal"><span class="pre">stride(rank()-1)</span> == 1</tt> .</div>
+<div class="line">When <tt class="docutils literal">1 &lt; rank()</tt> then <tt class="docutils literal"><span class="pre">stride(r-1)</span> = stride(r) * extent(r)</tt> for <tt class="docutils literal">0 &lt; r &lt; rank()</tt> ..</div>
+</div>
+<p>For rank-two arrays (a.k.a., matrices) this is also known as <em>row major</em> layout.</p>
+</blockquote>
+<p><tt class="docutils literal">layout_left</tt> ; i.e., the FORTRAN standard layout</p>
+<blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">is_always_unique == true</tt></div>
+<div class="line"><tt class="docutils literal">is_always_contiguous == true</tt></div>
+<div class="line"><tt class="docutils literal">is_always_strided == true</tt></div>
+<div class="line">When <tt class="docutils literal">0 &lt; rank()</tt> then <tt class="docutils literal">stride(0) == 1</tt> .</div>
+<div class="line">When <tt class="docutils literal">1 &lt; rank()</tt> then <tt class="docutils literal">stride(r) = <span class="pre">stride(r-1)</span> * <span class="pre">extent(r-1)</span></tt> for <tt class="docutils literal">0 &lt; r &lt; rank()</tt> ..</div>
+</div>
+<p>For rank-two arrays (a.k.a., matrices) this is also known as <em>column major</em> layout.</p>
+</blockquote>
+<p><tt class="docutils literal">layout_stride</tt> ; i.e., an arbitrary <strong>strided</strong> layout</p>
+<blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">is_always_unique == false</tt></div>
+<div class="line"><tt class="docutils literal">is_always_contiguous == false</tt></div>
+<div class="line"><tt class="docutils literal">is_always_strided == true</tt></div>
+</div>
+</blockquote>
+</div>
+<div class="section" id="concept-for-extensible-layout-mapping">
+<h3>3.5.2&nbsp;&nbsp;&nbsp;Concept for Extensible Layout Mapping</h3>
+<p>A <em>layout</em> class conforms to the following interface such that an
+<tt class="docutils literal">mdspan</tt> can compose the layout mapping with its <tt class="docutils literal">mdspan</tt>
+codomain member reference generation.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">class</span> <span class="name class">layout_property</span> <span class="comment multiline">/* exposition only */</span> <span class="punctuation">{</span>
+<span class="keyword">public</span><span class="operator">:</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">...</span> <span class="name">StaticExtents</span> <span class="operator">&gt;</span>
+  <span class="keyword">class</span> <span class="name class">mapping</span> <span class="punctuation">{</span>
+  <span class="keyword">public</span><span class="operator">:</span>
+
+    <span class="comment single">// domain types
+</span>
+    <span class="keyword">using</span> <span class="name">index_type</span> <span class="operator">=</span> <span class="keyword type">ptrdiff_t</span> <span class="punctuation">;</span>
+
+    <span class="comment single">// constructors, copy, assignment, and destructor
+</span>
+    <span class="operator">~</span><span class="name">mapping</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+    <span class="keyword">constexpr</span> <span class="name function">mapping</span><span class="punctuation">()</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+    <span class="keyword">constexpr</span> <span class="name function">mapping</span><span class="punctuation">(</span><span class="name">mapping</span> <span class="keyword">const</span><span class="operator">&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+    <span class="name">mapping</span><span class="operator">&amp;</span> <span class="keyword">operator</span><span class="operator">=</span><span class="punctuation">(</span><span class="name">mapping</span> <span class="keyword">const</span><span class="operator">&amp;</span><span class="punctuation">)</span> <span class="keyword">noexcept</span> <span class="operator">=</span> <span class="keyword">default</span> <span class="punctuation">;</span>
+
+    <span class="comment single">// observers of domain
+</span>
+    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">int</span> <span class="name function">rank</span><span class="punctuation">()</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">int</span> <span class="name function">rank_dynamic</span><span class="punctuation">()</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">static_extent</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">extent</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">size</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="comment single">// observers of the codomain: [0..required_span_size())
+</span>
+    <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">required_span_size</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="comment single">// observers of the mapping from domain to codomain
+</span>
+    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name">is_always_unique</span>     <span class="operator">=</span> <span class="comment multiline">/* deduced */</span> <span class="punctuation">;</span>
+    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name">is_always_contiguous</span> <span class="operator">=</span> <span class="comment multiline">/* deduced */</span> <span class="punctuation">;</span>
+    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name">is_always_strided</span>    <span class="operator">=</span> <span class="comment multiline">/* deduced */</span> <span class="punctuation">;</span>
+
+    <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name function">is_unique</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+    <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name function">is_contiguous</span><span class="punctuation">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+    <span class="keyword">constexpr</span> <span class="keyword type">bool</span> <span class="name function">is_strided</span><span class="punctuation">()</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="name function">stride</span><span class="punctuation">(</span><span class="keyword type">int</span><span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+
+    <span class="comment single">// mapping domain index to access codomain element
+</span>
+    <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">IndexType</span> <span class="operator">&gt;</span>
+    <span class="keyword">constexpr</span> <span class="name">index_type</span> <span class="keyword">operator</span><span class="punctuation">()(</span> <span class="name">IndexType</span> <span class="punctuation">...</span> <span class="name">indices</span> <span class="punctuation">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="punctuation">;</span>
+  <span class="punctuation">};</span>
+<span class="punctuation">};</span>
+</pre>
+<!--  -->
+<p><tt class="docutils literal">template&lt; ptrdiff_t ... StaticExtents &gt; class mapping</tt></p>
+<blockquote>
+<p>Requires:
+Let <tt class="docutils literal">StaticExtents[ith]</tt> be the ith member of the pack.
+<tt class="docutils literal">StaticExtents[ith] == <span class="pre">std::dynamic_extent</span></tt> or
+<tt class="docutils literal">0 &lt;= StaticExtents[ith]</tt>.</p>
+<p>Effects: Defines the domain index space where
+<tt class="docutils literal">rank() == <span class="pre">sizeof...(StaticExtents)</span></tt> and
+each <tt class="docutils literal">StaticExtents[ith] == <span class="pre">std::dynamic_extent</span></tt>
+denotes that <tt class="docutils literal">ith</tt> extent coordinate is a dynamic extent.</p>
+</blockquote>
+<p><tt class="docutils literal">constexpr <span class="pre">mapping();</span></tt></p>
+<blockquote>
+Effects:
+If <tt class="docutils literal">static_extent(i) != <span class="pre">std::dynamic_extent</span></tt> then
+<tt class="docutils literal">extent(i) == static_extent(i)</tt>
+otherwise <tt class="docutils literal">extent(i) == 0</tt>.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">explicit constexpr mapping( <span class="pre">index_type...</span> ) noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">explicit constexpr mapping(</tt> <em>layout_property</em> <tt class="docutils literal">const&amp;) noexcept;</tt></div>
+</div>
+<blockquote>
+Constructors, assignment operators, and destructor requires and effects
+correspond to the corresponding members of <tt class="docutils literal">mdspan</tt> .</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">static constexpr int rank() noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr int rank_dynamic() noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr index_type size() const noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr index_type extent(int) const noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr index_type static_extent(int) noexcept;</tt></div>
+<div class="line"><br /></div>
+<div class="line"><tt class="docutils literal">template &lt; class ... IndexType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr index_type required_span_size( IndexType ... DynamicExtents ) noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr index_type required_span_size( *layout_property* const &amp; ) noexcept;</tt></div>
+<div class="line"><br /></div>
+<div class="line"><tt class="docutils literal">static constexpr bool is_always_unique&nbsp;&nbsp;&nbsp;&nbsp; = /* deduced */ ;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr bool is_always_contiguous = /* deduced */ ;</tt></div>
+<div class="line"><tt class="docutils literal">static constexpr bool is_always_strided&nbsp;&nbsp;&nbsp; = /* deduced */ ;</tt></div>
+<div class="line"><br /></div>
+<div class="line"><tt class="docutils literal">constexpr bool is_unique() const noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr bool is_contiguous() const noexcept;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr bool is_strided() noexcept;</tt></div>
+<div class="line"><br /></div>
+<div class="line"><tt class="docutils literal">constexpr index_type stride(int) const noexcept;</tt></div>
+</div>
+<blockquote>
+Domain, codomain, and mapping observers requires and effects
+correspond to the corresponding members of <tt class="docutils literal">mdspan</tt> .</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">constexpr index_type required_span_size() const noexcept;</tt></div>
+</div>
+<blockquote>
+Returns: The upper bound of the codomain one dimensional index space
+<tt class="docutils literal"><span class="pre">[0..required_span_size())</span></tt>.</blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">template&lt; class ... IndexType &gt;</tt></div>
+<div class="line"><tt class="docutils literal">constexpr index_type <span class="pre">operator()(IndexType</span> ... indices) const noexcept;</tt></div>
+</div>
+<blockquote>
+<p>Requires: <tt class="docutils literal">rank() == <span class="pre">sizeof...(indices)</span></tt> and
+<tt class="docutils literal">0 &lt;= indices[ith] &lt; extent(ith)</tt>.</p>
+<p>Returns: Result of mapping <tt class="docutils literal"><span class="pre">indices...</span></tt> from the domain
+multidimensional index space to the codomain one dimensional index space
+<tt class="docutils literal"><span class="pre">[0..required_span_size())</span></tt>.</p>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="section" id="appendix-preferred-declaration-syntax-for-multi-index-space-domain-p0332">
+<h1>4&nbsp;&nbsp;&nbsp;Appendix: Preferred declaration syntax for multi-index space domain (P0332)</h1>
+<p id="preferred-concise-and-intuitive-syntax">The proposed declaration mechanism for the multi-index domain space is
+verbose and unwieldy.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">using</span> <span class="name">tensor</span> <span class="operator">=</span> <span class="name">std</span><span class="operator">::</span><span class="name">mdspan</span><span class="operator">&lt;</span><span class="keyword type">double</span><span class="punctuation">,</span><span class="name">std</span><span class="operator">::</span><span class="name">extents</span><span class="operator">&lt;</span><span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span><span class="punctuation">,</span><span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span><span class="punctuation">,</span><span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span><span class="operator">&gt;&gt;</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<p>The preferred mechanism is compact, is intuitive,
+LEWG has staw-polled strong preference,
+and users have voiced strong expressed preference.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">using</span> <span class="name">tensor</span> <span class="operator">=</span> <span class="name">mdspan</span><span class="operator">&lt;</span><span class="keyword type">double</span><span class="punctuation">[][][]</span><span class="operator">&gt;</span> <span class="punctuation">;</span>
+</pre>
+<!--  -->
+<p>However, this syntax requires the non-functional language change
+proposed in P0332 to relax the definition of an incomplete array type.</p>
+<p><strong>Precedence:</strong></p>
+<p>There is precedence for using incomplete array types for dynamic extents.</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;T[]&gt;</span></tt> and <tt class="docutils literal"><span class="pre">std::unique_ptr&lt;T[]&gt;</span></tt>
+denote a dynamic extent array through the incomplete type <tt class="docutils literal">T[]</tt></li>
+<li>P0674 denotes <tt class="docutils literal"><span class="pre">make_shared&lt;T[][N1][N2]&gt;</span></tt> to allocate
+a <tt class="docutils literal">shared_ptr</tt> to a C style multidimensional array.</li>
+</ul>
+</blockquote>
+<div class="section" id="impact-on-this-proposal">
+<h2>4.1&nbsp;&nbsp;&nbsp;Impact on this proposal</h2>
+<p><tt class="docutils literal">DataType</tt></p>
+<blockquote>
+<p>Requires: Is a complete or incomplete array type (8.3.4.p3).
+Each omitted static extent in the incomplete array type, <tt class="docutils literal">[]</tt>,
+denotes a <em>dynamic</em> extent.</p>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">using element_type = <span class="pre">std::remove_all_extents&lt;DataType&gt;::type</span> ;</tt></div>
+<div class="line"><br /></div>
+<div class="line"><tt class="docutils literal">constexpr int rank() const { return <span class="pre">std::rank&lt;DataType&gt;::value</span> ; }</tt></div>
+<div class="line"><br /></div>
+<div class="line"><tt class="docutils literal">static_extent(i)</tt> is <tt class="docutils literal"><span class="pre">std::extent_v&lt;DataType,i&gt;</span></tt></div>
+<div class="line"><br /></div>
+<div class="line">A dynamic extent is denoted when <tt class="docutils literal"><span class="pre">std::extent_v&lt;DataType,i&gt;</span> == 0</tt>.</div>
+<div class="line"><br /></div>
+<div class="line">The need for the magic number <tt class="docutils literal"><span class="pre">std::dynamic_extent</span></tt> is removed.</div>
+</div>
+</blockquote>
+</div>
+</div>
+<div class="section" id="appendix-alignment-or-merging-with-p0122-span-p0456">
+<h1>5&nbsp;&nbsp;&nbsp;Appendix: Alignment or Merging with P0122 <tt class="docutils literal">span</tt> (P0456)</h1>
+<p>A minor revision of P0122 <tt class="docutils literal">span</tt> is proposed in P0456 that
+would more closely align <tt class="docutils literal">span</tt> with <tt class="docutils literal">mdspan</tt> and
+enable <tt class="docutils literal">span</tt> to have a similar extensibility for
+access properties.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">typename</span> <span class="name">DataType</span> <span class="punctuation">,</span> <span class="keyword">class</span> <span class="error">... </span><span class="name class">Properties</span> <span class="operator">&gt;</span>
+<span class="keyword">class</span> <span class="name class">span</span> <span class="punctuation">{</span>
+<span class="keyword">public</span><span class="operator">:</span>
+  <span class="comment single">// change element_type declaration:
+</span>  <span class="keyword">using</span> <span class="name">element_type</span> <span class="operator">=</span> <span class="name">std</span><span class="operator">::</span><span class="name">remove_extent_t</span><span class="operator">&lt;</span> <span class="name">DataType</span> <span class="operator">&gt;</span> <span class="punctuation">;</span>
+
+<span class="punctuation">};</span>
+</pre>
+<!--  -->
+<p>Given P0456 the proposed <tt class="docutils literal">span</tt> and <tt class="docutils literal">mdspan</tt> could be merged into
+a single template class by simply requiring that all members specific
+to a one-dimensional span <strong>Requre</strong> that <tt class="docutils literal">rank() == 1</tt>.</p>
+</div>
+<div class="section" id="appendix-reference-is-potentially-a-proxy-p0860">
+<h1>6&nbsp;&nbsp;&nbsp;Appendix: Reference is potentially a proxy (P0860)</h1>
+<p>The <tt class="docutils literal">reference</tt> type may be a proxy for accessing an <tt class="docutils literal">element_type</tt> object.
+For example, if an <tt class="docutils literal">atomic_access</tt> property were defined with the
+meaning that all access operations on codomain objects are atomic
+then the <tt class="docutils literal">reference</tt> type must be an atomic reference type
+(paper P0019).</p>
+<pre class="code c++ literal-block">
+<span class="name">mdspan</span><span class="operator">&lt;</span><span class="keyword type">int</span><span class="punctuation">[],</span><span class="name">atomic_access</span><span class="operator">&gt;</span> <span class="name">a</span><span class="punctuation">(</span> <span class="name">ptr</span> <span class="punctuation">,</span> <span class="name">N</span> <span class="punctuation">);</span>
+
+<span class="keyword">static_assert</span><span class="punctuation">(</span> <span class="name">std</span><span class="operator">::</span><span class="name">is_same_v</span><span class="operator">&lt;</span> <span class="name">delctype</span><span class="punctuation">(</span><span class="name">a</span><span class="punctuation">(</span><span class="name">i</span><span class="punctuation">))</span> <span class="punctuation">,</span> <span class="name">atomic_ref</span><span class="operator">&lt;</span><span class="keyword type">int</span><span class="operator">&gt;</span> <span class="operator">&gt;</span> <span class="punctuation">);</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="appendix-anticipated-mdspan-properties">
+<h1>7&nbsp;&nbsp;&nbsp;Appendix: Anticipated mdspan properties</h1>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+
+  <span class="comment single">// bounds checking property
+</span>  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword type">bool</span> <span class="name">Enable</span> <span class="operator">&gt;</span>
+  <span class="keyword">struct</span> <span class="name">bounds_check_if</span> <span class="punctuation">;</span>
+
+  <span class="keyword">using</span> <span class="name">bounds_check</span> <span class="operator">=</span> <span class="name">bounds_check_if</span><span class="operator">&lt;</span> <span class="name builtin">true</span> <span class="operator">&gt;</span> <span class="punctuation">;</span>
+<span class="punctuation">}}</span>
+</pre>
+<!--  -->
+<blockquote>
+When <tt class="docutils literal">mdspan</tt> <tt class="docutils literal"><span class="pre">Properties...</span></tt> includes
+<tt class="docutils literal">bounds_check_if&lt;true&gt;</tt> then the mapping operators
+<tt class="docutils literal"><span class="pre">mdspan::operator()</span></tt> and <tt class="docutils literal"><span class="pre">mdspan::operator[]</span></tt>
+verify that each index is valid,
+<tt class="docutils literal">0 &lt;= index[ith] &lt; extent(ith)</tt>.
+Verification failure shall be reported.</blockquote>
+</div>
+<div class="section" id="appendix-examples">
+<h1>8&nbsp;&nbsp;&nbsp;Appendix: Examples</h1>
+<p>Given <tt class="docutils literal">mdspan x</tt> then:</p>
+<pre class="code c++ literal-block">
+<span class="keyword type">int</span> <span class="name">d</span> <span class="operator">=</span> <span class="literal number integer">0</span> <span class="punctuation">;</span>
+<span class="name">index_type</span> <span class="name">s</span> <span class="operator">=</span> <span class="literal number integer">1</span> <span class="punctuation">;</span>
+<span class="keyword">for</span> <span class="punctuation">(</span> <span class="keyword type">int</span> <span class="name">i</span> <span class="operator">=</span> <span class="literal number integer">0</span> <span class="punctuation">;</span> <span class="name">i</span> <span class="operator">&lt;</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">rank</span><span class="punctuation">()</span> <span class="punctuation">;</span> <span class="operator">++</span><span class="name">i</span> <span class="punctuation">)</span> <span class="punctuation">{</span>
+  <span class="keyword">if</span> <span class="punctuation">(</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">static_extent</span><span class="punctuation">(</span><span class="name">i</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">std</span><span class="operator">::</span><span class="name">dynamic_extent</span> <span class="punctuation">)</span> <span class="punctuation">{</span> <span class="operator">++</span><span class="name">d</span> <span class="punctuation">;</span> <span class="punctuation">}</span>
+  <span class="name">s</span> <span class="operator">*=</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="name">i</span><span class="punctuation">);</span>
+<span class="punctuation">}</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">d</span> <span class="operator">==</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">rank_dynamic</span><span class="punctuation">()</span> <span class="punctuation">);</span>
+<span class="name">assert</span><span class="punctuation">(</span> <span class="name">s</span> <span class="operator">==</span> <span class="name">x</span><span class="punctuation">.</span><span class="name">size</span><span class="punctuation">()</span> <span class="punctuation">);</span>
+</pre>
+<!--  -->
+<p>Subspan behavior:</p>
+<pre class="code c++ literal-block">
+<span class="comment single">// given U.rank() == 4
+</span><span class="keyword type">void</span> <span class="name function">foo</span><span class="punctuation">(</span> <span class="name">mdspan</span><span class="operator">&lt;</span> <span class="name">DataType</span> <span class="punctuation">,</span> <span class="name">Properties</span> <span class="punctuation">...</span> <span class="operator">&gt;</span> <span class="keyword">const</span> <span class="operator">&amp;</span> <span class="name">U</span> <span class="punctuation">)</span>
+<span class="punctuation">{</span>
+  <span class="keyword">auto</span> <span class="name">V</span> <span class="operator">=</span> <span class="name">subspan</span><span class="punctuation">(</span> <span class="name">U</span> <span class="punctuation">,</span> <span class="name">make_pair</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span><span class="operator">-</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="punctuation">,</span> <span class="literal number integer">1</span> <span class="punctuation">,</span> <span class="name">make_pair</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">,</span><span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span><span class="operator">-</span><span class="literal number integer">2</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="name">V</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">-</span> <span class="literal number integer">2</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="name">V</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">U</span><span class="punctuation">.</span><span class="name">extent</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="operator">-</span> <span class="literal number integer">2</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">V</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">U</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">2</span><span class="punctuation">,</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">V</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">0</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">U</span><span class="punctuation">(</span><span class="literal number integer">2</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">2</span><span class="punctuation">,</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+  <span class="name">assert</span><span class="punctuation">(</span> <span class="operator">&amp;</span> <span class="name">V</span><span class="punctuation">(</span><span class="literal number integer">0</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">)</span> <span class="operator">==</span> <span class="name">U</span><span class="punctuation">(</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">1</span><span class="punctuation">,</span><span class="literal number integer">3</span><span class="punctuation">,</span><span class="literal number integer">2</span><span class="punctuation">)</span> <span class="punctuation">);</span>
+<span class="punctuation">}</span>
+</pre>
+<!--  -->
+</div>
+<div class="section" id="related-papers">
+<h1>9&nbsp;&nbsp;&nbsp;Related papers</h1>
+<p>ISOCPP issue: <a class="reference external" href="https://issues.isocpp.org/show_bug.cgi?id=80">https://issues.isocpp.org/show_bug.cgi?id=80</a></p>
+<ul class="simple">
+<li><strong>P0122 : span: bounds-safe views for sequences of objects</strong>
+The <tt class="docutils literal">mdspan</tt> codomain concept of <em>span</em> is well-aligned with this paper.</li>
+<li><strong>P0367 : Accessors</strong>
+The P0367 Accessors proposal includes polymorphic mechanisms for
+accessing the memory an object or span of objects.
+The <tt class="docutils literal"><span class="pre">Properties...</span></tt> extension point in this proposal is intended
+to include such memroy access properties.</li>
+<li><strong>P0454 : Wording for a Minimal ``mdspan``</strong> (withdrawn)</li>
+<li><strong>P0546 : Preparing ``span`` for the future</strong></li>
+<li><strong>P0567 : Asynchronous Managed Pointer for Hetergeneous ...</strong></li>
+<li><strong>P0687 : Data Movement in C++</strong></li>
+</ul>
+</div>
+</div>
+</body>
+</html>

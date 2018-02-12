@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.14: http://docutils.sourceforge.net/" />
+<title>P0860r0 : Atomic Access Property for span and mdspan</title>
+<meta name="date" content="2018-02-10" />
+<meta name="author" content="H. Carter Edwards" />
+<meta name="author" content="Christian Trott" />
+<meta name="author" content="Daniel Sunderland" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7952 2016-07-26 18:15:59Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+.subscript {
+  vertical-align: sub;
+  font-size: smaller }
+
+.superscript {
+  vertical-align: super;
+  font-size: smaller }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left, table.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right, table.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+.align-top    {
+  vertical-align: top }
+
+.align-middle {
+  vertical-align: middle }
+
+.align-bottom {
+  vertical-align: bottom }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="p0860r0-atomic-access-property-for-span-and-mdspan">
+<h1 class="title">P0860r0 : Atomic Access Property for span and mdspan</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr class="project field"><th class="docinfo-name">Project:</th><td class="field-body">ISO JTC1/SC22/WG21: Programming Language C++</td>
+</tr>
+<tr class="number field"><th class="docinfo-name">Number:</th><td class="field-body">P0860r0</td>
+</tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2018-02-10</td></tr>
+<tr class="reply-to field"><th class="docinfo-name">Reply-to:</th><td class="field-body"><a class="reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td>
+</tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>H. Carter Edwards</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:hcedwar&#64;sandia.gov">hcedwar&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Christian Trott</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:crtrott&#64;sandia.gov">crtrott&#64;sandia.gov</a></td></tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Daniel Sunderland</td></tr>
+<tr><th class="docinfo-name">Contact:</th>
+<td><a class="first last reference external" href="mailto:dsunder&#64;sandia.gov">dsunder&#64;sandia.gov</a></td></tr>
+<tr class="audience field"><th class="docinfo-name">Audience:</th><td class="field-body">Parallelism and Concurrency Study Group (SG1)</td>
+</tr>
+<tr class="audience field"><th class="docinfo-name">Audience:</th><td class="field-body">Library Evolution Working Group (LEWG)</td>
+</tr>
+<tr class="url field"><th class="docinfo-name">URL:</th><td class="field-body"><a class="reference external" href="https://github.com/kokkos/array_ref/blob/master/proposals/P0860.rst">https://github.com/kokkos/array_ref/blob/master/proposals/P0860.rst</a></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="revision-history">
+<h1>1&nbsp;&nbsp;&nbsp;Revision History</h1>
+<div class="section" id="p0856r0">
+<h2>1.1&nbsp;&nbsp;&nbsp;P0856r0</h2>
+<p>2017-11-Albuquerque LEWG feedback for P0009, P0019, and P0546</p>
+<blockquote>
+<ul class="simple">
+<li>Extract atomic array reference from P0019 to a separate paper</li>
+</ul>
+</blockquote>
+</div>
+</div>
+<div class="section" id="description-motivation">
+<h1>2&nbsp;&nbsp;&nbsp;Description / Motivation</h1>
+<p>High performance computing (HPC) applications use very large arrays.
+Computations with these arrays typically have distinct phases that
+allocate and initialize members of the array,
+update members of the array,
+and read members of the array.
+Parallel algorithms for initialization (e.g., zero fill)
+have non-conflicting access when assigning member values.
+Parallel algorithms for updates have conflicting access
+to members which must be guarded by atomic operations.
+Parallel algorithms with read-only access require best-performing
+streaming read access, random read access, vectorization,
+or other guaranteed non-conflicting HPC pattern.</p>
+<p>An <tt class="docutils literal">atomic_ref</tt> (P0019) is used to perform
+atomic operations on the non-atomic members of the referenced array.
+Construction of an <tt class="docutils literal">atomic_ref</tt> for a non-atomic object
+requires the non-atomic object satisfy several conditions
+and potentially must acquire resources such as a lock
+in order to perform atomic operations on that object.
+Construction of <tt class="docutils literal">atomic_ref</tt> has potentially large overhead
+which could be performed once for an entire span.</p>
+<p>The proposed <tt class="docutils literal">mdspan</tt> (<strong>P0009</strong>) allows for additional
+property parameters to be specified.
+Collections of property parameters form an ontology,
+described in <strong>P0900</strong>, where the <em>property-values</em> are organized
+into orthogonal <em>property-types</em>.</p>
+<p>We propose the <tt class="docutils literal">atomic_access</tt> property-value
+for <tt class="docutils literal">span</tt> and <tt class="docutils literal">mdspan</tt> such that</p>
+<blockquote>
+<ul class="simple">
+<li>all references to <tt class="docutils literal">mdspan</tt> elements are <tt class="docutils literal">atomic_ref</tt></li>
+<li>potential overhead associated with constructing <tt class="docutils literal">atomic_ref</tt>
+occurs only once when an <tt class="docutils literal">mdspan</tt> object
+is constructed.</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="proposal">
+<h1>3&nbsp;&nbsp;&nbsp;Proposal</h1>
+<p>Modify <tt class="docutils literal">mdspan</tt> specification:</p>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+<span class="keyword reserved">inline</span> <span class="keyword">namespace</span> <span class="name">fundamentals_v3</span> <span class="punctuation">{</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">ArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+  <span class="keyword">struct</span> <span class="name">mdspan</span> <span class="punctuation">{</span>
+    <span class="comment single">// revision
+</span>    <span class="comment single">// using reference = element_type &amp; ; // remove
+</span>    <span class="keyword">using</span> <span class="name">reference</span> <span class="operator">=</span> <span class="comment multiline">/* implementation defined */</span> <span class="punctuation">;</span>
+  <span class="punctuation">};</span>
+
+<span class="punctuation">}}}</span>
+</pre>
+<!--  -->
+<p>Add to <strong>[views]</strong> a new <strong>[views.atomics]</strong> section.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+<span class="keyword reserved">inline</span> <span class="keyword">namespace</span> <span class="name">fundamentals_v3</span> <span class="punctuation">{</span>
+
+  <span class="keyword">struct</span> <span class="name">atomic_access</span> <span class="punctuation">;</span>
+
+<span class="punctuation">}}}</span>
+</pre>
+<!--  -->
+<p>The <tt class="docutils literal">atomic_access</tt> property-value may appear at most once
+in the <tt class="docutils literal"><span class="pre">Properties...</span></tt> parameter pack of <tt class="docutils literal">span</tt> or <tt class="docutils literal">mdpsan</tt>.
+Let <em>S</em> be an instantiation of <tt class="docutils literal">span</tt> or <tt class="docutils literal">mdspan</tt> with
+<tt class="docutils literal"><span class="pre">Properties...</span></tt> parameter pack containing <tt class="docutils literal">atomic_access</tt>.
+Let <em>R</em> be <tt class="docutils literal">atomic_ref&lt;</tt> <em>S</em> <tt class="docutils literal">::element_type&gt;</tt> .</p>
+<blockquote>
+<p><em>Requires:</em></p>
+<blockquote>
+<ul class="simple">
+<li><em>S</em> <tt class="docutils literal">::element_type</tt> satisfies requirements for
+<tt class="docutils literal">atomic_ref&lt;</tt> <em>S</em> <tt class="docutils literal">::element_type&gt;</tt>,</li>
+<li><em>S</em> constructors also require <em>R</em> constructors' requirements
+for member objects of <em>S</em>.</li>
+</ul>
+</blockquote>
+<p><em>Effects:</em></p>
+<blockquote>
+<ul class="simple">
+<li><em>S</em> <tt class="docutils literal">::reference</tt> is <tt class="docutils literal">atomic_ref&lt;</tt> <em>S</em> <tt class="docutils literal">::element_type&gt;</tt>,</li>
+<li><em>S</em> iterator types dereference to <tt class="docutils literal">atomic_ref&lt;</tt> <em>S</em> <tt class="docutils literal">::element_type&gt;</tt></li>
+</ul>
+</blockquote>
+</blockquote>
+</div>
+<div class="section" id="application-to-span">
+<h1>4&nbsp;&nbsp;&nbsp;Application to <tt class="docutils literal">span</tt></h1>
+<p>When the <tt class="docutils literal">span</tt> library is updated to accept properties (<strong>P0546</strong>)
+the same revision should be applied to accept the <tt class="docutils literal">atomic_access</tt>
+property-value.</p>
+<pre class="code c++ literal-block">
+<span class="keyword">namespace</span> <span class="name">std</span> <span class="punctuation">{</span>
+<span class="keyword">namespace</span> <span class="name">experimental</span> <span class="punctuation">{</span>
+<span class="keyword reserved">inline</span> <span class="keyword">namespace</span> <span class="name">fundamentals_v3</span> <span class="punctuation">{</span>
+
+  <span class="keyword">template</span><span class="operator">&lt;</span> <span class="keyword">class</span> <span class="name class">ArrayType</span> <span class="punctuation">,</span> <span class="keyword">typename</span> <span class="punctuation">...</span> <span class="name">Properties</span> <span class="operator">&gt;</span>
+  <span class="keyword">struct</span> <span class="name">span</span> <span class="punctuation">{</span>
+    <span class="comment single">// revision
+</span>    <span class="comment single">// using reference = element_type &amp; ; // remove
+</span>    <span class="keyword">using</span> <span class="name">reference</span> <span class="operator">=</span> <span class="comment multiline">/* implementation defined */</span> <span class="punctuation">;</span>
+  <span class="punctuation">};</span>
+
+<span class="punctuation">}}}</span>
+</pre>
+<!--  -->
+</div>
+</div>
+</body>
+</html>
