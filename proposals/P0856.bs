@@ -54,7 +54,7 @@ Without `restrict` annotations, the compiler cannot vectorize this code, since
 every iteration, the compiler needs to preform fresh loads `a[i]` and `b[i]`
 every iteration in case, for instance, they point to `dest[i-1]`. 
 
-Reordering for the purposes of optimizing memory operation is another example of
+Reordering for the purposes of optimizing memory operations is another example of
 an optimization that `restrict` enables.  Consider the (albeit naïve)
 implementation of a function that initializes two arrays at the start of some
 user's program:
@@ -72,7 +72,7 @@ In the absence of `restrict` information, the compiler cannot tell at what
 point, if any, the statement `v1[i] = 1` starts to overwrite the effects of
 previous statements on `v0` (or vice versa).  With non-aliasing information
 provided, however, the compiler can transform this function into two calls to
-`memset`, which would be much more efficient on most archetectures.  (It's clear
+`memset`, which would be much more efficient on most architectures.  (It's clear
 to most people in this example that the user should have made this
 transformation to begin with, but with intervening work in between the two
 assignments, or other increased complexity, this may not be as clear).
@@ -153,7 +153,7 @@ A translator is free to ignore any or all aliasing implications of uses of
 ### Dependence of N4700 on ISO C `restrict`
 
 Note that [[N4700]] already references the ISO C `restrict` keyword in paragraph
-2 of [library.c], implying that C++ implementations should already be aare of
+2 of [library.c], implying that C++ implementations should already be aware of
 its semantics (though, as stated in [[WG14-N1570]], conforming implementations
 can completely ignore `restrict`):
 
