@@ -19,7 +19,7 @@ Default Highlight: c++
 Revision History
 ================
 
-## D0856r0
+## P0856r0
 
 Address [2017-11-Albuquerque LEWG feedback](http://wiki.edg.com/bin/view/Wg21albuquerque/P00546) to generate paper for *restrict_access* property for `mdspan` and `span`.
 
