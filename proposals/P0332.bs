@@ -398,8 +398,8 @@ numbered `0` to `N-1`.
 > *incomplete type* is allowed any of the constant expressions that
 > specify the bounds of the arrays may be omitted; if any of the
 > constant expressions are omitted the type is an incomplete type that
-> cannot be completed. In addition, the first of the constant
-> expressions that specify the bounds of the arrays may be omitted
+> cannot be completed. The first of the constant expressions that specify
+> the bounds of the arrays may be omitted
 >
 > -   in some cases in the declaration of a function parameter
 >     (11.3.5),
