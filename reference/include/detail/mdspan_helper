@@ -312,7 +312,7 @@ struct slices_impl< R , T , Tail... > {
           , std::pair<I,I> const & y , Tail const & ... tail )
     {
       *str = m.stride(R);
-      *dyn = y.end - y.begin ;
+      *dyn = y.second - y.first ;
       next::get( dyn + 1 , str + 1 , m , tail... );
     }
 };
