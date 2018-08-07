@@ -141,7 +141,7 @@ struct extents_impl< R , SN , Tail... >
   static constexpr ptrdiff_t static_extent( int k ) noexcept
     { return k == R ? StaticN : next::static_extent(k); }
 
-  constexpr ptrdiff_t extent( int k ) noexcept
+  constexpr ptrdiff_t extent( int k ) const noexcept
     { return k == R ? N : next::extent(k); }
 
   constexpr ptrdiff_t size( int k ) const noexcept
