@@ -144,10 +144,10 @@ For example, a one-dimensional array is passed to a function as follows.
 The *const-ness* of an ``array_ref`` is analogous to the *const-ness*
 of a pointer.
 A ``const array_ref<D>`` is similar to a const-pointer in that the ``array_ref``
-may not be modifid but the referenced extent of memory may be modified.
+may not be modified but the referenced extent of memory may be modified.
 A ``array_ref<const D>`` is similar to a pointer-to-const in that the
 referenced extent of memory may not be modified. These are the same *const-ness*
-semantics of ``unique_ptr`` and ``shared_ptr``. 
+semantics of ``unique_ptr`` and ``shared_ptr``.
 
 The ``T[]`` syntax has precedence in the standard; ``unique_ptr`` supports this
 syntax to denote a ``unique_ptr`` which manages the lifetime of a dynamically
@@ -246,7 +246,7 @@ Preferred Syntax
 ------------------------------------------------------------------------------
 
 We prefer the following concise and intuitive syntax for arrays
-with multiple implict dimensions.
+with multiple implicit dimensions.
 
 .. code-block:: c++
 
@@ -404,8 +404,8 @@ through tiles as *subarray* of the array.
 
 ..
 
-Note that a tiled layout mapping is irregular and if padding is 
-required to align with tile boundarries then the span will exceed the size.
+Note that a tiled layout mapping is irregular and if padding is
+required to align with tile boundaries then the span will exceed the size.
 A customized layout mapping will have slightly different requirements
 depending on whether the layout is regular or irregular.
 
@@ -423,7 +423,8 @@ A member access array bounds checking array property allows
 the selective injection of array bounds checking and removes
 the need for special compiler support.
 A high quality implementation of bounds checking would output the
-array bounds, multi-index, and traceback of where the array bounds violation occured.
+array bounds, multi-index, and traceback of where the array bounds
+violation occurred.
 
 .. code-block:: c++
 
@@ -505,7 +506,7 @@ The ``subarray`` function returns ``array_ref<`` *deduced...* ``>``.
 The return type is deduced from the input ``array_ref`` and the slicing argument pack.
 The deduction rules must be defined to insure correctness and
 should be defined for performance.
-For example, a simple rule wuld define the returned type to always
+For example, a simple rule would define the returned type to always
 have a strided layout.  While correct there are many use cases
 where a better performing layout can be deduced.
 
@@ -517,7 +518,7 @@ Example Usage in an 8th Order Finite Difference Stencil
 ------------------------------------------------------------------------
 
 The subarray interface provides a powerful mechanism for accessing
-3-dimensional data in numerical kernels in a fashion which utilizes performant
+3-dimensional data in numerical kernels in a fashion which utilizes efficient
 memory access patterns and is amenable to compiler-assisted vectorization.
 
 The following code is an example of a typical finite difference stencil which
